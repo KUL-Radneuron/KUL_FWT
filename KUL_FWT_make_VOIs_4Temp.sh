@@ -12,29 +12,29 @@ function Usage {
 
 cat <<USAGE
 
-    `basename $0` Runs whole brain TCK segmentation using an input config file
+    `basename $0` part of the KUL_FWT package of fully automated workflows for fiber tracking
 
     Usage:
 
-    `basename $0` -p pat001 -s 01  -F /path_to/FS_dir -M /path_to/MSBP_dir -d /path_to/dMRI_dir -c /path_to/WBTCK_seg_config.txt -o /fullpath/output
+    `basename $0` -p pat001 -s 01  -F /path_to/FS_dir/aparc+aseg.mgz -M /path_to/MSBP_dir/sub-pat001_label-L2018_desc-scale3_atlas.nii.gz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output
 
     Examples:
 
-    `basename $0` -p pat001 -s 01 -F /path_to/FS_dir -M /path_to/MSBP_dir -d /path_to/dMRI_dir -c /path_to/WBTCK_seg_config.txt -o /fullpath/output -n 6 
+    `basename $0` -p pat001 -s 01 -F /path_to/FS_dir/aparc+aseg.mgz -M /path_to/MSBP_dir/sub-pat001_label-L2018_desc-scale3_atlas.nii.gz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -n 6 
 
     Purpose:
 
-    This generate the VOIs needed from FS and MSBP to segment whole brain tractograms into known bundles
+    This workflow generates the VOIs needed for fiber tracking by KUL_FWT_make_TCKs.sh from input FS and MSBP for all bundles specified in the input config file for group-averaged template data
 
     Required arguments:
 
     -p:  BIDS participant name (anonymised name of the subject without the "sub-" prefix)
     -s:  BIDS participant session (session no. without the "ses-" prefix)
     -M:  full path and file name of scale 3 MSBP parcellation
-    -F:  full path and file name to aparc+aseg.mgz from FreeSurfer
+    -F:  full path and file name of aparc+aseg.mgz from FreeSurfer
     -c:  path to config file with list of tracks to segment from the whole brain tractogram
     -d:  path to directory with diffusion data (specific to subject and run)
-    -o:  full path to output dir (if not set reverts to default output ./lesion_wf_output)
+    -o:  full path to output dir (if not set reverts to default output ./sub-*_ses-*_KUL_FWT_output)
 
     Optional arguments:
 
@@ -53,8 +53,6 @@ USAGE
 # CHECK COMMAND LINE OPTIONS -------------
 # 
 # Set defaults
-# this works for ANTsX scripts and FS
-ncpu=8
 
 # Set required options
 p_flag=0
@@ -273,9 +271,9 @@ fi
 
 if [[ "$n_flag" -eq 0 ]]; then
 
-	ncpu=8
+	ncpu=6
 
-	echo " -n flag not set, using default 8 threads. "
+	echo " -n flag not set, using default 6 threads. "
 
 else
 
@@ -288,11 +286,11 @@ OMP_NUM_THREADS=$ncpu; export OMP_NUM_THREADS
 
 # Priors dir and check
 ## change the temps dir name later
-pr_d="${function_path}/TCKedit_templates"
+pr_d="${function_path}/KUL_FWT_templates"
 
 if [[ ! -d ${pr_d} ]]; then
 
-    echo "KUL_WBTCK_seg priors directory not found where expected, exiting"
+    echo "KUL_FWT priors directory not found where expected, exiting"
     exit 2
 
 fi
@@ -309,7 +307,7 @@ if [[ "$o_flag" -eq 1 ]]; then
 
 else
 
-    output_d="${cwd}/sub-${subj}${ses_str}_KUL_WBTCK_Seg_output"
+    output_d="${cwd}/sub-${subj}${ses_str}_KUL_FWT_output"
 
 fi
 
@@ -331,7 +329,8 @@ mkdir -p "${ROIs_d}/custom_VOIs" >/dev/null 2>&1
 
 # make your log file
 
-prep_log2="${output_d}/KUL_VOIs_prep_log_${d}.txt";
+prep_log2="${output_d}/KUL_FWT_VOIs_GT_log_${subj}_${d}.txt";
+
 
 if [[ ! -f ${prep_log2} ]] ; then
 
@@ -364,7 +363,7 @@ export MRTRIX_TMPFILE_DIR="${tmpo_d}"
 processId=$(ps -ef | grep 'ABCD' | grep -v 'grep' | awk '{ printf $2 }')
 echo $processId
 
-echo "KUL_WBTCK_Seg @ ${d} with parent pid $$ and process pid $BASHPID " | tee -a ${prep_log2}
+echo "KUL_FWT_make_VOIs_4Temp.sh @ ${d} with parent pid $$ and process pid $BASHPID " | tee -a ${prep_log2}
 echo "Inputs are -p  sub-${subj} -s ses-${ses} -c  ${conf_f} -d ${d_dir}  -F ${FS_dir}  -M ${MS_dir} " | tee -a ${prep_log2}
 
 # read the config file
@@ -4401,9 +4400,9 @@ for q in ${!tck_list[@]}; do
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs4" && make_VOIs
 
-                DRT_LT_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "cIX_RT_SUIT");
+                DRT_LT_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "cIX_RT_SUIT" "SegWM_LT_ALIC_custom");
 
-                DRT_LT_excs_Is=("1" "251" "25");
+                DRT_LT_excs_Is=("1" "251" "25" "1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
@@ -4433,9 +4432,9 @@ for q in ${!tck_list[@]}; do
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs4" && make_VOIs
 
-                DRT_RT_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "cIX_LT_SUIT");
+                DRT_RT_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "cIX_LT_SUIT" "SegWM_RT_ALIC_custom");
 
-                DRT_RT_excs_Is=("1" "251" "23");
+                DRT_RT_excs_Is=("1" "251" "23" "1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 

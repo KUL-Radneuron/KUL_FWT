@@ -17,19 +17,19 @@ function Usage {
 
 cat <<USAGE
 
-    `basename $0` Runs whole brain TCK segmentation using an input config file
+    `basename $0` part of the KUL_FWT package of fully automated workflows for fiber tracking
 
     Usage:
 
-    `basename $0` -p pat001 -s 01  -F /path_to/FS_dir -M /path_to/MSBP_dir -d /path_to/dMRI_dir -c /path_to/WBTCK_seg_config.txt -o /fullpath/output
+    `basename $0` -p pat001 -s 01  -F /path_to/FS_dir/aparc+aseg.mgz -M /path_to/MSBP_dir/sub-pat001_label-L2018_desc-scale3_atlas.nii.gz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -T 2 -f 2
 
     Examples:
 
-    `basename $0` -p pat001 -s 01 -F /path_to/FS_dir -M /path_to/MSBP_dir -d /path_to/dMRI_dir -c /path_to/WBTCK_seg_config.txt -o /fullpath/output -n 6 
+    `basename $0` -p pat001 -s 01 -F /path_to/FS_dir/aparc+aseg.mgz -M /path_to/MSBP_dir/sub-pat001_label-L2018_desc-scale3_atlas.nii.gz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -n 6 -T 1 -f 1 -S -Q
 
     Purpose:
 
-    This generate the VOIs needed from FS and MSBP to segment whole brain tractograms into known bundles
+    This workflow creates all bundles specified in the input config file using the inclusion and exclusion VOIs created by KUL_FWT_make_VOIs.sh for single subject data
 
     Required arguments:
 
@@ -37,15 +37,15 @@ cat <<USAGE
     -s:  BIDS participant session (session no. without the "ses-" prefix)
     -T:  Tracking and segmentation approach (1 = Bundle-specific tckgen, 2 = Whole brain tckgen & bundle segmentation)
     -M:  Full path and file name of scale 3 MSBP parcellation
-    -F:  Full path and file name to aparc+aseg.mgz from FreeSurfer
+    -F:  Full path and file name of aparc+aseg.mgz from FreeSurfer
     -c:  Path to config file with list of tracks to segment from the whole brain tractogram
     -d:  Path to directory with diffusion data (specific to subject and run)
-    -o:  Full path to output dir (if not set reverts to default output ./lesion_wf_output)
+    -o:  Full path to output dir (if not set reverts to default output ./sub-*_ses-*_KUL_FWT_output)
 
     Optional arguments:
 
     -a:  Specify algorithm for tckgen fiber tractography (tckgen -algorithm options are: iFOD2, iFOD1, SD_STREAM, Tensor_Det, Tensor_Prob)
-    -f:  Specify filtering approach (1 = conservative, 2 = liberal)
+    -f:  Specify filtering approach (0 = No filtering, 1 = conservative, 2 = liberal)
     -Q:  If set quantitative and qualitative analyses will be done
     -S:  If set screenshots will taken of each bundle
     -n:  Number of cpu for parallelisation (default is 6)
@@ -63,8 +63,6 @@ USAGE
 # CHECK COMMAND LINE OPTIONS -------------
 # 
 # Set defaults
-# this works for ANTsX scripts and FS
-ncpu=6
 
 # Set required options
 p_flag=0
@@ -320,11 +318,11 @@ OMP_NUM_THREADS=$ncpu; export OMP_NUM_THREADS
 
 # Priors dir and check
 ## change the temps dir name later
-pr_d="${function_path}/TCKedit_templates"
+pr_d="${function_path}/KUL_FWT_templates"
 
 if [[ ! -d ${pr_d} ]]; then
 
-    echo "KUL_WBTCK_seg priors directory not found where expected, exiting"
+    echo "KUL_FWT priors directory not found where expected, exiting"
     exit 2
 
 fi
@@ -341,7 +339,7 @@ if [[ "$o_flag" -eq 1 ]]; then
 
 else
 
-    output_d="${cwd}/sub-${subj}${ses_str}_KUL_WBTCK_Seg_output"
+    output_d="${cwd}/sub-${subj}${ses_str}_KUL_FWT_output"
 
 fi
 
@@ -361,7 +359,7 @@ mkdir -p ${TCKs_prepd} >/dev/null 2>&1
 
 # make your log file
 
-prep_log2="${output_d}/KUL_TCKs_prep_log_${d}.txt";
+prep_log2="${output_d}/KUL_FWT_TCKs_log_${subj}_${d}.txt";
 
 if [[ ! -f ${prep_log2} ]] ; then
 
@@ -403,33 +401,38 @@ fi
 # # filtering scheme selection
 
 if [[ "${filt_fl1}" -eq 0 ]]; then 
-
+    
     filt_fl2=2
-    echo " Conservative filtering used by default " | tee -a ${prep_log2}
+    echo " No filtering scheme selected, we will do liberal filtering by default " | tee -a ${prep_log2}
     Alfa=0.48
 
 else
 
     if [[ ${filt_fl2} =~ ^[+-]?[0-9]+$ ]]; then 
 
-        if [[ ${filt_fl2} -eq 1 ]]; then
+        if [[ ${filt_fl2} -eq 0 ]]; then
+            
+            echo " No filtering selected " | tee -a ${prep_log2}
+        
+        elif [[ ${filt_fl2} -eq 1 ]]; then
+            
             echo " Conservative filtering selected " | tee -a ${prep_log2}
             Alfa=0.48
         
         elif [[ ${filt_fl2} -eq 2 ]]; then
-
+            
             echo " Liberal filtering selected " | tee -a ${prep_log2}
             Alfa=0.38
 
         else
-
+            
             echo "incorrect input to -f flag (filtering option selection), exiting "
             exit 2
 
         fi
 
     else
-
+        
         echo "incorrect input to -f flag (filtering option selection), exiting "
         exit 2
 
@@ -466,7 +469,7 @@ export MRTRIX_TMPFILE_DIR="${tmpo_d}"
 processId=$(ps -ef | grep 'ABCD' | grep -v 'grep' | awk '{ printf $2 }')
 echo $processId
 
-echo "KUL_FWT @ ${d} with parent pid $$ and process pid $BASHPID " | tee -a ${prep_log2}
+echo "KUL_FWT_make_TCKs.sh @ ${d} with parent pid $$ and process pid $BASHPID " | tee -a ${prep_log2}
 echo "Inputs are -p  sub-${subj} -s ses-${ses} -c  ${conf_f} -d ${d_dir}  -F ${FS_dir}  -M ${MS_dir} " | tee -a ${prep_log2}
 
 # read the config file
@@ -720,6 +723,8 @@ function make_bundle {
 
         tck_init="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}.tck"
 
+        tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
+
         # cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} -angle 45 \
         # -select ${ns} -maxlength 280 -minlength 20 \
         # -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
@@ -733,6 +738,8 @@ function make_bundle {
         T="WB"
 
         tck_init="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}.tck"
+
+        tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
         cmd_str="tckedit -force -nthreads ${ncpu} -maxlength 280 -minlength 10 -tck_weights_in ${TCKs_outd}/sub-${subj}${ses_str}_sift2_ws.txt \
         -mask ${tracking_mask} -minweight 0.08 ${includes_str} ${excludes_str} ${auto_X} ${WB_tck} ${tck_init}"
@@ -810,11 +817,22 @@ function make_bundle {
 
         task_exec
 
+        task_in="tcktransform -force ${tck_init} ${TCKs_w2temp} ${tck_init_inT}"
+
+        task_exec
+
         count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init} -quiet ));
 
     else
 
         count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init} -quiet ));
+
+        if [[ ! -f ${tck_init_inT} ]]; then
+          
+            task_in="tcktransform -force ${tck_init} ${TCKs_w2temp} ${tck_init_inT}"
+
+            task_exec
+        fi
 
         if [[ ${count} -gt 10 ]]; then
 
@@ -921,7 +939,7 @@ function make_bundle {
     tck_reor="${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_inMNI_rTCK.tck"
     tckc_reor="${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_inMNI_centroid_rTCK.tck"
 
-    if [[ ${count} -gt 10 ]]; then
+    if [[ ${count} -gt 10 ]] && [[ ! ${filt_fl2} == 0 ]]; then
 
         if [[ ! -f "${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}_inMNI.nii.gz" ]]; then
 
@@ -953,7 +971,7 @@ function make_bundle {
 
                     task_exec &
 
-                    task_in="scil_detect_streamlines_loops.py -f --qb --reference ${subj_FA} ${tck_filt1} ${tck_filt2}"
+                    task_in="scil_detect_streamlines_loops.py -f --reference ${subj_FA} ${tck_filt1} ${tck_filt2}"
 
                     task_exec
 
@@ -1059,8 +1077,14 @@ function make_bundle {
         fi
 
     else
+        if [[ ${count} -gt 10 ]]; then
+            echo " ${TCK_2_make} has less than 10 fibers initially, skipping filtering " | tee -a ${prep_log2}
+        fi
 
-        echo " ${TCK_2_make} has less than 10 fibers initially, skipping filtering " | tee -a ${prep_log2}
+        if [[ ! ${filt_fl2} == 0 ]]; then
+            echo " Streamline filtering is disabled by the user, skipping filtering " | tee -a ${prep_log2}
+        fi
+
 
     fi
 
@@ -1076,7 +1100,7 @@ function make_bundle {
     # 7- *** QQ happens in native space
     # 8- keep the --nb_points at 50?
     
-    if [[ "${Q_flag}" -eq 1 ]]; then
+    if [[ "${Q_flag}" -eq 1 ]] && [[ ! ${filt_fl2} == 0 ]]; then
 
         # metrics+=("${MNI_segs}" "${MNI_agg}")
 
@@ -1221,7 +1245,7 @@ function make_bundle {
 
     # Screenshots workflow
     # we use template warped TCKs for SCs
-    if [[ "${S_flag}" -eq 1 ]]; then
+    if [[ "${S_flag}" -eq 1 ]] && [[ ! ${filt_fl2} == 0 ]]; then
 
         if [[ -f "${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck" ]] && [[ ! -f "${TCK_out}/Screenshots/${TCK_2_make}_fin_${T}_${algo_f}_Sc_done.done" ]]; then
 
@@ -1444,7 +1468,9 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
     subj_FS_Fx_inFA="${prep_d}/sub-${subj}${ses_str}_FS_fornix_inFA.nii.gz"
 
-    subj_T1_in_UKBB="${prep_d}/FS_2_UKBB_${subj}${ses_str}_Warped.nii.gz"
+    # will use MS_2_UKBB here, as it will be normal in case of a lesion free brain
+    # and will be lesioned if using VBG filled FS input (as long as MSBP was run after VBG_FS recon-all)
+    subj_T1_in_UKBB="${prep_d}/MS_2_UKBB_${subj}${ses_str}_Warped.nii.gz"
 
     # account for different tracking algorithms
 
@@ -1628,8 +1654,6 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
         # # add the maps to metric for plotting if Q_flag is set
         # if [[ "${Q_flag}" -eq 1 ]]; then
 
-            
-
         # fi
 
     elif [[ ${algo_f} == "FACT" ]]; then
@@ -1642,7 +1666,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
             subj_DT_vecs="${prep_d}/sub-${subj}_dwi_dt_vecs_reg2T1w.mif"
 
-            subj_FA="${prep_d}/fa"
+            subj_FA="${prep_d}/fa.nii.gz"
 
             subj_ADC="${prep_d}/sub-${subj}_dwi_dt_vecs_reg2T1w.mif"
 
@@ -1665,9 +1689,9 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
                 echo " This data is not preprocessed using KUL_NITs" | tee -a ${prep_log2}
 
-                subj_FA=($(find ${d_dir} -type f -name "*fa*.nii.gz" -o -name "*FA*.nii.gz"));
+                subj_FA=($(find ${d_dir} -type f -name "*fa*.nii.gz" -o -name "*FA*.nii.gz" -o -name "fa.nii.gz"));
 
-                subj_ADC=($(find ${d_dir} -type f -name "*adc*.nii.gz" -o -name "*ADC*.nii.gz"));
+                subj_ADC=($(find ${d_dir} -type f -name "*adc*.nii.gz" -o -name "*ADC*.nii.gz" -o -name "adc.nii.gz"));
 
             fi
 
