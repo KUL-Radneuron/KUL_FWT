@@ -2627,9 +2627,9 @@ for q in ${!tck_list[@]}; do
 
             elif [[ ${tck_list[$q]} == "FAT_LT" ]]; then
 
-                FAT_LT_incs1_Ls=("IFG_POp_GM_FS_LT");
+                FAT_LT_incs1_Ls=("IFG_POp_GM_FS_LT" "IFG_PTr_GM_FS_LT");
 
-                FAT_LT_incs1_Is=("1018");
+                FAT_LT_incs1_Is=("1018" "1020");
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
 
@@ -2653,9 +2653,9 @@ for q in ${!tck_list[@]}; do
 
             elif [[ ${tck_list[$q]} == "FAT_RT" ]]; then
 
-                FAT_RT_incs1_Ls=("IFG_POp_GM_FS_RT");
+                FAT_RT_incs1_Ls=("IFG_POp_GM_FS_RT" "IFG_PTr_GM_FS_RT");
 
-                FAT_RT_incs1_Is=("2018");
+                FAT_RT_incs1_Is=("2018" "2020");
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
 
