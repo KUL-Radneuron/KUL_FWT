@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+# set -x
 
 # the point of this one is to make my life easier!
 # when it comes to VOI gen
@@ -1337,6 +1337,8 @@ PD25="${pr_d}/PD25_hist_1mm_RLinMNI.nii.gz" # done
 
 SUIT="${pr_d}/SUIT_atlas_inMNI.nii.gz" # done
 
+CIT="${pr_d}/CIT168toMNI152_prob_atlas_bilat_1mm_STN.nii.gz" # done
+
 RL_VOIs="${pr_d}/RL_hemi_masks.nii.gz" # done
 
 TCKs_w2temp="${prep_d}/FS_2_UKBB_${subj}_inv_4TCKs.mif"
@@ -1441,6 +1443,8 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
     PD25_in_FA="${prep_d}/sub-${subj}${ses_str}_PD25_histological_inFA.nii.gz"
 
     SUIT_in_FA="${prep_d}/sub-${subj}${ses_str}_SUIT_cerebellar_atlas_inFA.nii.gz"
+
+    CIT_in_FA="${prep_d}/sub-${subj}${ses_str}_CIT_inFA.nii.gz"
 
     UKBB_in_FA="${prep_d}/sub-${subj}${ses_str}_UKBB_Bstem_VOIs_inFA.nii.gz"
 

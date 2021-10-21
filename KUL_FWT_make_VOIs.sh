@@ -480,7 +480,14 @@ PD25="${pr_d}/PD25_hist_1mm_RLinMNI.nii.gz" # done
 
 SUIT="${pr_d}/SUIT_atlas_inMNI.nii.gz" # done
 
+CIT="${pr_d}/CIT168toMNI152_prob_atlas_bilat_1mm_STN.nii.gz" # done
+
+DISTAL_STN="${pr_d}/DISTAL_STN_motor_bilateral_in_FSL_6thgen.nii.gz" # done
+
+TMP_BStem="${pr_d}/Temp_BStem_labels.nii.gz" # done
+
 RL_VOIs="${pr_d}/RL_hemi_masks.nii.gz" # done
+
 
 ####
 
@@ -504,6 +511,12 @@ RL_in_FA="${prep_d}/sub-${subj}${ses_str}_RL_masks_inFA.nii.gz"
 PD25_in_FA="${prep_d}/sub-${subj}${ses_str}_PD25_histological_inFA.nii.gz"
 
 SUIT_in_FA="${prep_d}/sub-${subj}${ses_str}_SUIT_cerebellar_atlas_inFA.nii.gz"
+
+CIT_in_FA="${prep_d}/sub-${subj}${ses_str}_CIT_inFA.nii.gz"
+
+DISTAL_STN_in_FA="${prep_d}/sub-${subj}${ses_str}_DISTAL_STN_inFA.nii.gz"
+
+TMP_BStem_in_FA="${pr_d}/Temp_BStem_labels_in_FA.nii.gz" # done
 
 UKBB_in_FA="${prep_d}/sub-${subj}${ses_str}_UKBB_Bstem_VOIs_inFA.nii.gz"
 
@@ -1316,6 +1329,21 @@ if [[ -z ${srch_pt1_done} ]]; then
         -t [${temp2subj}_0GenericAffine.mat,1] -t ${temp2subj}_1InverseWarp.nii.gz -n multilabel"
         task_exec &
 
+        ##  CIT
+        task_in="antsApplyTransforms -d 3 -i ${CIT} -o ${CIT_in_FA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz \
+        -t [${temp2subj}_0GenericAffine.mat,1] -t ${temp2subj}_1InverseWarp.nii.gz -n multilabel"
+        task_exec &
+
+        ##  DISTAL_STN
+        task_in="antsApplyTransforms -d 3 -i ${DISTAL_STN} -o ${DISTAL_STN_in_FA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz \
+        -t [${temp2subj}_0GenericAffine.mat,1] -t ${temp2subj}_1InverseWarp.nii.gz -n multilabel"
+        task_exec &
+
+        ##  TMP_Bstem
+        task_in="antsApplyTransforms -d 3 -i ${TMP_BStem} -o ${TMP_BStem_in_FA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz \
+        -t [${temp2subj}_0GenericAffine.mat,1] -t ${temp2subj}_1InverseWarp.nii.gz -n multilabel"
+        task_exec &
+        
         ## Manual VOIs
         task_in="antsApplyTransforms -d 3 -i ${Man_VOIs} -o ${Man_VOIs_in_FA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz \
         -t [${temp2subj}_0GenericAffine.mat,1] -t ${temp2subj}_1InverseWarp.nii.gz -n multilabel"
@@ -1876,6 +1904,18 @@ function make_VOIs {
         elif [[ ${Vs_Ls[$z]} == *"SUIT"* ]]; then
 
             source_map="${SUIT_in_FA}"
+
+        elif [[ ${Vs_Ls[$z]} == *"CIT"* ]]; then
+
+            source_map="${CIT_in_FA}"
+
+        elif [[ ${Vs_Ls[$z]} == *"DISTAL_STN"* ]]; then
+
+            source_map="${DISTAL_STN_in_FA}"
+
+        elif [[ ${Vs_Ls[$z]} == *"TMP_BStem"* ]]; then
+
+            source_map="${TMP_BStem_in_FA}"
 
         elif [[ ${Vs_Ls[$z]} == *"MAN"* ]]; then
 
@@ -2777,6 +2817,7 @@ for q in ${!tck_list[@]}; do
                 SLF_I_LT_incs1_Is=("149" "150" "151");
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
 
                 SLF_I_LT_incs2_Ls=("SPL2_LT_MSBP");
 
@@ -4504,6 +4545,46 @@ for q in ${!tck_list[@]}; do
                 DRT_RT_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "cIX_LT_SUIT");
 
                 DRT_RT_excs_Is=("1" "251" "23");
+
+                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+
+            elif [[ ${tck_list[$q]} == "CSHP_LT" ]]; then
+
+                CSHP_LT_incs1_Ls=("STN_LT_DISTAL_STN");
+
+                CSHP_LT_incs1_Is=("1");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
+                CSHP_LT_incs2_Ls=("M1_GM_FS_LT");
+
+                CSHP_LT_incs2_Is=("1024");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
+
+                CSHP_LT_excs_Ls=("CC_allr_custom");
+
+                CSHP_LT_excs_Is=("1");
+
+                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+
+            elif [[ ${tck_list[$q]} == "CSHP_RT" ]]; then
+
+                CSHP_RT_incs1_Ls=("STN_RT_DISTAL_STN");
+
+                CSHP_RT_incs1_Is=("2");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
+                CSHP_RT_incs2_Ls=("M1_GM_FS_RT");
+
+                CSHP_RT_incs2_Is=("2024");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
+
+                CSHP_RT_excs_Ls=("CC_allr_custom");
+
+                CSHP_RT_excs_Is=("1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
