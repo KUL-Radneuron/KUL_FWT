@@ -4548,43 +4548,43 @@ for q in ${!tck_list[@]}; do
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
-            elif [[ ${tck_list[$q]} == "CSHP_LT" ]]; then
+            elif [[ ${tck_list[$q]} == "CSHDP_LT" ]]; then
 
-                CSHP_LT_incs1_Ls=("STN_LT_DISTAL_STN");
+                CSHDP_LT_incs1_Ls=("STN_LT_DISTAL_STN");
 
-                CSHP_LT_incs1_Is=("1");
+                CSHDP_LT_incs1_Is=("1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
 
-                CSHP_LT_incs2_Ls=("M1_GM_FS_LT");
+                CSHDP_LT_incs2_Ls=("M1_GM_FS_LT");
 
-                CSHP_LT_incs2_Is=("1024");
+                CSHDP_LT_incs2_Is=("1024");
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
 
-                CSHP_LT_excs_Ls=("CC_allr_custom");
+                CSHDP_LT_excs_Ls=("CC_allr_custom");
 
-                CSHP_LT_excs_Is=("1");
+                CSHDP_LT_excs_Is=("1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
-            elif [[ ${tck_list[$q]} == "CSHP_RT" ]]; then
+            elif [[ ${tck_list[$q]} == "CSHDP_RT" ]]; then
 
-                CSHP_RT_incs1_Ls=("STN_RT_DISTAL_STN");
+                CSHDP_RT_incs1_Ls=("STN_RT_DISTAL_STN");
 
-                CSHP_RT_incs1_Is=("2");
+                CSHDP_RT_incs1_Is=("2");
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
 
-                CSHP_RT_incs2_Ls=("M1_GM_FS_RT");
+                CSHDP_RT_incs2_Ls=("M1_GM_FS_RT");
 
-                CSHP_RT_incs2_Is=("2024");
+                CSHDP_RT_incs2_Is=("2024");
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
 
-                CSHP_RT_excs_Ls=("CC_allr_custom");
+                CSHDP_RT_excs_Ls=("CC_allr_custom");
 
-                CSHP_RT_excs_Is=("1");
+                CSHDP_RT_excs_Is=("1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 

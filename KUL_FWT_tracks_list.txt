@@ -72,4 +72,5 @@ CC_Occipital_Comm,20000
 CC_Temporal_Comm,20000
 Ant_Comm,10000
 Post_Comm,5000
-
+CSHDP_LT,8000
+CSHDP_RT,8000
