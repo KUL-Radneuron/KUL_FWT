@@ -16,24 +16,9 @@ Equivalent workflows are also provided for group-averaged template data (T1 and 
 
 ![FWT fig1](figs_4_readme/FWT_all_figs_fin.jpg)
 
-&nbsp  
-&nbsp  
-&nbsp  
-&nbsp  
-&nbsp  
-&nbsp  
-&nbsp  
-&nbsp  
-&nbsp  
-&nbsp  
-&nbsp  
-
 Below is a schematic of the FWT workflow, followed by the user instructions for each part:
 
 ![FWT fig2](figs_4_readme/FWT_workflow.jpg)
-
-&nbsp  
-&nbsp  
 
 ### Required inputs for both parts are:
 1) BIDS participant name (anonymised name of the subject without the "sub-" prefix) (input to -p)
