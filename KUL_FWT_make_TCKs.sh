@@ -1842,18 +1842,21 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
     fi
 
+    if [[ ${T_app} -gt 2 ]]; then
+        # if [[ ! -f "${subj_gmwmi_inFA}" ]]; then
+        
+            task_in="5ttgen freesurfer ${subj_aparc_inFA} ${subj_5tt_inFA} -force && 5tt2gmwmi -force ${subj_5tt_inFA} - | \
+            mrgrid - regrid - -template ${subj_FA} | mrcalc - 0.05 -gt ${subj_gmwmi_inFA} -force"
+
+            task_exec
+        
+        # fi
+
+    fi
+
     if [[ ${algo_f} == "iFOD2" ]] || [[ ${algo_f} == "iFOD1" ]] || [[ ${algo_f} == "SD_Stream" ]]; then
 
         if [[ ${T_app} -gt 2 ]]; then
-
-            # if [[ ! -f "${subj_gmwmi_inFA}" ]]; then
-            
-                task_in="5ttgen freesurfer ${subj_aparc_inFA} ${subj_5tt_inFA} -force && 5tt2gmwmi -force ${subj_5tt_inFA} - | \
-                mrgrid - regrid - -template ${subj_FA} | mrcalc - 0.05 -gt ${subj_gmwmi_inFA} -force"
-
-                task_exec
-            
-            # fi
             
             tracking_string=" -algorithm ${algo_f} -seed_gmwmi ${subj_gmwmi_inFA} -act ${subj_5tt_inFA} -angle 45 "
 
