@@ -1,9 +1,11 @@
 #!/bin/bash
 
-set -x
+# set -x
 
-# the point of this one is to make my life easier!
-# when it comes to VOI gen
+# This workflow belongs to the manuscript (under review) https://doi.org/10.1101/2021.10.13.464139, please consider citing if you will use it
+# KUL_FWT_make_TCKs_4Temp.sh automatically generates fiber bundles for group template FOD data
+
+# version = v0.6_16122021
 
 cwd="$(pwd)"
 
@@ -35,7 +37,7 @@ cat <<USAGE
 
     -p:  BIDS participant name (anonymised name of the subject without the "sub-" prefix)
     -s:  BIDS participant session (session no. without the "ses-" prefix)
-    -T:  Tracking and segmentation approach (1 = Bundle-specific tckgen, 2 = Whole brain tckgen & bundle segmentation)
+    -T:  Tracking and segmentation approach (1 = Bundle-specific tckgen, 2 = Whole brain tckgen & bundle segmentation, 3 = whole brain tckgen with mrtrix3 freesurfer ACT, 4 = Bundle specific seeding from the grey-white matter interface)
     -M:  Full path and file name of scale 3 MSBP parcellation
     -F:  Full path and file name of aparc+aseg.mgz from FreeSurfer
     -c:  Path to config file with list of tracks to segment from the whole brain tractogram
@@ -44,7 +46,7 @@ cat <<USAGE
 
     Optional arguments:
 
-    -a:  Specify algorithm for tckgen fiber tractography (tckgen -algorithm options are: iFOD2, iFOD1, SD_STREAM, Tensor_Det, Tensor_Prob)
+    -a:  Specify algorithm for tckgen fiber tractography (tckgen -algorithm options are: iFOD2, iFOD1, SD_STREAM, Tensor_Det, Tensor_Prob, FACT)
     -f:  Specify filtering approach (0 = No filtering, 1 = conservative, 2 = liberal)
     -Q:  If set quantitative and qualitative analyses will be done
     -S:  If set screenshots will taken of each bundle
@@ -389,9 +391,17 @@ else
 
         Tracto=2
 
+    elif [[ "$T_app" -eq 3 ]]; then
+
+        Tracto=3
+    
+    elif [[ "$T_app" -eq 4 ]]; then
+
+        Tracto=4
+
     else
 
-        echo " Incorrect choice of fiber tracking approach, please select 1 or 2"
+        echo " Incorrect choice of fiber tracking approach, please select 1, 2, 3 or 4"
         exit 2
 
     fi
@@ -456,9 +466,9 @@ fi
 
 # set mrtrix tmp dir to prep_d
 
-rm -rf ${TCKs_prepd}/tmp_dir_*
+rm -rf ${TCKs_prepd}/tmp_dir*
 
-tmpo_d="${TCKs_prepd}/tmp_dir_${d}"
+tmpo_d="${TCKs_prepd}/tmp_dir"
 
 mkdir -p "${tmpo_d}" >/dev/null 2>&1
 
@@ -607,6 +617,38 @@ function make_bundle {
 
     TCK_X_b=($(find ${ROIs_d}/${TCK_2_make}_VOIs/${TCK_2_make}_excs/${TCK_2_make}_excs_bin.nii.gz));
 
+    if [[ ${T_app} -eq 4 ]]; then
+
+        for aw in ${!TCK_I_b[@]}; do
+
+            if [[ ! -f "${ROIs_d}/${TCK_2_make}_VOIs/${TCK_2_make}_incs$((aw+1))/${TCK_2_make}_incs$((aw+1))_bin_gwi.nii.gz" ]]; then
+            
+                task_in="maskfilter -force -nthreads ${ncpu} -npass 2 ${TCK_I_b[$aw]} dilate - | mrcalc - ${subj_gmwmi_inFOD} \
+                -mult 0.05 -gt ${ROIs_d}/${TCK_2_make}_VOIs/${TCK_2_make}_incs$((aw+1))/${TCK_2_make}_incs$((aw+1))_bin_gwi.nii.gz -datatype uint16 -force"
+
+                task_exec
+
+                vol_i_test=$(mrstats -force -ignorezero -output count ${ROIs_d}/${TCK_2_make}_VOIs/${TCK_2_make}_incs$((aw+1))/${TCK_2_make}_incs$((aw+1))_bin_gwi.nii.gz)
+
+                # if the resulting VOI has less than 250 voxels we use the original one
+                if [[ ${vol_i_test} -lt 250 ]]; then
+
+                    echo "This VOI ${TCK_I_b[$aw]} has ${vol_i_test} nonzero voxels less than the permitted min of 250 voxels for GMWMI seeding so we use the original VOI" | tee -a ${prep_log2}
+
+                    task_in="cp ${TCK_I_b[$aw]} ${ROIs_d}/${TCK_2_make}_VOIs/${TCK_2_make}_incs$((aw+1))/${TCK_2_make}_incs$((aw+1))_bin_gwi.nii.gz"
+
+                    task_exec
+
+                fi
+            
+            fi
+
+        done
+
+        TCK_I_b=($(find ${ROIs_d}/${TCK_2_make}_VOIs/${TCK_2_make}_incs*/${TCK_2_make}_incs*_gwi.nii.gz));
+
+    fi
+        
     # these guys say map but they r actually binary
     TCK_Is_MNI=($(find ${ROIs_d}/${TCK_2_make}_VOIs_inMNI/${TCK_2_make}_incs*_map_inMNI.nii.gz));
 
@@ -643,7 +685,7 @@ function make_bundle {
 
     else
 
-        if [[ ${TCK_2_make} == *"Comm"* ]] ; then
+        if [[ ${TCK_2_make} == *"_Comm" ]] ; then
 
             echo " ${TCK_2_make} a commissural or midline bundle " | tee -a ${prep_log2}
             auto_X=" -exclude ${ROIs_d}/custom_VOIs/cerebellum_Bil_X.nii.gz "
@@ -687,6 +729,7 @@ function make_bundle {
 
 
     fi
+
     # define include and exclude strings for tckgen &/or tckedit
 
     includes_str=$(printf " -include %s"  "${TCK_I_b[@]}")
@@ -707,7 +750,16 @@ function make_bundle {
 
     else
 
-        tracking_mask="${T1_brain_mask_inFOD}"
+        # use the bm minCSF for bundle specific psuedo-ACT
+        if [[ ${T_app} == 4 ]]; then
+
+            tracking_mask="${T1_BM_inFA_minCSF}"
+        
+        else
+
+            tracking_mask="${T1_brain_mask_inFA}"
+
+        fi
 
     fi
 
@@ -717,11 +769,15 @@ function make_bundle {
 
     fi
 
+    # T = 1 is bundle specific, 2 = WBTCK wo ACT, 3 = WBTCK w ACT, 4 = bundle specific with GMWMI seeding
+
     if [[ ${T_app} == 1 ]]; then 
 
         T="BT"
 
         tck_init="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}.tck"
+
+        tck_init_rs="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_rs.tck"
         
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
@@ -735,11 +791,39 @@ function make_bundle {
 
         tck_init="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}.tck"
 
+        tck_init_rs="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_rs.tck"
+
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
         cmd_str="tckedit -force -nthreads ${ncpu} -maxlength 280 -minlength 10 -tck_weights_in ${TCKs_outd}/sub-${subj}${ses_str}_sift2_ws.txt \
         -mask ${tracking_mask} -minweight 0.08 ${includes_str} ${excludes_str} ${auto_X} ${WB_tck} ${tck_init}"
 
+elif [[ ${T_app} == 3 ]]; then 
+
+        T="WB_ACT"
+
+        tck_init="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}.tck"
+
+        tck_init_rs="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_rs.tck"
+
+        tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
+
+        cmd_str="tckedit -force -nthreads ${ncpu} -maxlength 280 -minlength 10 ${sift_str} \
+        -mask ${tracking_mask} -minweight 0.08 ${includes_str} ${excludes_str} ${auto_X} ${WB_tck} ${tck_init}"
+
+    elif [[ ${T_app} == 4 ]]; then 
+
+        T="BT_ACT"
+
+        tck_init="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}.tck"
+
+        tck_init_rs="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_rs.tck"
+
+        tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
+
+        cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} \
+        -select ${ns} -angle 45 -maxlength 280 -minlength 20 \
+        -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
     fi
 
 
@@ -747,7 +831,7 @@ function make_bundle {
     # we only use the start and end includes, i.e. the first and last for the includes array
     # need to add condition for bilateral - commissural bundles
 
-    if [[ ${TCK_2_make} == *"Comm"* ]]; then
+    if [[ ${TCK_2_make} == *"_Comm" ]]; then
         # should ensure that all bundles of this kind start with the midline VOI as inc1, and incs2 & 3 as the cortical VOIs
 
       drawn_incs_str=$(printf " --drawn_roi %s any include "  "${TCK_I_b[0]}")
@@ -807,25 +891,29 @@ function make_bundle {
 
     # processing control for initial tracking/segmentation
 
-    if [[ ! -f "${tck_init}" ]]; then
+    if [[ ! -f "${tck_init_rs}" ]]; then
 
         task_in="${cmd_str}"
 
         task_exec
 
-        task_in="tcktransform -force ${tck_init} ${TCKs_w2temp} ${tck_init_inT}"
+        task_in="tckresample -force -nthreads ${ncpu} -num_points 101 ${tck_init} ${tck_init_rs}"
+
+        task_exec
+        
+        task_in="tcktransform -force ${tck_init_rs} ${TCKs_w2temp} ${tck_init_inT}"
 
         task_exec
 
-        count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init} -quiet ));
+        count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init_rs} -quiet ));
 
     else
 
-        count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init} -quiet ));
+        count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init_rs} -quiet ));
 
         if [[ ! -f ${tck_init_inT} ]]; then
           
-            task_in="tcktransform -force ${tck_init} ${TCKs_w2temp} ${tck_init_inT}"
+            task_in="tcktransform -force ${tck_init_rs} ${TCKs_w2temp} ${tck_init_inT}"
 
             task_exec
         fi
@@ -845,7 +933,7 @@ function make_bundle {
 
             task_exec
 
-            count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init} -quiet ));
+            count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init_rs} -quiet ));
 
         fi
 
@@ -859,18 +947,18 @@ function make_bundle {
         mrcal_strs=$(printf " %s "  "${TCK_I_b[0]}")
         for fun in $(seq 1 ${funn}); do
             ((funme=${fun}+1))
-            task_in="mrcalc -force -quiet -nthreads ${ncpu} ${TCK_I_b[$fun]} 0 -gt ${funme} -mult \
+            task_in="mrcalc -force -quiet -datatype uint16 -nthreads ${ncpu} ${TCK_I_b[$fun]} 0 -gt ${funme} -mult \
             ${tmpo_d}/${TCK_2_make}_incs_map_init${funme}.nii.gz"
             task_exec
             mrcal_strs+=$(printf " %s -add "  "${tmpo_d}/${TCK_2_make}_incs_map_init${funme}.nii.gz")
         done
 
         # WIP we mult the result agg map by 10 to ease separating heads from toes
-        task_in="mrcalc -force -quiet -nthreads ${ncpu} ${mrcal_strs} 0 -gt ${tmpo_d}/${TCK_2_make}_incs_map_agg_bin.nii.gz"
+        task_in="mrcalc -force -quiet -datatype uint16 -nthreads ${ncpu} ${mrcal_strs} 0 -gt ${tmpo_d}/${TCK_2_make}_incs_map_agg_bin.nii.gz"
 
         task_exec
 
-        task_in="mrcalc -force -quiet -nthreads ${ncpu} ${mrcal_strs} ${tmpo_d}/${TCK_2_make}_incs_map_agg_bin.nii.gz -mult 10 -mult ${TCK_out}/${TCK_2_make}_incs_map_agg.nii.gz"
+        task_in="mrcalc -force -quiet -datatype uint16 -nthreads ${ncpu} ${mrcal_strs} ${tmpo_d}/${TCK_2_make}_incs_map_agg_bin.nii.gz -mult 10 -mult ${TCK_out}/${TCK_2_make}_incs_map_agg.nii.gz"
 
         task_exec
 
@@ -913,7 +1001,7 @@ function make_bundle {
 
     MNI_segs="${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_rs1c_segments_inMNI.nii.gz"
 
-    MNI_segsd="${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_rs1c_segments_inMNI_debug.nii.gz"
+    # MNI_segsd="${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_rs1c_segments_inMNI_debug.nii.gz"
 
     # MNI_segs3="${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_rs50_segments3_inMNI.nii.gz"
 
@@ -965,7 +1053,7 @@ function make_bundle {
                     ${TCK_out}/${TCK_2_make}_filt1_map_${T}_${algo_f}.nii.gz && mrcalc -datatype uint16 -force -nthreads ${ncpu} \
                     ${TCK_out}/${TCK_2_make}_filt1_map_${T}_${algo_f}.nii.gz 0 -gt ${TCK_out}/${TCK_2_make}_filt1_map_mask_${T}_${algo_f}.nii.gz"
 
-                    task_exec &
+                    task_exec
 
                     task_in="scil_detect_streamlines_loops.py -f --qb --reference ${temp_fod1} ${tck_filt1} ${tck_filt2}"
 
@@ -1015,7 +1103,7 @@ function make_bundle {
                     ${TCK_out}/${TCK_2_make}_filt1_map_${T}_${algo_f}.nii.gz && mrcalc -datatype uint16 -force -nthreads ${ncpu} \
                     ${TCK_out}/${TCK_2_make}_filt1_map_${T}_${algo_f}.nii.gz 0 -gt ${TCK_out}/${TCK_2_make}_filt1_map_mask_${T}_${algo_f}.nii.gz"
 
-                    task_exec &
+                    task_exec
 
                     task_in="scil_smooth_streamlines.py -f --gaussian 5 --reference ${temp_fod1} ${tck_filt1} ${tck_filt5}"
 
@@ -1027,7 +1115,7 @@ function make_bundle {
 
                     sleep 5
 
-                    task_in="tckmap -precise -force -nthreads ${ncpu} -template ${UKBB_temp} ${tck_filt5_inT} \
+                    task_in="tckmap -precise -force -nthreads ${ncpu} -template ${UKBB_temp} ${tck_filt1_inT} \
                     ${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}_inMNI.nii.gz"
 
                     task_exec
@@ -1046,7 +1134,7 @@ function make_bundle {
                 ${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}.nii.gz && mrcalc -datatype uint16 -force -nthreads ${ncpu} \
                 ${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}.nii.gz 0 -gt ${TCK_out}/${TCK_2_make}_fin_map_mask_${T}_${algo_f}.nii.gz"
 
-                task_exec &
+                task_exec
 
                 task_in="tcktransform -nthreads ${ncpu} -force ${tck_filt5} ${TCKs_w2temp} ${tck_filt5_inT}"
 
@@ -1078,7 +1166,7 @@ function make_bundle {
             echo " ${TCK_2_make} has less than 10 fibers initially, skipping filtering " | tee -a ${prep_log2}
         fi
 
-        if [[ ! ${filt_fl2} == 0 ]]; then
+        if [[ ${filt_fl2} == 0 ]]; then
             echo " Streamline filtering is disabled by the user, skipping filtering " | tee -a ${prep_log2}
         fi
 
@@ -1114,7 +1202,7 @@ function make_bundle {
 
             task_exec
 
-            task_in="tckmap -force -nthreads ${ncpu} -template ${UKBB_temp} ${tck_filt5_centroid1} - | mrcalc - 0 -gt - | maskfilter - dilate - -npass 2 | mrcalc - ${TCK_out}/${TCK_2_make}_incs_map_agg_inMNI.nii.gz -mult ${tck_cent1_HT_map} -force -nthreads ${ncpu}"
+            task_in="tckmap -force -nthreads ${ncpu} -template ${UKBB_temp} ${tck_filt5_centroid1} - | mrcalc - 0 -gt - | maskfilter - dilate - -npass 2 | mrcalc - ${TCK_out}/${TCK_2_make}_incs_map_agg_inMNI.nii.gz -mult ${tck_cent1_HT_map} -force -nthreads ${ncpu} -datatype uint16"
 
             task_exec
 
@@ -1135,7 +1223,7 @@ function make_bundle {
 
             elif [[ "${#TCK_Is_MNI[@]}" -eq 3 ]]; then
 
-                if [[ ${TCK_2_make} == *"Comm"* ]]; then
+                if [[ ${TCK_2_make} == *"_Comm" ]]; then
 
                     # we want the second inc as the start and the last as the end
 
@@ -1164,14 +1252,6 @@ function make_bundle {
 
                 task_exec
 
-                # task_in="fslmaths ${lego_1} -mul ${TCK_Is_MNI[0]} -bin -save ${lego_1a} -restart ${lego_1} -mul ${TCK_Is_MNI[-1]} -bin ${lego_1b}"
-
-                # task_exec
-
-                # task_in="fslmaths ${lego_2} -mul ${TCK_Is_MNI[0]} -bin -save ${lego_2a} -restart ${lego_2} -mul ${TCK_Is_MNI[-1]} -bin ${lego_2b}"
-
-                # task_exec
-
             fi
 
             # grab em by the scruff of their necks
@@ -1180,9 +1260,9 @@ function make_bundle {
 
             task_exec
 
-            task_in="scil_compute_bundle_voxel_label_map.py -f --reference ${UKBB_temp} --out_labels_npz ${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_rs1c_labels_inMNI_d.npz --out_distances_npz ${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_rs1c_distances_inMNI_d.npz ${tck_filt5_inT} ${tck_filt5_centroid1} ${MNI_segsd}"
+            # task_in="scil_compute_bundle_voxel_label_map.py -f --reference ${UKBB_temp} --out_labels_npz ${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_rs1c_labels_inMNI_d.npz --out_distances_npz ${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_rs1c_distances_inMNI_d.npz ${tck_filt5_inT} ${tck_filt5_centroid1} ${MNI_segsd}"
 
-            task_exec
+            # task_exec
 
             task_in="antsApplyTransforms -d 3 -i ${CFP_aparc_inFOD} \
             -o ${CFP_aparc_inMNI} -r ${UKBB_temp} \
@@ -1191,15 +1271,14 @@ function make_bundle {
 
             task_exec
 
-            # for debugging
             task_in="KUL_FWT_TCKsm_cap.py -i ${MNI_segs}"
 
             task_exec &
 
-            # final (testing)
-            task_in="KUL_FWT_TCKsm_cap.py -i ${MNI_segsd}"
+            # # for debugging
+            # task_in="KUL_FWT_TCKsm_cap.py -i ${MNI_segsd}"
 
-            task_exec &
+            # task_exec &
 
             # for met in metrics
             # this list is conditional, if DTI only FA and MD 
@@ -1292,11 +1371,11 @@ function make_bundle {
 
             fi
 
-            mkdir -p "${TCK_out}/Screenshots/mosaic"
+            mkdir -p "${TCK_out}/Screenshots/mosaic_${T}_${algo_f}"
 
             task_in="scil_visualize_bundles_mosaic.py -f --zoom 1.5 --reference ${subj_T1_in_UKBB} --opacity_background 0.3 --resolution_of_thumbnails 600 \
             ${subj_T1_in_UKBB} ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck \
-            ${TCK_out}/Screenshots/mosaic/${TCK_2_make}_fin_${T}_${algo_f}_inMNI_mosaic.pdf "
+            ${TCK_out}/Screenshots/mosaic_${T}_${algo_f}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI_mosaic.pdf "
 
             task_exec
 
@@ -1457,6 +1536,10 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
     subj_aparc_inFOD="${prep_d}/sub-${subj}${ses_str}_aparc_inFOD.nii.gz"
 
+    subj_5tt_inFA="${prep_d}/sub-${subj}${ses_str}_5tt_inFOD.nii.gz"
+
+    subj_gmwmi_inFA="${prep_d}/sub-${subj}${ses_str}_gmwmi_inFOD.nii.gz"
+
     subj_aseg_inFOD="${prep_d}/sub-${subj}${ses_str}_aseg_inFOD.nii.gz"
 
     subj_FS_WMaparc_inFOD="${prep_d}/sub-${subj}${ses_str}_WMaparc_inFOD.nii.gz"
@@ -1468,10 +1551,23 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
     CFP_aparc_inMNI="${prep_d}/sub-${subj}${ses_str}_LC+spine_inMNI.nii.gz"
 
     subj_FS_lobes_inFOD="${prep_d}/sub-${subj}${ses_str}_FS_lobes_inFOD.nii.gz"
-
+    
     subj_FS_2009_inFOD="${prep_d}/sub-${subj}${ses_str}_FS_2009_inFOD.nii.gz"
 
     subj_FS_Fx_inFOD="${prep_d}/sub-${subj}${ses_str}_FS_fornix_inFOD.nii.gz"
+
+    # will use MS_2_UKBB here, as it will be normal in case of a lesion free brain
+    # and will be lesioned if using VBG filled FS input (as long as MSBP was run after VBG_FS recon-all)
+
+    if [[ ! -f "${prep_d}/MS_2_UKBB_${subj}${ses_str}_Warped.nii.gz" ]]; then
+        
+        subj_T1_in_UKBB="${prep_d}/FS_2_UKBB_${subj}${ses_str}_Warped.nii.gz"
+    
+    else
+        
+        subj_T1_in_UKBB="${prep_d}/MS_2_UKBB_${subj}${ses_str}_Warped.nii.gz"
+
+    fi
 
     subj_T1_in_UKBB="${prep_d}/FS_2_UKBB_${subj}${ses_str}_Warped.nii.gz"
 
@@ -1574,33 +1670,34 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
     # metrics=("${subj_FOD_MNI}" "${subj_ADC_MNI}" "${subj_AD_MNI}" "${subj_RD_MNI}")
 
-    # if we want to quantify we should add rd and ad
-    if [[ "${Q_flag}" -eq 1 ]] && [[ ! -f "${subj_RD_MNI}" ]]; then
+    # if we want to quantify we should add rd and ad - need to tackle this and include tensor based methods
+    # we can easily make a tensor group template
+    # if [[ "${Q_flag}" -eq 1 ]] && [[ ! -f "${subj_RD_MNI}" ]]; then
 
-        task_in="tensor2metric -force -mask ${T1_brain_mask_inFOD} -rd ${subj_RD} -ad ${subj_AD} ${subj_dt}"
+    #     task_in="tensor2metric -force -mask ${T1_brain_mask_inFOD} -rd ${subj_RD} -ad ${subj_AD} ${subj_dt}"
 
-        task_exec
+    #     task_exec
 
-        task_in="antsApplyTransforms -d 3 -i ${temp_fod1} \
-        -o ${subj_FOD_MNI} -r ${UKBB_temp} \
-        -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
-        -t ${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0] \
-        && antsApplyTransforms -d 3 -i ${subj_ADC} \
-        -o ${subj_ADC_MNI} -r ${UKBB_temp} \
-        -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
-        -t ${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0] \
-        && antsApplyTransforms -d 3 -i ${subj_AD} \
-        -o ${subj_AD_MNI} -r ${UKBB_temp} \
-        -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
-        -t ${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0] \
-        && antsApplyTransforms -d 3 -i ${subj_RD} \
-        -o ${subj_RD_MNI} -r ${UKBB_temp} \
-        -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
-        -t ${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0]"
+    #     task_in="antsApplyTransforms -d 3 -i ${temp_fod1} \
+    #     -o ${subj_FOD_MNI} -r ${UKBB_temp} \
+    #     -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
+    #     -t ${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0] \
+    #     && antsApplyTransforms -d 3 -i ${subj_ADC} \
+    #     -o ${subj_ADC_MNI} -r ${UKBB_temp} \
+    #     -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
+    #     -t ${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0] \
+    #     && antsApplyTransforms -d 3 -i ${subj_AD} \
+    #     -o ${subj_AD_MNI} -r ${UKBB_temp} \
+    #     -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
+    #     -t ${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0] \
+    #     && antsApplyTransforms -d 3 -i ${subj_RD} \
+    #     -o ${subj_RD_MNI} -r ${UKBB_temp} \
+    #     -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
+    #     -t ${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/fod_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0]"
 
-        task_exec
+    #     task_exec
 
-    fi
+    # fi
 
     # make some CSD based metrics
 
@@ -1642,9 +1739,29 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
     if [[ ${algo_f} == "iFOD2" ]] || [[ ${algo_f} == "iFOD1" ]] || [[ ${algo_f} == "SD_Stream" ]]; then
 
-        tracking_string=" -algorithm ${algo_f} -seed_dynamic ${subj_fod} "
+        if [[ ${T_app} -gt 2 ]]; then
 
-        tracking_source=" ${subj_fod} "
+            # if [[ ! -f "${subj_gmwmi_inFA}" ]]; then
+            
+                task_in="5ttgen freesurfer ${subj_aparc_inFA} ${subj_5tt_inFA} -force && 5tt2gmwmi -force ${subj_5tt_inFA} - | \
+                mrgrid - regrid - -template ${subj_FA} | mrcalc - 0.05 -gt ${subj_gmwmi_inFA} -force"
+
+                task_exec
+            
+            # fi
+            
+            tracking_string=" -algorithm ${algo_f} -seed_gmwmi ${subj_gmwmi_inFA} -act ${subj_5tt_inFA} -angle 45 "
+
+            tracking_source=" ${subj_fod} "
+
+            # elif [[ ${T_app} -eq 2 ]]; then
+        else
+
+            tracking_string=" -algorithm ${algo_f} -seed_dynamic ${subj_fod} "
+
+            tracking_source=" ${subj_fod} "
+
+        fi
 
         metrics+=("${subj_vfd_MNI}" "${subj_vdisp_MNI}" "${subj_vpk_MNI}")
 
@@ -1706,19 +1823,45 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
     # Find out tracking method of choice
 
-    if [[ ${T_app} -eq 2 ]]; then
+    # echo "tracking application is ${T_app}"
+
+    if [[ ! ${T_app} -eq 1 ]] && [[ ! ${T_app} -eq 4 ]]; then
 
         echo " You have asked for whole brain tractography followed by segmentation " | tee -a ${prep_log2}
 
-        WB_tck_srch=($(find ${TCKs_outd} -type f -name "sub-${subj}${ses_str}_WB_TCKs.tck"));
+        WB_tck_srch=($(find ${TCKs_outd} -type f -name "sub-${subj}${ses_str}_WB_TCKs_${T}_${algo_f}.tck"));
+
+        SIFT_srch=($(find ${TCKs_outd} -type f -name "sub-${subj}${ses_str}_sift2_ws.txt"));
 
         if [[ -z ${WB_tck_srch} ]]; then
 
             echo " Whole brain tractogram not found, generating " | tee -a ${prep_log2}
 
-            task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_BM_inFOD_minCSF} -select 20000000 -angle 45 -cutoff 0.08 -power 2.0 -maxlength 300 -minlength 20 ${tracking_source} ${WB_tck}"
+            # task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_BM_inFOD_minCSF} -select 20000000 -angle 45 -cutoff 0.08 -power 2.0 -maxlength 300 -minlength 20 ${tracking_source} ${WB_tck}"
 
-            task_exec
+            # task_exec
+
+            if [[ ${T_app} -eq 3 ]]; then
+
+                task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_brain_mask_inFA} -select 10000000 -maxlength 300 -minlength 20 ${tracking_source} ${WB_tck}"
+
+                task_exec
+
+            elif [[ ${T_app} -eq 2 ]]; then
+            
+                task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_BM_inFA_minCSF} -select 10000000 -maxlength 300 -minlength 20 ${tracking_source} ${WB_tck}"
+
+                task_exec
+                
+            fi
+
+        else
+
+            echo " Whole brain tractogram found, skipping to SIFT weights " | tee -a ${prep_log2}
+
+        fi
+
+        if [[ -z ${SIFT_srch} ]]; then
 
             if [[ ${algo_f} == "iFOD2" ]] || [[ ${algo_f} == "iFOD1" ]] || [[ ${algo_f} == "SD_Stream" ]]; then
 
@@ -1740,7 +1883,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
         else
 
-            echo " Whole brain tractogram found, skipping to segmentation " | tee -a ${prep_log2}
+            echo " SIFT weights found, skipping to segmentation " | tee -a ${prep_log2}
 
         fi
 
@@ -1775,8 +1918,9 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
         done
 
+        echo "tracking source is ${tracking_source}"
 
-    elif [[ ${T_app} -eq 1 ]]; then
+    elif [[ ${T_app} -eq 1 ]] || [[ ${T_app} -eq 4 ]]; then
 
         echo " You have asked for inidividual bundle tractography  " | tee -a ${prep_log2}
 
@@ -1786,6 +1930,9 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
         for q in ${!tck_list[@]}; do
 
+            # echo "tracking source is ${tracking_source}"
+            # echo "subject fod is ${subj_fod}"
+            
             echo $q
             echo ${tck_list[$q]}
 
