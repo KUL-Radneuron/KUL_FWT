@@ -6,8 +6,7 @@ Please refer to the BioRXiv preprint, "An atlas of white matter anatomy, its var
 
 Additional material and information can also be accessed here -> https://osf.io/snq2d/
 
-###** This branch of the repository is updated and contains further additions after the version published with the BioRxiv preprint.
-Please see the branch titled "Orig_https/doi.org/10.1101/2021.10.13.464139" for the initial version of FWT**###
+###*** This branch of the repository is up to date with the BioRxiv preprint, further development and additions can be found in the "dev" branch***###
 
 ## Introduction
 
@@ -92,7 +91,7 @@ Below is a schematic of the FWT workflow, followed by the user instructions for 
 
     -p:  BIDS participant name (anonymised name of the subject without the "sub-" prefix)
     -s:  BIDS participant session (session no. without the "ses-" prefix)
-    -T:  Tracking and segmentation approach (1 = Bundle-specific tckgen, 2 = Whole brain tckgen & bundle segmentation)
+    -T:  Tracking and segmentation approach (1 = Bundle-specific tckgen, 2 = Whole brain tckgen & bundle segmentation, 3 = whole brain tckgen with mrtrix3 freesurfer ACT, 4 = Bundle specific seeding from the grey-white matter interface)
     -M:  Full path and file name of scale 3 MSBP parcellation
     -F:  Full path and file name of aparc+aseg.mgz from FreeSurfer
     -c:  Path to config file with list of tracks to segment from the whole brain tractogram
