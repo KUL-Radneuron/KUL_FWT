@@ -5,7 +5,7 @@
 # This workflow belongs to the manuscript (under review) https://doi.org/10.1101/2021.10.13.464139, please consider citing if you will use it
 # KUL_FWT_make_TCKs.sh automatically generates fiber bundles for single subjects
 
-# version = v0.6_16122021
+# version = v0.7_07012022
 
 # to do:
 # add a fourth filtering method (relying on reconbundle with CSD templates)
@@ -1156,7 +1156,7 @@ function make_bundle {
 
                     task_exec
 
-                    task_in="scil_detect_streamlines_loops.py -f --reference ${subj_FA} ${tck_filt1} ${tck_filt2}"
+                    task_in="scil_detect_streamlines_loops.py -f --qb --reference ${subj_FA} ${tck_filt1} ${tck_filt2}"
 
                     task_exec
 

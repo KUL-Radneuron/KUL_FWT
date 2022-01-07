@@ -5,7 +5,7 @@
 # This workflow belongs to the manuscript (under review) https://doi.org/10.1101/2021.10.13.464139, please consider citing if you will use it
 # KUL_FWT_make_VOIs.sh automatically generates anatomical VOIs for single subject fiber tractography
 
-# version = v0.6_16122021
+# version = v0.7_07012022
 
 cwd="$(pwd)"
 
@@ -517,7 +517,7 @@ CIT_in_FA="${prep_d}/sub-${subj}${ses_str}_CIT_inFA.nii.gz"
 
 DISTAL_STN_in_FA="${prep_d}/sub-${subj}${ses_str}_DISTAL_STN_inFA.nii.gz"
 
-TMP_BStem_in_FA="${pr_d}/Temp_BStem_labels_in_FA.nii.gz" # done
+TMP_BStem_in_FA="${prep_d}/Temp_BStem_labels_in_FA.nii.gz" # done
 
 UKBB_in_FA="${prep_d}/sub-${subj}${ses_str}_UKBB_Bstem_VOIs_inFA.nii.gz"
 
@@ -4609,7 +4609,7 @@ for q in ${!tck_list[@]}; do
                 "2003" "4003" \
                 "1" \
                 "2028" "4028");
-
+                
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
             elif [[ ${tck_list[$q]} == "Ant_Comm" ]]; then

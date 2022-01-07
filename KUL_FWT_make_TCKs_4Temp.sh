@@ -5,7 +5,7 @@
 # This workflow belongs to the manuscript (under review) https://doi.org/10.1101/2021.10.13.464139, please consider citing if you will use it
 # KUL_FWT_make_TCKs_4Temp.sh automatically generates fiber bundles for group template FOD data
 
-# version = v0.6_16122021
+# version = v0.7_07012022
 
 cwd="$(pwd)"
 
@@ -413,7 +413,7 @@ fi
 if [[ "${filt_fl1}" -eq 0 ]]; then 
 
     filt_fl2=2
-    echo " Conservative filtering used by default " | tee -a ${prep_log2}
+    echo " No filtering scheme selected, we will do conservative filtering by default " | tee -a ${prep_log2}
     Alfa=0.48
 
 else
