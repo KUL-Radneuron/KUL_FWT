@@ -2160,13 +2160,13 @@ for q in ${!tck_list[@]}; do
                 "Cing_lobeGM_RT" "Cing_lobeWM_RT" "RT_ML_X_custom" \
                 "hypothal_bildil_excr_custom" "Thal_RT_ero2_custom" \
                 "Temp_lobeGM_RT" "Temp_lobeWM_RT" "Putamen_RT_FS" \
-                "Caudate_GM_RT_FS" "SFG_GM_LT_FS" "Occ_lobeGM_RT"  "Occ_lobeWM_RT");
+                "Caudate_GM_RT_FS" "SFG_GM_RT_FS" "Occ_lobeGM_RT"  "Occ_lobeWM_RT");
 
                 CST_RT_excs_Is=("1" "1" \
                 "2003" "4003" "1" \
                 "1" "1" \
                 "2005" "4005" "51" \
-                "50" "1028" "2004" "4004");
+                "50" "2028" "2004" "4004");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
@@ -4574,9 +4574,15 @@ for q in ${!tck_list[@]}; do
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
 
-                CSHDP_LT_excs_Ls=("CC_allr_custom" "hypothal_bildil_excr_custom" "BStem_FS");
+                CSHDP_LT_excs_Ls=("CC_allr_custom" "hypothal_bildil_excr_custom" "BStem_FS" \
+                "Cing_lobeGM_LT" "Cing_lobeWM_LT" \
+                "Thal_LT_ero2_custom" \
+                "SFG_GM_LT_FS" "SFG_WM_LT_FS");
 
-                CSHDP_LT_excs_Is=("1" "1" "16");
+                CSHDP_LT_excs_Is=("1" "1" "16" \
+                "1003" "3003" \
+                "1" \
+                "1028" "3028");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
@@ -4594,9 +4600,15 @@ for q in ${!tck_list[@]}; do
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
 
-                CSHDP_RT_excs_Ls=("CC_allr_custom" "hypothal_bildil_excr_custom" "BStem_FS");
+                CSHDP_RT_excs_Ls=("CC_allr_custom" "hypothal_bildil_excr_custom" "BStem_FS" \
+                "Cing_lobeGM_RT" "Cing_lobeWM_RT" \ 
+                "Thal_RT_ero2_custom" \
+                "SFG_GM_RT_FS" "SFG_WM_RT_FS");
 
-                CSHDP_RT_excs_Is=("1" "1" "16");
+                CSHDP_RT_excs_Is=("1" "1" "16" \
+                "2003" "4003" \
+                "1" \
+                "2028" "4028");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
