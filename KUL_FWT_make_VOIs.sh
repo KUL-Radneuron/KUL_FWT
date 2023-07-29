@@ -1256,46 +1256,9 @@ if [[ -z ${srch_pt1_done} ]]; then
 
     fi
 
-    # using last generated file
-    srch_tck_warp=($(find ${prep_d} -type f -name UKBB_2_FA_${subj}_inv_4TCKs.mif));
-
     # split the JuHA labels apart already
     GNs=("LGN_RT" "LGN_LT" "MGN_RT" "MGN_LT");
-
-    if [[ -z ${srch_tck_warp} ]]; then
-
-        # from https://community.mrtrix.org/t/registration-using-transformations-generated-from-other-packages/2259
-        # we use this to transform TCKs to MNI
-        # antsApplyTransforms needs to be applied in the opposite direction
-        task_in="warpinit ${UKBB_temp} ${tmpo_d}/TCKs_iw_[].nii.gz -f"
-
-        task_exec
-
-        for wi in {0..2}; do 
-
-            task_in="antsApplyTransforms -d 3 -i ${tmpo_d}/TCKs_iw_${wi}.nii.gz \
-            -o ${tmpo_d}/TCKs_iw_w_${wi}.nii.gz -r ${subj_FA} \
-            -t [${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,1] \
-            -t ${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_1InverseWarp.nii.gz \
-            -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,1] \
-            -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1InverseWarp.nii.gz
-            --default-value 2147483647"
-
-            task_exec
-
-        done
-
-        task_in="warpcorrect ${tmpo_d}/TCKs_iw_w_[].nii.gz ${prep_d}/FS_2_UKBB_${subj}_inv_4TCKs.mif -force -marker 2147483647"
-
-        task_exec
-
-    else
-
-        echo "Generating warps for already done, skipping " | tee -a ${prep_log2}
-
-    fi
-
-    
+   
     if [[ ! -f ${ROIs_d}/priors_warped.done ]]; then
 
         ## UKBB VOIs
@@ -1403,6 +1366,85 @@ if [[ -z ${srch_pt1_done} ]]; then
 else
 
     echo " Part 1 already done, skipping" | tee -a ${prep_log2}
+
+fi
+
+# this is for scil_reco_bundles
+if [[ ! -f "${prep_d}/MNI_2_MNI_${subj}${ses_str}_Warped.nii.gz" ]]; then
+
+    task_in="antsRegistrationSyN.sh -d 3 -f ${UKBB_temp} -m ${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_template.nii.gz -t a -n ${ncpu} -o ${prep_d}/MNI_2_MNI_${subj}${ses_str}_"
+
+    task_exec
+
+fi
+
+# using last generated file
+srch_tck_warp=($(find ${prep_d} -type f -name FS_2_UKBB_${subj}_inv_4TCKs.mif));
+srch_tck_warp2=($(find ${prep_d} -type f -name FS_2_UKBB_${subj}_forward_4TCKs.mif));
+
+if [[ -z ${srch_tck_warp} ]]; then
+
+    # from https://community.mrtrix.org/t/registration-using-transformations-generated-from-other-packages/2259
+    # we use this to transform TCKs to MNI
+    # antsApplyTransforms needs to be applied in the opposite direction
+    task_in="warpinit ${UKBB_temp} ${tmpo_d}/TCKs_iw_[].nii.gz -f"
+
+    task_exec
+
+    for wi in {0..2}; do 
+
+        task_in="antsApplyTransforms -d 3 -i ${tmpo_d}/TCKs_iw_${wi}.nii.gz \
+        -o ${tmpo_d}/TCKs_iw_w_${wi}.nii.gz -r ${subj_FA} \
+        -t [${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,1] \
+        -t ${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_1InverseWarp.nii.gz \
+        -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,1] \
+        -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1InverseWarp.nii.gz
+        --default-value 2147483647"
+
+        task_exec
+
+    done
+
+    task_in="warpcorrect ${tmpo_d}/TCKs_iw_w_[].nii.gz ${prep_d}/FS_2_UKBB_${subj}_inv_4TCKs.mif -force -marker 2147483647"
+
+    task_exec
+
+else
+
+    echo "Generating backward warps already done, skipping " | tee -a ${prep_log2}
+
+fi
+
+if [[ -z ${srch_tck_warp2} ]]; then
+
+    # from https://community.mrtrix.org/t/registration-using-transformations-generated-from-other-packages/2259
+    # we use this to transform TCKs from MNI to native
+    # antsApplyTransforms needs to be applied in the opposite direction
+    task_in="warpinit ${temp_fod1} ${tmpo_d}/TCKs_w_[].nii.gz -f"
+
+    task_exec
+
+    for wi in {0..2}; do 
+
+        task_in="antsApplyTransforms -d 3 -i ${tmpo_d}/TCKs_w_${wi}.nii.gz \
+        -o ${tmpo_d}/TCKs_w_w_${wi}.nii.gz -r ${UKBB_temp} \
+        -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz \
+        -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
+        -t ${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz \
+        -t [${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0] \
+        --default-value 2147483647"
+
+        task_exec
+
+    done
+
+    task_in="warpcorrect ${tmpo_d}/TCKs_w_w_[].nii.gz ${prep_d}/FS_2_UKBB_${subj}_forward_4TCKs.mif -force -marker 2147483647"
+
+    task_exec
+
+else
+
+    echo "Generating forward warps already done, skipping " | tee -a ${prep_log2}
 
 fi
 
@@ -2032,7 +2074,7 @@ function make_VOIs {
     -o ${MNI_VOIs_dir}/${tck_VOIs_2seg}_map_inMNI.nii.gz -r ${UKBB_temp} \
     -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
     -t ${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0] \
-    -n multilabel"
+    -n NearestNeighbor"
 
     task_exec &
 
@@ -4271,7 +4313,74 @@ for q in ${!tck_list[@]}; do
                 "2002" "2004" "2006" \
                 "1" "2024" "4024" \
                 "24" "2003" "2016" "4016" \
-                "2035" "4035" "1003" "3003" "60");
+                "2035" "4035" "2003" "4003" "60");
+
+                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+
+            elif [[ ${tck_list[$q]} == "ThR_OCD_DBS_LT" ]]; then
+                # WIP
+
+                ThR_OCD_DBS_LT_incs1_Ls=("PD25_DM_LT_custom" "STN_LT_DISTAL_STN");
+
+                ThR_OCD_DBS_LT_incs1_Is=("1" "1");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
+                ThR_OCD_DBS_LT_incs2_Ls=("SFG1_MSBP_LT" "SFG2_MSBP_LT" "SFG3_MSBP_LT" \
+                "SFG4_MSBP_LT" "MedOF_GM_LT_FS" "LatOF_GM_LT_FS" "FrP_GM_LT_FS" "cACC_GM_FS_LT");
+
+                ThR_OCD_DBS_LT_incs2_Is=("144" "145" "146" \
+                "147" "1014" "1012" "1032" "1002");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
+
+                ThR_OCD_DBS_LT_excs_Ls=("CC_allr_custom" "BStem_FS" "AC_midline_MAN" \
+                "hypothal_bildil_excr_custom" "Temp_lobeGM_LT" "Putamen_GM_LT_FS" \
+                "Caudate_GM_LT_FS" "PD25_Pulvi_LT_custom" "Fornix_Fx" \
+                "Occ_lobeGM_LT" "Pari_lobeGM_LT" \
+                "PD25_VPALPLPM_LT_custom" "M1_GM_FS_LT" "M1_WM_FS_LT" \
+                "SFG5_LT_MSBP" "cMFG_GM_LT_FS" "PHipp_GM_LT_FS" "PHipp_WM_LT_FS" \
+                "Insula_GM_LT_FS" "Insula_WM_LT_FS" "vDC_FS_LT");
+
+                ThR_OCD_DBS_LT_excs_Is=("1" "16" "1" \
+                "1" "1003" "12" \
+                "11" "1" "250" \
+                "1004" "1006" \
+                "1" "1024" "3024" \
+                "148" "1003" "1016" "3016" \
+                "1035" "3035" "28");
+
+                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+
+            elif [[ ${tck_list[$q]} == "ThR_OCD_DBS_RT" ]]; then
+
+                ThR_OCD_DBS_RT_incs1_Ls=("PD25_DM_RT_custom" "STN_RT_DISTAL_STN");
+
+                ThR_OCD_DBS_RT_incs1_Is=("1" "1");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
+                ThR_OCD_DBS_RT_incs2_Ls=("SFG1_MSBP_RT" "SFG2_MSBP_RT" "SFG3_MSBP_RT" "SFG4_MSBP_RT" "MedOF_GM_LT_FS" "LatOF_GM_LT_FS" "FrP_GM_RT_FS" "cACC_GM_FS_RT");
+
+                ThR_OCD_DBS_RT_incs2_Is=("20" "21" "22" "23" "2014" "2012" "2032" "2002");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
+
+                ThR_OCD_DBS_RT_excs_Ls=("CC_allr_custom" "BStem_FS" "AC_midline_MAN" \
+                "hypothal_bildil_excr_custom" "Temp_lobeGM_RT" "Putamen_GM_RT_FS" \
+                "Caudate_GM_RT_FS" "PD25_Pulvi_RT_custom" "Fornix_Fx" \
+                "Occ_lobeGM_RT" "Pari_lobeGM_RT" \
+                "PD25_VPALPLPM_RT_custom" "M1_GM_FS_RT" "M1_WM_FS_RT" \
+                "SFG5_RT_MSBP" "cMFG_GM_RT_FS" "PHipp_GM_RT_FS" "PHipp_WM_RT_FS" \
+                "Insula_GM_RT_FS" "Insula_WM_RT_FS" "vDC_FS_RT");
+
+                ThR_OCD_DBS_RT_excs_Is=("1" "16" "1" \
+                "1" "2003" "51" \
+                "50" "1" "250" \
+                "2004" "2006" \
+                "1" "2024" "4024" \
+                "24" "2003" "2016" "4016" \
+                "2035" "4035" "60");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
@@ -4496,6 +4605,62 @@ for q in ${!tck_list[@]}; do
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
+            elif [[ ${tck_list[$q]} == "CSHDP_LT" ]]; then
+
+                CSHDP_LT_incs1_Ls=("STN_LT_DISTAL_STN");
+
+                CSHDP_LT_incs1_Is=("1");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
+                CSHDP_LT_incs2_Ls=("M1_GM_FS_LT");
+
+                CSHDP_LT_incs2_Is=("1024");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
+
+                CSHDP_LT_excs_Ls=("CC_allr_custom" "hypothal_bildil_excr_custom" "BStem_FS" \
+                "Cing_lobeGM_LT" "Cing_lobeWM_LT" \
+                "Thal_LT_ero2_custom" \
+                "SFG_GM_LT_FS" "SFG_WM_LT_FS" \
+                "SegWM_LT_ALIC_custom");
+
+                CSHDP_LT_excs_Is=("1" "1" "16" \
+                "1003" "3003" \
+                "1" \
+                "1028" "3028" \ 
+                "1");
+
+                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+
+            elif [[ ${tck_list[$q]} == "CSHDP_RT" ]]; then
+
+                CSHDP_RT_incs1_Ls=("STN_RT_DISTAL_STN");
+
+                CSHDP_RT_incs1_Is=("2");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
+                CSHDP_RT_incs2_Ls=("M1_GM_FS_RT");
+
+                CSHDP_RT_incs2_Is=("2024");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
+
+                CSHDP_RT_excs_Ls=("CC_allr_custom" "hypothal_bildil_excr_custom" "BStem_FS" \
+                "Cing_lobeGM_RT" "Cing_lobeWM_RT" \ 
+                "Thal_RT_ero2_custom" \
+                "SFG_GM_RT_FS" "SFG_WM_RT_FS" \
+                "SegWM_RT_ALIC_custom");
+
+                CSHDP_RT_excs_Is=("1" "1" "16" \
+                "2003" "4003" \
+                "1" \
+                "2028" "4028" \ 
+                "1");
+                
+                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+ 
             elif [[ ${tck_list[$q]} == "DRT_LT" ]]; then
 
                 DRT_LT_incs1_Ls=("Dent_RT_SUIT");
@@ -4522,9 +4687,9 @@ for q in ${!tck_list[@]}; do
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs4" && make_VOIs
 
-                DRT_LT_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "cIX_RT_SUIT");
+                DRT_LT_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "cIX_RT_SUIT" "SegWM_LT_ALIC_custom");
 
-                DRT_LT_excs_Is=("1" "251" "25");
+                DRT_LT_excs_Is=("1" "251" "25" "1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
@@ -4554,65 +4719,13 @@ for q in ${!tck_list[@]}; do
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs4" && make_VOIs
 
-                DRT_RT_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "cIX_LT_SUIT");
+                DRT_RT_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "cIX_LT_SUIT" "SegWM_RT_ALIC_custom");
 
-                DRT_RT_excs_Is=("1" "251" "23");
-
-                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
-
-            elif [[ ${tck_list[$q]} == "CSHDP_LT" ]]; then
-
-                CSHDP_LT_incs1_Ls=("STN_LT_DISTAL_STN");
-
-                CSHDP_LT_incs1_Is=("1");
-
-                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
-
-                CSHDP_LT_incs2_Ls=("M1_GM_FS_LT");
-
-                CSHDP_LT_incs2_Is=("1024");
-
-                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
-
-                CSHDP_LT_excs_Ls=("CC_allr_custom" "hypothal_bildil_excr_custom" "BStem_FS" \
-                "Cing_lobeGM_LT" "Cing_lobeWM_LT" \
-                "Thal_LT_ero2_custom" \
-                "SFG_GM_LT_FS" "SFG_WM_LT_FS");
-
-                CSHDP_LT_excs_Is=("1" "1" "16" \
-                "1003" "3003" \
-                "1" \
-                "1028" "3028");
+                DRT_RT_excs_Is=("1" "251" "23" "1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
-
-            elif [[ ${tck_list[$q]} == "CSHDP_RT" ]]; then
-
-                CSHDP_RT_incs1_Ls=("STN_RT_DISTAL_STN");
-
-                CSHDP_RT_incs1_Is=("2");
-
-                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
-
-                CSHDP_RT_incs2_Ls=("M1_GM_FS_RT");
-
-                CSHDP_RT_incs2_Is=("2024");
-
-                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
-
-                CSHDP_RT_excs_Ls=("CC_allr_custom" "hypothal_bildil_excr_custom" "BStem_FS" \
-                "Cing_lobeGM_RT" "Cing_lobeWM_RT" \ 
-                "Thal_RT_ero2_custom" \
-                "SFG_GM_RT_FS" "SFG_WM_RT_FS");
-
-                CSHDP_RT_excs_Is=("1" "1" "16" \
-                "2003" "4003" \
-                "1" \
-                "2028" "4028");
                 
-                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
-
-            elif [[ ${tck_list[$q]} == "Ant_Comm" ]]; then
+           elif [[ ${tck_list[$q]} == "Ant_Comm" ]]; then
 
                 Ant_Comm_incs1_Ls=("AC_MAN");
 
@@ -4660,9 +4773,9 @@ for q in ${!tck_list[@]}; do
                 tck_VOIs_2seg="${tck_list[$q]}_incs3" && make_VOIs
 
                 # should probably add an AC_min_Fx VOI as well
-                Post_Comm_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "Pons_MSBP" "AC_MAN" "OptCh_FS" "hypoTh_LT_MSBP" "hypoTh_RT_MSBP" "Unseg_WM_bil_FS_custom" "Pari_lobeGM_LT" "Pari_lobeWM_LT" "Pari_lobeGM_RT" "Pari_lobeWM_RT");
+                Post_Comm_excs_Ls=("CC_allr_custom" "Medulla_MSBP" "Pons_MSBP" "AC_MAN" "OptCh_FS" "hypoTh_LT_MSBP" "hypoTh_RT_MSBP" "Pari_lobeGM_LT" "Pari_lobeWM_LT" "Pari_lobeGM_RT" "Pari_lobeWM_RT");
 
-                Post_Comm_excs_Is=("1" "251" "250" "1" "85" "248" "124" "1" "1006" "3006" "2006" "4006");
+                Post_Comm_excs_Is=("1" "251" "250" "1" "85" "248" "124" "1006" "3006" "2006" "4006");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
@@ -4686,7 +4799,7 @@ for q in ${!tck_list[@]}; do
 
                 CC_PreF_Comm_incs3_Ls=("IFG_PTr_GM_FS_RT" "IFG_POr_GM_FS_RT" \
                 "FrontP_GM_FS_RT" "LatOF_GM_FS_RT" "MedOF_GM_FS_RT" \
-                "cMFG_GM_RT_FS" "rMFG_GM_RT_FS" "SFG_GM_RT_FS" "");
+                "cMFG_GM_RT_FS" "rMFG_GM_RT_FS" "SFG_GM_RT_FS");
 
                 CC_PreF_Comm_incs3_Is=("2020" "2019" \
                 "2032" "2012" "2014" \
@@ -4737,68 +4850,11 @@ for q in ${!tck_list[@]}; do
 
                 # should probably add an AC_min_Fx VOI as well
                 CC_PMandSM_Comm_excs_Ls=("AC_MAN" "PC_MAN" "CC_genu_FS" "CC_ant_FS" "CC_isth_FS" "CC_splen_FS" "Fornix_Fx" "BStem_FS" \
-                "Cing_lobeGM_LT" "Cing_lobeGM_RT" "SegWM_LT_ALIC_custom" "SegWM_RT_ALIC_custom" "vDC_FS_LT" "vDC_FS_RT");
+                "Cing_lobeGM_LT" "Cing_lobeGM_RT" "SegWM_LT_ALIC_custom" "SegWM_RT_ALIC_custom" "vDC_FS_LT" "vDC_FS_RT" \
+                "Thal_LT_FS" "Thal_RT_FS");
 
                 CC_PMandSM_Comm_excs_Is=("1" "2" "255" "254" "252" "251" "250" "16" \
-                "1003" "2003" "1" "1" "28" "60");
-
-                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
-            
-            elif [[ ${tck_list[$q]} == "CC_SMAR_2contM1LT_Comm" ]]; then
-
-                CC_SMAR_2contM1LT_Comm_incs1_Ls=("CC_mid_FS" "CC_isth_FS");
-
-                CC_SMAR_2contM1LT_Comm_incs1_Is=("253" "252");
-
-                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
-
-                CC_SMAR_2contM1LT_Comm_incs2_Ls=("M1_GM_FS_LT");
-
-                CC_SMAR_2contM1LT_Comm_incs2_Is=("1024");
-
-                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
-
-                CC_SMAR_2contM1LT_Comm_incs3_Ls=("SFG5_RT_MSBP" "SFG6_RT_MSBP" "SFG7_RT_MSBP" "SFG8_RT_MSBP");
-
-                CC_SMAR_2contM1LT_Comm_incs3_Is=("24" "25" "26" "27");
-
-                tck_VOIs_2seg="${tck_list[$q]}_incs3" && make_VOIs
-
-                # should probably add an AC_min_Fx VOI as well
-                CC_SMAR_2contM1LT_Comm_excs_Ls=("AC_MAN" "PC_MAN" "CC_genu_FS" "CC_ant_FS" "CC_splen_FS" "Fornix_Fx" "BStem_FS" \
-                "Cing_lobeGM_LT" "Cing_lobeGM_RT" "SegWM_LT_ALIC_custom" "SegWM_RT_ALIC_custom" "vDC_FS_LT" "vDC_FS_RT");
-
-                CC_SMAR_2contM1LT_Comm_excs_Is=("1" "2" "255" "254" "251" "250" "16" \
-                "1003" "2003" "1" "1" "28" "60");
-
-                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
-
-            elif [[ ${tck_list[$q]} == "CC_SMAL_2contM1RT_Comm" ]]; then
-
-                CC_SMAL_2contM1RT_Comm_incs1_Ls=("CC_mid_FS" "CC_isth_FS");
-
-                CC_SMAL_2contM1RT_Comm_incs1_Is=("253" "252");
-
-                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
-
-                CC_SMAL_2contM1RT_Comm_incs2_Ls=("M1_GM_FS_RT");
-
-                CC_SMAL_2contM1RT_Comm_incs2_Is=("2024");
-
-                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
-
-                CC_SMAL_2contM1RT_Comm_incs3_Ls=("SFG5_LT_MSBP" "SFG6_LT_MSBP" "SFG7_LT_MSBP" "SFG8_LT_MSBP");
-
-                CC_SMAL_2contM1RT_Comm_incs3_Is=("148" "149" "150" "151");
-
-                tck_VOIs_2seg="${tck_list[$q]}_incs3" && make_VOIs
-
-                # should probably add an AC_min_Fx VOI as well
-                CC_SMAL_2contM1RT_Comm_excs_Ls=("AC_MAN" "PC_MAN" "CC_genu_FS" "CC_ant_FS" "CC_splen_FS" "Fornix_Fx" "BStem_FS" \
-                "Cing_lobeGM_LT" "Cing_lobeGM_RT" "SegWM_LT_ALIC_custom" "SegWM_RT_ALIC_custom" "vDC_FS_LT" "vDC_FS_RT");
-
-                CC_SMAL_2contM1RT_Comm_excs_Is=("1" "2" "255" "254" "251" "250" "16" \
-                "1003" "2003" "1" "1" "28" "60");
+                "1003" "2003" "1" "1" "28" "60" "10" "49");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
@@ -4828,14 +4884,16 @@ for q in ${!tck_list[@]}; do
                 "Fornix_Fx" "cMFG_GM_LT_FS" "cMFG_GM_RT_FS" \
                 "SFG_GM_LT_FS" "SFG_GM_RT_FS" "Pari_lobeGM_LT" \
                 "Pari_lobeGM_RT" "BStem_FS" \
-                "Cing_lobeGM_LT" "Cing_lobeGM_RT");
+                "Cing_lobeGM_LT" "Cing_lobeGM_RT" \
+                "vDC_FS_LT" "vDC_FS_RT" "Thal_LT_FS" "Thal_RT_FS");
 
                 CC_Motor_Comm_excs_Is=("1" "2" "255" \
                 "254" "253" "251" \
                 "250" "1003" "2003" \
                 "1028" "2028" "1006" \
                 "2006" "16" \
-                "1003" "2003");
+                "1003" "2003" \
+                "28" "60" "10" "49");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
@@ -4905,7 +4963,8 @@ for q in ${!tck_list[@]}; do
                 "S1_GM_FS_LT" "S1_GM_FS_RT" \
                 "BStem_FS" "Cing_lobeGM_LT" "Cing_lobeGM_RT" \
                 "Occ_lobeGM_LT" "Occ_lobeWM_LT" \
-                "Occ_lobeGM_RT" "Occ_lobeWM_RT");
+                "Occ_lobeGM_RT" "Occ_lobeWM_RT" \
+                "vDC_FS_LT" "vDC_FS_RT" "Thal_LT_FS" "Thal_RT_FS");
 
                 CC_Parietal_Comm_excs_Is=("1" "2" "255" \
                 "254" "253" "252" \
@@ -4913,7 +4972,8 @@ for q in ${!tck_list[@]}; do
                 "1022" "2022" \
                 "16" "1003" "2003" \
                 "1004" "3004" \
-                "2004" "4004");
+                "2004" "4004" \
+                "28" "60" "10" "49");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
@@ -4943,14 +5003,16 @@ for q in ${!tck_list[@]}; do
                 "Fornix_Fx" "Front_lobeGM_LT" "Front_lobeGM_RT" \
                 "Pari_lobeGM_LT" "Pari_lobeGM_RT" \
                 "Temp_lobeGM_LT" "Temp_lobeGM_RT" "BStem_FS" \
-                "Cing_lobeGM_LT" "Cing_lobeGM_RT");
+                "Cing_lobeGM_LT" "Cing_lobeGM_RT" \
+                "vDC_FS_LT" "vDC_FS_RT" "Thal_LT_FS" "Thal_RT_FS");
 
                 CC_Occipital_Comm_excs_Is=("1" "2" "255" \
                 "254" "253" "252" \
                 "250" "1001" "2001" \
                 "1006" "2006" \
                 "1005" "2005" "16" \
-                "1003" "2003");
+                "1003" "2003" \
+                "28" "60" "10" "49");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
@@ -4997,6 +5059,64 @@ for q in ${!tck_list[@]}; do
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
+            elif [[ ${tck_list[$q]} == "CC_SMAR_2contM1LT_Comm" ]]; then
+
+                CC_SMAR_2contM1LT_Comm_incs1_Ls=("CC_mid_FS" "CC_isth_FS");
+
+                CC_SMAR_2contM1LT_Comm_incs1_Is=("253" "252");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
+                CC_SMAR_2contM1LT_Comm_incs2_Ls=("M1_GM_FS_LT");
+
+                CC_SMAR_2contM1LT_Comm_incs2_Is=("1024");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
+
+                CC_SMAR_2contM1LT_Comm_incs3_Ls=("SFG5_RT_MSBP" "SFG6_RT_MSBP" "SFG7_RT_MSBP" "SFG8_RT_MSBP");
+
+                CC_SMAR_2contM1LT_Comm_incs3_Is=("24" "25" "26" "27");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs3" && make_VOIs
+
+                # should probably add an AC_min_Fx VOI as well
+                CC_SMAR_2contM1LT_Comm_excs_Ls=("AC_MAN" "PC_MAN" "CC_genu_FS" "CC_ant_FS" "CC_splen_FS" "Fornix_Fx" "BStem_FS" \
+                "Cing_lobeGM_LT" "Cing_lobeGM_RT" "SegWM_LT_ALIC_custom" "SegWM_RT_ALIC_custom" "vDC_FS_LT" "vDC_FS_RT");
+
+                CC_SMAR_2contM1LT_Comm_excs_Is=("1" "2" "255" "254" "251" "250" "16" \
+                "1003" "2003" "1" "1" "28" "60");
+
+                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+
+            elif [[ ${tck_list[$q]} == "CC_SMAL_2contM1RT_Comm" ]]; then
+
+                CC_SMAL_2contM1RT_Comm_incs1_Ls=("CC_mid_FS" "CC_isth_FS");
+
+                CC_SMAL_2contM1RT_Comm_incs1_Is=("253" "252");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
+                CC_SMAL_2contM1RT_Comm_incs2_Ls=("M1_GM_FS_RT");
+
+                CC_SMAL_2contM1RT_Comm_incs2_Is=("2024");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
+
+                CC_SMAL_2contM1RT_Comm_incs3_Ls=("SFG5_LT_MSBP" "SFG6_LT_MSBP" "SFG7_LT_MSBP" "SFG8_LT_MSBP");
+
+                CC_SMAL_2contM1RT_Comm_incs3_Is=("148" "149" "150" "151");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs3" && make_VOIs
+
+                # should probably add an AC_min_Fx VOI as well
+                CC_SMAL_2contM1RT_Comm_excs_Ls=("AC_MAN" "PC_MAN" "CC_genu_FS" "CC_ant_FS" "CC_splen_FS" "Fornix_Fx" "BStem_FS" \
+                "Cing_lobeGM_LT" "Cing_lobeGM_RT" "SegWM_LT_ALIC_custom" "SegWM_RT_ALIC_custom" "vDC_FS_LT" "vDC_FS_RT");
+
+                CC_SMAL_2contM1RT_Comm_excs_Is=("1" "2" "255" "254" "251" "250" "16" \
+                "1003" "2003" "1" "1" "28" "60");
+
+                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+                
             elif [[ ${tck_list[$q]} == "dHippo_Comm" ]]; then
 
                 dHippo_Comm_incs1_Ls=("CC_splen_FS");

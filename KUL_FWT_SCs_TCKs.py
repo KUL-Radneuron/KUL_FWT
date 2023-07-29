@@ -21,7 +21,7 @@ import dipy.stats.analysis as dsa
 import dipy.data as dpd
 import pkgutil
 import matplotlib
-matplotlib.use('Qt5Agg')
+# import pyqt # matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import dipy.tracking.streamline as dts
 from nilearn import plotting
