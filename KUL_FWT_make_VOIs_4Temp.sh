@@ -483,7 +483,7 @@ SUIT="${pr_d}/SUIT_atlas_inMNI.nii.gz" # done
 
 CIT="${pr_d}/CIT168toMNI152_prob_atlas_bilat_1mm_STN.nii.gz" # done
 
-DISTAL_STN="${pr_d}/DISTAL_STN_motor_bilateral_in_FSL_6thgen.nii.gz" # done
+DISTAL_STN="${pr_d}/DISTAL_STN_motor_bilateral_in_FSL_6thgen_symm.nii.gz" # done
 
 TMP_BStem="${pr_d}/Temp_BStem_labels.nii.gz" # done
 
@@ -1194,7 +1194,7 @@ if [[ -z ${srch_pt1_done} ]]; then
 
         ##  DISTAL_STN
         task_in="antsApplyTransforms -d 3 -i ${DISTAL_STN} -o ${DISTAL_STN_in_FOD} -r ${temp_fod1} -t [${FOD2FS_str}_0GenericAffine.mat,1] -t ${FOD2FS_str}_1InverseWarp.nii.gz \
-        -t [${temp2subj}_0GenericAffine.mat,1] -t ${temp2subj}_1InverseWarp.nii.gz -n multilabel"
+        -t [${temp2subj}_0GenericAffine.mat,1] -t ${temp2subj}_1InverseWarp.nii.gz -n NearesNeighbor"
         task_exec &
 
         ##  TMP_Bstem
