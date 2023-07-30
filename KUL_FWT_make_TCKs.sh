@@ -1581,7 +1581,7 @@ function make_bundle {
 
     # Screenshots workflow
     # we use template warped TCKs for SCs
-    if [[ "${S_flag}" -eq 1 ]] && [[ ! ${filt_fl2} == 0 ]]; then
+    if [[ "${S_flag}" -eq 1 ]]; then
 
         if [[ -f "${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck" ]] && [[ ! -f "${TCK_out}/Screenshots/${TCK_2_make}_fin_${T}_${algo_f}_Sc_done.done" ]]; then
 
