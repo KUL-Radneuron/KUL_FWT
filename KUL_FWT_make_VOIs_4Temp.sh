@@ -4202,17 +4202,25 @@ for q in ${!tck_list[@]}; do
             elif [[ ${tck_list[$q]} == "ThR_OCD_DBS_LT" ]]; then
                 # WIP
 
-                ThR_OCD_DBS_LT_incs1_Ls=("PD25_DM_LT_custom" "STN_LT_DISTAL_STN");
+                # ThR_OCD_DBS_LT_incs1_Ls=("PD25_DM_LT_custom" "STN_LT_DISTAL_STN");
 
-                ThR_OCD_DBS_LT_incs1_Is=("1" "1");
+                # ThR_OCD_DBS_LT_incs1_Is=("1" "1");
+
+                ThR_OCD_DBS_LT_incs1_Ls=("PD25_DM_LT_custom");
+
+                ThR_OCD_DBS_LT_incs1_Is=("1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
 
-                ThR_OCD_DBS_LT_incs2_Ls=("SFG1_MSBP_LT" "SFG2_MSBP_LT" "SFG3_MSBP_LT" \
-                "SFG4_MSBP_LT" "MedOF_GM_LT_FS" "LatOF_GM_LT_FS" "FrP_GM_LT_FS" "cACC_GM_FS_LT");
+                # ThR_OCD_DBS_LT_incs2_Ls=("SFG1_MSBP_LT" "SFG2_MSBP_LT" "SFG3_MSBP_LT" \
+                # "SFG4_MSBP_LT" "MedOF_GM_LT_FS" "LatOF_GM_LT_FS" "FrP_GM_LT_FS" "cACC_GM_FS_LT");
 
-                ThR_OCD_DBS_LT_incs2_Is=("144" "145" "146" \
-                "147" "1014" "1012" "1032" "1002");
+                # ThR_OCD_DBS_LT_incs2_Is=("144" "145" "146" \
+                # "147" "1014" "1012" "1032" "1002");
+
+                ThR_OCD_DBS_LT_incs2_Ls=("Front_lobeGM_LT")
+
+                ThR_OCD_DBS_LT_incs2_Is=("1001")
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
 
@@ -4220,31 +4228,39 @@ for q in ${!tck_list[@]}; do
                 "hypothal_bildil_excr_custom" "Temp_lobeGM_LT" "Putamen_GM_LT_FS" \
                 "Caudate_GM_LT_FS" "PD25_Pulvi_LT_custom" "Fornix_Fx" \
                 "Occ_lobeGM_LT" "Pari_lobeGM_LT" \
-                "PD25_VPALPLPM_LT_custom" "M1_GM_FS_LT" "M1_WM_FS_LT" \
-                "SFG5_LT_MSBP" "cMFG_GM_LT_FS" "PHipp_GM_LT_FS" "PHipp_WM_LT_FS" \
-                "Insula_GM_LT_FS" "Insula_WM_LT_FS" "vDC_FS_LT");
+                "M1_GM_FS_LT" "M1_WM_FS_LT" \
+                "PHipp_GM_LT_FS" "PHipp_WM_LT_FS" \
+                "Insula_GM_LT_FS" "Insula_WM_LT_FS");
 
                 ThR_OCD_DBS_LT_excs_Is=("1" "16" "1" \
                 "1" "1003" "12" \
                 "11" "1" "250" \
                 "1004" "1006" \
-                "1" "1024" "3024" \
-                "148" "1003" "1016" "3016" \
-                "1035" "3035" "28");
+                "1024" "3024" \
+                "1016" "3016" \
+                "1035" "3035");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 
             elif [[ ${tck_list[$q]} == "ThR_OCD_DBS_RT" ]]; then
 
-                ThR_OCD_DBS_RT_incs1_Ls=("PD25_DM_RT_custom" "STN_RT_DISTAL_STN");
+                # ThR_OCD_DBS_RT_incs1_Ls=("PD25_DM_RT_custom" "STN_RT_DISTAL_STN");
 
-                ThR_OCD_DBS_RT_incs1_Is=("1" "1");
+                # ThR_OCD_DBS_RT_incs1_Is=("1" "2");
+
+                ThR_OCD_DBS_RT_incs1_Ls=("PD25_DM_RT_custom");
+
+                ThR_OCD_DBS_RT_incs1_Is=("1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
 
-                ThR_OCD_DBS_RT_incs2_Ls=("SFG1_MSBP_RT" "SFG2_MSBP_RT" "SFG3_MSBP_RT" "SFG4_MSBP_RT" "MedOF_GM_LT_FS" "LatOF_GM_LT_FS" "FrP_GM_RT_FS" "cACC_GM_FS_RT");
+                # ThR_OCD_DBS_RT_incs2_Ls=("SFG1_MSBP_RT" "SFG2_MSBP_RT" "SFG3_MSBP_RT" "SFG4_MSBP_RT" "MedOF_GM_LT_FS" "LatOF_GM_LT_FS" "FrP_GM_RT_FS" "cACC_GM_FS_RT");
 
-                ThR_OCD_DBS_RT_incs2_Is=("20" "21" "22" "23" "2014" "2012" "2032" "2002");
+                # ThR_OCD_DBS_RT_incs2_Is=("20" "21" "22" "23" "2014" "2012" "2032" "2002");
+
+                ThR_OCD_DBS_RT_incs2_Ls=("Front_lobeGM_RT")
+                
+                ThR_OCD_DBS_RT_incs2_Is=("2001")
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
 
@@ -4252,17 +4268,17 @@ for q in ${!tck_list[@]}; do
                 "hypothal_bildil_excr_custom" "Temp_lobeGM_RT" "Putamen_GM_RT_FS" \
                 "Caudate_GM_RT_FS" "PD25_Pulvi_RT_custom" "Fornix_Fx" \
                 "Occ_lobeGM_RT" "Pari_lobeGM_RT" \
-                "PD25_VPALPLPM_RT_custom" "M1_GM_FS_RT" "M1_WM_FS_RT" \
-                "SFG5_RT_MSBP" "cMFG_GM_RT_FS" "PHipp_GM_RT_FS" "PHipp_WM_RT_FS" \
-                "Insula_GM_RT_FS" "Insula_WM_RT_FS" "vDC_FS_RT");
+                "M1_GM_FS_RT" "M1_WM_FS_RT" \
+                "PHipp_GM_RT_FS" "PHipp_WM_RT_FS" \
+                "Insula_GM_RT_FS" "Insula_WM_RT_FS");
 
                 ThR_OCD_DBS_RT_excs_Is=("1" "16" "1" \
                 "1" "2003" "51" \
                 "50" "1" "250" \
                 "2004" "2006" \
-                "1" "2024" "4024" \
-                "24" "2003" "2016" "4016" \
-                "2035" "4035" "60");
+                "2024" "4024" \
+                "2016" "4016" \
+                "2035" "4035");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
 

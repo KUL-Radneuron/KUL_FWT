@@ -1367,6 +1367,10 @@ else
 
     echo " Part 1 already done, skipping" | tee -a ${prep_log2}
 
+    subj_FA="${prep_d}/fa.nii.gz"
+
+    subj_FS_lobes="${FS_dir}/sub-${subj}${ses}_lobes.mgz"
+
 fi
 
 # this is for scil_reco_bundles
@@ -1420,7 +1424,7 @@ if [[ -z ${srch_tck_warp2} ]]; then
     # from https://community.mrtrix.org/t/registration-using-transformations-generated-from-other-packages/2259
     # we use this to transform TCKs from MNI to native
     # antsApplyTransforms needs to be applied in the opposite direction
-    task_in="warpinit ${temp_fod1} ${tmpo_d}/TCKs_w_[].nii.gz -f"
+    task_in="warpinit ${subj_FA} ${tmpo_d}/TCKs_w_[].nii.gz -f"
 
     task_exec
 
