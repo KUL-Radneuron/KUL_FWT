@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# set -x
+set -x
 
 # This workflow belongs to the manuscript (under review) https://doi.org/10.1101/2021.10.13.464139, please consider citing if you will use it
 # KUL_FWT_make_VOIs.sh automatically generates anatomical VOIs for single subject fiber tractography
@@ -557,28 +557,29 @@ qo=4;
 function PD25_lab_gen {
 
     PD25_labels_LT=("PD25_DM_LT" "PD25_DL_LT" "PD25_VA_LT" "PD25_VL_LT" "PD25_VPL_LT" "PD25_VPM_LT" "PD25_Pulvi_LT" \
-    "PD25_MG_LT" "PD25_RN_LT");
+    "PD25_MG_LT" "PD25_RN_LT" "PD25_VCI_LT" "PD25_VCAI1_LT" "PD25_VCAI2_LT" "PD25_VCPCE_LT" "PD25_PulSup_LT" "PD25_VIM_LT" "PD25_RTP_LT" "PD25_VOM_LT");
 
     PD25_labels_RT=("PD25_DM_RT" "PD25_DL_RT" "PD25_VA_RT" "PD25_VL_RT" "PD25_VPL_RT" "PD25_VPM_RT" "PD25_Pulvi_RT" \
-    "PD25_MG_RT" "PD25_RN_RT");
-
-    PD25_vals_RT=("37" "40" "53" "26" "28" "36" "89" \
-    "86" "87" "88" "90" "91" "92" "93" "94" "104" \
-    "111" "112" "114" "120" "123" "96" "97" "98" \
-    "115" "117" "118" "95" "113" \
-    "102" "103" "105" "106" "107" "116" "119" "68" "48");
+    "PD25_MG_RT" "PD25_RN_RT" "PD25_VCI_RT" "PD25_VCAI1_RT" "PD25_VCAI2_RT" "PD25_VCPCE_RT" "PD25_PulSup_RT" "PD25_VIM_RT" "PD25_RTP_RT" "PD25_VOM_RT");
 
     PD25_vals_LT=("3700" "4000" "5300" "2600" "2800" "3600" "8900" \
-    "8600" "8700" "8800" "9000" "9100" "9200" "9300" "9400" "10400" \
-    "11100" "11200" "11400" "12000" "12300" "9600" "9700" "9800" \
-    "11500" "11700" "11800" "9500" "11300" \
-    "10200" "10300" "10500" "10600" "10700" "11600" "11900" "6800" "4800");
+    "8600" "8700" "9500" "9600" "11300" "11500" "11600" "9400" "2400" "8100" "8800" "9000" "9100" "9200" "9300" "10400" \
+    "11100" "11200" "11400" "12000" "12300" "9700" "9800" \
+    "11700" "11800" \
+    "10200" "10300" "10500" "10600" "10700" "11900" "6800" "4800");
+
+    PD25_vals_RT=("37" "40" "53" "26" "28" "36" "89" \
+    "86" "87" "95" "96" "113" "115" "116" "94" "24" "81" "88" "90" "91" "92" "93" "104" \
+    "111" "112" "114" "120" "123" "97" "98" \
+    "117" "118" \
+    "102" "103" "105" "106" "107" "119" "68" "48");
+
 
     # this should be 36 entries per side + RNs
     # vals outnumber labels, as each nucleus (label) constitutes
     # multiple ROIs from the atlas
 
-    srch_PD25Ls=($(find ${ROIs_d}/custom_VOIs -type f | grep "PD25_VPALPLPM_RT_custom.nii.gz"))
+    srch_PD25Ls=($(find ${ROIs_d}/custom_VOIs -type f | grep "PD25_Pulvi_exc_rois_LT_custom.nii.gz"))
 
     if [[ ! ${srch_PD25Ls} ]]; then
 
@@ -638,7 +639,7 @@ function PD25_lab_gen {
 
         wait
 
-        sleep 50
+        # sleep 50
 
         # unset hr
 
@@ -660,6 +661,10 @@ function PD25_lab_gen {
         VPM_rois_LT=("9500" "11300");
         PUL_rois_RT=("102" "103" "105" "106" "107" "116" "119");
         PUL_rois_LT=("10200" "10300" "10500" "10600" "10700" "11600" "11900");
+        VC_rois_RT=("95" "96" "113" "115");
+        VC_rois_LT=("9500" "9600" "11300" "11500");
+        Pulvi_exc_rois_RT=("116" "24" "81");
+        Pulvi_exc_rois_LT=("11600" "2400" "8100");
 
         # Isolate the thalamus from the aparc
         # We use this to refine PD25 thalamic VOIs
@@ -698,14 +703,14 @@ function PD25_lab_gen {
         task_in="mrcalc -force -datatype uint16 -force -nthreads 1 ${tmpo_d}/PD25_ROI_26_RT_custom.nii.gz ${tmpo_d}/PD25_ROI_28_RT_custom.nii.gz -add \
         ${VA_adds_RT} 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
         ${ROIs_d}/custom_VOIs/Thalamus_RT_FS_custom.nii.gz -mult ${ROIs_d}/custom_VOIs/PD25_VA_RT_custom.nii.gz -force"
-        task_exec
+        task_exec &
 
         VA_adds_LT=$(printf " ${tmpo_d}/PD25_ROI_%s_LT_custom.nii.gz -add"  "${VA_rois_LT[@]:2}")
 
         task_in="mrcalc -force -datatype uint16 -force -nthreads 1 ${tmpo_d}/PD25_ROI_2600_LT_custom.nii.gz ${tmpo_d}/PD25_ROI_2800_LT_custom.nii.gz -add \
         ${VA_adds_LT} 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
         ${ROIs_d}/custom_VOIs/Thalamus_LT_FS_custom.nii.gz -mult ${ROIs_d}/custom_VOIs/PD25_VA_LT_custom.nii.gz -force"
-        task_exec
+        task_exec &
 
         #################################
 
@@ -747,12 +752,12 @@ function PD25_lab_gen {
         task_in="mrcalc -force -datatype uint16 -force -nthreads 1 ${tmpo_d}/PD25_ROI_95_RT_custom.nii.gz ${tmpo_d}/PD25_ROI_113_RT_custom.nii.gz -add \
         0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
         ${ROIs_d}/custom_VOIs/Thalamus_RT_FS_custom.nii.gz -mult ${ROIs_d}/custom_VOIs/PD25_VPM_RT_custom.nii.gz -force"
-        task_exec
+        task_exec &
 
         task_in="mrcalc -force -datatype uint16 -force -nthreads 1 ${tmpo_d}/PD25_ROI_9500_LT_custom.nii.gz ${tmpo_d}/PD25_ROI_11300_LT_custom.nii.gz -add \
         0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
         ${ROIs_d}/custom_VOIs/Thalamus_LT_FS_custom.nii.gz -mult ${ROIs_d}/custom_VOIs/PD25_VPM_LT_custom.nii.gz -force"
-        task_exec
+        task_exec &
 
         #################################
 
@@ -786,13 +791,43 @@ function PD25_lab_gen {
         #################################
 
         # Red Nucleus
-        task_in="mrcalc -force -datatype uint16 -force -nthreads 1 ${tmpo_d}/PD25_ROI_48_RT_custom.nii.gz 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
-        ${ROIs_d}/custom_VOIs/PD25_RN_RT_custom.nii.gz -force"
-        task_exec
+        task_in="mrcalc -force -datatype uint16 -nthreads 1 ${tmpo_d}/PD25_ROI_48_RT_custom.nii.gz 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
+        ${ROIs_d}/custom_VOIs/PD25_RN_RT_custom.nii.gz"
+        task_exec &
 
-        task_in="mrcalc -force -datatype uint16 -force -nthreads 1 ${tmpo_d}/PD25_ROI_4800_LT_custom.nii.gz 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
-        ${ROIs_d}/custom_VOIs/PD25_RN_LT_custom.nii.gz -force"
-        task_exec
+        task_in="mrcalc -force -datatype uint16 -nthreads 1 ${tmpo_d}/PD25_ROI_4800_LT_custom.nii.gz 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
+        ${ROIs_d}/custom_VOIs/PD25_RN_LT_custom.nii.gz"
+        task_exec &
+
+        #################################
+
+        ## For the ThR_S1 (defining VC includes and Pulvi exclude - without dilation)
+
+        VC_rois_RT=("95" "96" "113" "115");
+        VC_rois_LT=("9500" "9600" "11300" "11500");
+        Pulvi_exc_rois_RT=("116");
+        Pulvi_exc_rois_LT=("11600");
+
+        task_in="mrcalc -force -datatype uint16 -nthreads 1 ${tmpo_d}/PD25_ROI_9500_LT_custom.nii.gz ${tmpo_d}/PD25_ROI_9600_LT_custom.nii.gz -add ${tmpo_d}/PD25_ROI_11300_LT_custom.nii.gz -add ${tmpo_d}/PD25_ROI_11500_LT_custom.nii.gz -add 0 -gt \
+        ${ROIs_d}/custom_VOIs/PD25_VC_rois_LT_custom.nii.gz"
+
+        task_exec &
+
+        task_in="mrcalc -force -datatype uint16 -nthreads 1 ${tmpo_d}/PD25_ROI_95_RT_custom.nii.gz ${tmpo_d}/PD25_ROI_96_RT_custom.nii.gz -add ${tmpo_d}/PD25_ROI_113_RT_custom.nii.gz -add ${tmpo_d}/PD25_ROI_115_RT_custom.nii.gz -add 0 -gt \
+        ${ROIs_d}/custom_VOIs/PD25_VC_rois_RT_custom.nii.gz"
+
+        task_exec &
+
+        task_in="mrcalc -force -datatype uint16 -nthreads 1 ${tmpo_d}/PD25_ROI_116_RT_custom.nii.gz ${tmpo_d}/PD25_ROI_24_RT_custom.nii.gz -add ${tmpo_d}/PD25_ROI_81_RT_custom.nii.gz -add 0 -gt ${ROIs_d}/custom_VOIs/PD25_Pulvi_exc_rois_RT_custom.nii.gz"
+
+        task_exec &
+
+        task_in="mrcalc -force -datatype uint16 -nthreads 1 ${tmpo_d}/PD25_ROI_11600_LT_custom.nii.gz ${tmpo_d}/PD25_ROI_2400_LT_custom.nii.gz -add ${tmpo_d}/PD25_ROI_8100_LT_custom.nii.gz -add 0 -gt ${ROIs_d}/custom_VOIs/PD25_Pulvi_exc_rois_LT_custom.nii.gz"
+
+        task_exec &
+
+        wait 
+        #################################
 
         ###
 
@@ -4196,11 +4231,11 @@ for q in ${!tck_list[@]}; do
 
                 tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
 
-                ThR_Sup_LT_incs2_Ls=("M1_GM_LT_FS" "ParaC_GM_LT_FS" \
+                ThR_Sup_LT_incs2_Ls=("M1_GM_LT_FS" "S1_GM_LT_FS" "ParaC_GM_LT_FS" \
                 "SFG5_LT_MSBP" "SFG6_LT_MSBP" "SFG7_LT_MSBP" "SFG8_LT_MSBP" \
                 "cMFG_GM_LT_FS");
 
-                ThR_Sup_LT_incs2_Is=("1024" "1017" \
+                ThR_Sup_LT_incs2_Is=("1024" "1022" "1017" \
                 "148" "149" "150" "151" \
                 "1003");
 
@@ -4533,6 +4568,66 @@ for q in ${!tck_list[@]}; do
                 "1" "1");
 
                 tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+
+            elif [[ ${tck_list[$q]} == "ThR_S1_LT" ]]; then
+                # this should actually be the ThR_PPC_LT
+                # remove the occipital lobe as we already generate it
+
+                ThR_S1_LT_incs1_Ls=("PD25_VC_rois_LT_custom");
+
+                ThR_S1_LT_incs1_Is=("1");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
+                ThR_S1_LT_incs2_Ls=("S1_GM_LT_FS");
+
+                ThR_S1_LT_incs2_Is=("1022");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
+
+                ThR_S1_LT_excs_Ls=("CC_allr_custom" "BStem_FS" "vDC_LT" "AC_midline_MAN" "SegWM_LT_ALIC_custom" \
+                "hypothal_bildil_excr_custom" "Temp_lobeGM_LT" "Putamen_GM_LT_FS" "Front_lobeGM_LT" "Fornix_Fx" "Occ_lobeGM_LT" \
+                "Caudate_GM_LT_FS" "Caud_ero_LT_custom" "SFG1_MSBP_LT" \
+                "SFG2_MSBP_LT" "SFG3_MSBP_LT" "SFG4_MSBP_LT" "cACC_GM_FS_LT" "PD25_DM_LT_custom" \
+                "PD25_DL_LT_custom" "SegWM_LT_mIPV_custom" "PD25_Pulvi_exc_rois_LT_custom");
+
+                ThR_S1_LT_excs_Is=("1" "16" "28" "1" "1" \
+                "1" "1005" "12" "1001" "250" "1004" \
+                "11" "1" "144" \
+                "145" "146" "147" "1002" "1" \
+                "1" "1" "1");
+
+                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+
+            elif [[ ${tck_list[$q]} == "ThR_S1_RT" ]]; then
+
+                ThR_S1_RT_incs1_Ls=("PD25_VC_rois_RT_custom");
+
+                ThR_S1_RT_incs1_Is=("1");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs1" && make_VOIs
+
+                ThR_S1_RT_incs2_Ls=("S1_GM_RT_FS");
+
+                ThR_S1_RT_incs2_Is=("2022");
+
+                tck_VOIs_2seg="${tck_list[$q]}_incs2" && make_VOIs
+
+                ThR_S1_RT_excs_Ls=("CC_allr_custom" "BStem_FS" "vDC_RT" "AC_midline_MAN" "SegWM_RT_ALIC_custom" \
+                "hypothal_bildil_excr_custom" "Temp_lobeGM_RT" "Putamen_GM_RT_FS" "Front_lobeGM_RT" \
+                "Fornix_Fx" "Occ_lobeGM_RT" \
+                "Caudate_GM_RT_FS" "Caud_ero_RT_custom" "SFG1_MSBP_RT" \
+                "SFG2_MSBP_RT" "SFG3_MSBP_RT" "SFG4_MSBP_RT" "cACC_GM_FS_RT" "PD25_DM_RT_custom" \
+                "PD25_DL_RT_custom" "SegWM_RT_mIPV_custom" "PD25_Pulvi_exc_rois_RT_custom");
+
+                ThR_S1_RT_excs_Is=("1" "16" "60" "1" "1" \
+                "1" "2005" "51" "2001" "250" "2004" \
+                "50" "1" "20" \
+                "21" "22" "23" "2002" "1" \
+                "1" "1" "1");
+
+                tck_VOIs_2seg="${tck_list[$q]}_excs" && make_VOIs
+
 
             elif [[ ${tck_list[$q]} == "MCP_LT" ]]; then
 
