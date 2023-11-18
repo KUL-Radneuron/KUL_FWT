@@ -33,7 +33,17 @@ def plot_mean_values(input_file, output_file, image_pdf):
     # get names
     base_name = os.path.basename(input_file)
     bundle = base_name.split('scores_')[1].split('.')[0]
-    metric = 'Mean_' + base_name.split('_')[1]
+    # Check if the session identifier is present in the base name
+    if 'ses-' in base_name:
+        # If present, use the third element from the split
+        metric_part = base_name.split('_')[2]
+    else:
+        # If not present, use the second element from the split
+        metric_part = base_name.split('_')[1]
+
+    # Construct the metric name
+    metric = 'Mean_' + metric_part
+    # metric = 'Mean_' + base_name.split('_')[1]
 
     # # Split the 'Segments, Mean_FDC' column into two separate columns
     # data[['Segments', metric]] = data[data.columns[0]].str.split(',', expand=True)

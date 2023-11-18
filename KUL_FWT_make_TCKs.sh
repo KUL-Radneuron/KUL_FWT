@@ -1157,7 +1157,8 @@ function make_bundle {
                     echo " ${TCK_2_make} initial filtering already done, skipping " | tee -a ${prep_log2}
 
                     count2=($(tckstats -force -nthreads ${ncpu} -output count ${tck_filt1} -quiet ));
-
+                    # enter checker for count here
+                    # mv filt1 to filt5/fin if count < 500 
                 fi
 
                 if [[ -f ${tck_filt1} ]] && [[ ! -f ${tck_filt5} ]] && [[ ${count2} -gt 10 ]]; then
@@ -1212,6 +1213,18 @@ function make_bundle {
                             task_in="tcktransform -force ${tck_filt5_inT} ${TCKs_wfromtemp} ${tck_filt5}"
 
                             task_exec
+
+                            count_checker=($(tckinfo ${tck_filt5} | grep "count:" | cut -d ":" -f2))
+
+                            # If this runs well but leaves nothing then grab what was there before it ran and continue with it
+                            if [[ ${count_checker[0]} == 0 ]]; then 
+                            
+                                task_in="mv ${tck_filt5} $(dirname ${tck_filt5})/$(basename ${tck_filt5} .tck)_failed.tck && \
+                                mv ${tck_filt4} ${tck_filt5} && mv ${tck_filt4_inT} ${tck_filt5_inT}"
+
+                                task_exec
+                            
+                            fi
                         
                         else
 
@@ -2166,7 +2179,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
                 task_exec
 
-                sift_str=" -tck_weights_in ${TCKs_outd}/sub-${subj}_sift2_ws.txt "
+                sift_str=" -tck_weights_in ${TCKs_outd}/sub-${subj}${ses_str}_sift2_ws.txt "
 
             else
 

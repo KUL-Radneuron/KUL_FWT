@@ -877,7 +877,7 @@ subj_MS_sc3=($(find ${MS_dir} -type f -name "*_label-L2018_desc-scale3_atlas.nii
 
 subj_MS_sc1=($(find ${MS_dir} -type f -name "*_label-L2018_desc-scale1_atlas.nii.gz"))
 
-subj_FS_lobes=($(find ${FS_dir} -type f -name "sub-${subj}${ses}_lobes.mgz"))
+subj_FS_lobes=($(find ${FS_dir} -type f -name "sub-${subj}${ses_str}_lobes.mgz"))
 
 subj_FS_2009=($(find ${FS_dir} -type f -name "aparc.a2009s+aseg.mgz"))
 
@@ -1086,7 +1086,7 @@ if [[ -z ${srch_pt1_done} ]]; then
 
         echo " Making FS lobes segmentation image in .mgz"  | tee -a ${prep_log2}
 
-        subj_FS_lobes="${FS_dir}/sub-${subj}${ses}_lobes.mgz"
+        subj_FS_lobes="${FS_dir}/sub-${subj}${ses_str}_lobes.mgz"
 
         task_in="mri_annotation2label --subject sub-${subj}${ses_str} --sd ${FS_dir}/../.. --hemi lh --lobesStrict lobes \
         && mri_annotation2label --subject sub-${subj}${ses_str} --sd ${FS_dir}/../.. --hemi rh --lobesStrict lobes"
@@ -1404,7 +1404,7 @@ else
 
     subj_FA="${prep_d}/fa.nii.gz"
 
-    subj_FS_lobes="${FS_dir}/sub-${subj}${ses}_lobes.mgz"
+    subj_FS_lobes="${FS_dir}/sub-${subj}${ses_str}_lobes.mgz"
 
 fi
 
