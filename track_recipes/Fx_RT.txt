@@ -1,0 +1,29 @@
+# Bundle: Fx_RT
+# type  name  label
+incs1  Fornix_Fx  250
+
+incs2  Hippocampus_FS_RT  53
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  Putamen_FS_RT  51
+excs  iPCC_GM_FS_RT  2010
+excs  iPCC_WM_FS_RT  4010
+excs  Thal_RT_ero2_custom  1
+excs  OptCh_FS  85
+excs  Front_lobeGM_RT  2001
+excs  Occ_lobeGM_RT  2004
+excs  Occ_lobeWM_RT  4004
+excs  Temp_lobeGM_RT  2005
+excs  Temp_lobeWM_RT  4005
+excs  Pari_lobeGM_RT  2006
+excs  Pari_lobeWM_RT  4006
+excs  Amyg_FS_RT  54
+excs  rACC_GM_FS_RT  2026
+excs  ChorP_FS_LT  31
+excs  ChorP_FS_RT  63
+excs  SegWM_LT_ALIC_custom  1
+excs  Caudate_FS_RT  50
+excs  vDC_FS_LT  28
+excs  Insula_GM_RT_FS  1035
+excs  Insula_WM_RT_FS  3035

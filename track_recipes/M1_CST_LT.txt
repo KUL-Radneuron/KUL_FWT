@@ -1,0 +1,22 @@
+# Bundle: M1_CST_LT
+# type  name  label
+incs1  CST_LT_UKBB  1
+
+incs2  M1_GM_LT_FS  1024
+incs2  ParaC_GM_LT_FS  1017
+
+excs  CC_allr_custom  1
+excs  BStemr_exc_RT_custom  1
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeWM_LT  3003
+excs  LT_ML_X_custom  1
+excs  Thal_LT_ero2_custom  1
+excs  Temp_lobeGM_LT  1005
+excs  Temp_lobeWM_LT  3005
+excs  Putamen_GM_LT_FS  12
+excs  Caudate_GM_LT_FS  11
+excs  SFG_GM_LT_FS  1028
+excs  Occ_lobeGM_LT  1004
+excs  Occ_lobeWM_LT  3004
+excs  S1_GM_LT_FS  1022
+excs  hypothal_vDC_RT_excr_custom  1

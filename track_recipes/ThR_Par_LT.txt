@@ -1,0 +1,28 @@
+# Bundle: ThR_Par_LT
+# type  name  label
+incs1  Thal_FS_LT  10
+
+incs2  Pari_lobeGM_LT  1006
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  vDC_LT  28
+excs  AC_midline_MAN  1
+excs  SegWM_LT_ALIC_custom  1
+excs  hypothal_LT_excr_custom  1
+excs  Temp_lobeGM_LT  1005
+excs  Putamen_GM_LT_FS  12
+excs  Front_lobeGM_LT  1001
+excs  Fornix_Fx  250
+excs  Occ_lobeGM_LT  1004
+excs  Caudate_GM_LT_FS  11
+excs  PD25_Pulvi_LT_custom  1
+excs  Caud_ero_LT_custom  1
+excs  SFG1_MSBP_LT  144
+excs  SFG2_MSBP_LT  145
+excs  SFG3_MSBP_LT  146
+excs  SFG4_MSBP_LT  147
+excs  cACC_GM_FS_LT  1002
+excs  PD25_DM_LT_custom  1
+excs  PD25_DL_LT_custom  1
+excs  SegWM_LT_mIPV_custom  1

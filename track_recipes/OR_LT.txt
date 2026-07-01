@@ -1,0 +1,36 @@
+# Bundle: OR_LT
+# type  name  label
+incs1  PD25_Pulvi_LT_custom  1
+incs1  JuHA_LGN_LT_custom  1
+
+incs2  Calc_S_LT_2009  11145
+incs2  PeriCal_LT_GM_FS  1021
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  Phippo_GM_LT_FS  1016
+excs  LT_vDC_subseg2_custom  1
+excs  Ins_IFOF_exc_LT_custom  1
+excs  PD25_VA_VL_LT_custom  1
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeWM_LT  3003
+excs  AC_midL_MAN  1
+excs  Hippo_GM_LT_FS  17
+excs  OptCh_FS  85
+excs  Insula_GM_LT_FS  1035
+excs  SegWM_LT_PLIC_ex_custom  1001
+excs  Front_lobeGM_LT  1006
+excs  Pari_lobeGM_LT  1
+excs  iPCC_GM_LT_FS  1010
+excs  Caudate_GM_LT_FS  11
+excs  SegWM_LT_ALIC_custom  1
+excs  SegWM_LT_MPV_custom  1
+excs  SegWM_LT_mIPV_custom  1
+excs  Ins_subseg3_LT_custom  1
+excs  Fusi4_MSBP_LT  211
+excs  TempP_GM_FS_LT  1033
+excs  TempP_WM_FS_LT  3033
+excs  ITG_GM_FS_LT  1009
+excs  ITG_WM_FS_LT  3009
+excs  Ins_infL_wm_LT_custom  1
+excs  Ins_subseg5_LT_custom  1

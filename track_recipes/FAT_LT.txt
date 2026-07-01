@@ -1,0 +1,25 @@
+# Bundle: FAT_LT
+# type  name  label
+incs1  IFG_POp_GM_FS_LT  1018
+incs1  IFG_PTr_GM_FS_LT  1020
+
+incs2  SFG5_MSBP_LT  148
+incs2  SFG6_MSBP_LT  149
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  Insula_GM_FS_LT  1035
+excs  Insula_WM_FS_LT  3035
+excs  M1_GM_FS_LT  1024
+excs  M1_WM_FS_LT  3024
+excs  Med_OF_GM_FS_LT  1014
+excs  Med_OF_WM_FS_LT  3014
+excs  LatOF_GM_FS_LT  1012
+excs  LatOF_WM_FS_LT  3012
+excs  IFG_POr_GM_FS_LT  1019
+excs  IFG_POr_WM_FS_LT  3019
+excs  Caudate_FS_LT  11
+excs  SFG1_MSBP_LT  144
+excs  SFG2_MSBP_LT  145
+excs  SFG3_MSBP_LT  146
+excs  SFG4_MSBP_LT  147

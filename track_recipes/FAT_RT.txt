@@ -1,0 +1,25 @@
+# Bundle: FAT_RT
+# type  name  label
+incs1  IFG_POp_GM_FS_RT  2018
+incs1  IFG_PTr_GM_FS_RT  2020
+
+incs2  SFG5_MSBP_RT  24
+incs2  SFG6_MSBP_RT  25
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  Insula_GM_FS_RT  2035
+excs  Insula_WM_FS_RT  4035
+excs  M1_GM_FS_RT  2024
+excs  M1_WM_FS_RT  4024
+excs  Med_OF_GM_FS_RT  2014
+excs  Med_OF_WM_FS_RT  4014
+excs  LatOF_GM_FS_RT  2012
+excs  LatOF_WM_FS_RT  4012
+excs  IFG_POr_GM_FS_RT  2019
+excs  IFG_POr_WM_FS_RT  4019
+excs  Caudate_FS_RT  50
+excs  SFG1_MSBP_RT  20
+excs  SFG2_MSBP_RT  21
+excs  SFG3_MSBP_RT  22
+excs  SFG4_MSBP_RT  23

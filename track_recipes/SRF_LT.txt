@@ -1,0 +1,23 @@
+# Bundle: SRF_LT
+# type  name  label
+incs1  Ling3_MSBP_LT  207
+incs1  Fusi2_MSBP_LT  209
+incs1  Fusi3_MSBP_LT  210
+incs1  Fusi4_GMWM_LT_custom  1
+
+incs2  SPL5_MSBP_LT  182
+incs2  Pc4_MSBP_LT  194
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  PHip_GM_FS_LT  1016
+excs  PHip_WM_FS_LT  3016
+excs  Front_lobeGM_LT  1001
+excs  Front_lobeWM_LT  3001
+excs  STG_GM_FS_LT  2030
+excs  STG_WM_FS_LT  4030
+excs  ITG1_MSBP_LT  215
+excs  ITG2_MSBP_LT  216
+excs  ITG3_MSBP_LT  217
+excs  MTG_GM_FS_LT  1015
+excs  S1_GM_FS_LT  1022

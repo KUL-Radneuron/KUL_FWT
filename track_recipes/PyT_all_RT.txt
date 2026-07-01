@@ -1,0 +1,34 @@
+# Bundle: PyT_all_RT
+# type  name  label
+incs1  BStem_FS  16
+
+incs2  M1_GM_RT_FS  2024
+incs2  S1_GM_RT_FS  2022
+incs2  ParaC_GM_RT_FS  2017
+incs2  SFG5_RT_MSBP  24
+incs2  SFG6_RT_MSBP  25
+incs2  SFG7_RT_MSBP  26
+incs2  SFG8_RT_MSBP  27
+incs2  cMFG_GM_RT_FS  2003
+incs2  SMG_GM_RT_FS  2031
+incs2  SPL1_RT_MSBP  54
+incs2  SPL2_RT_MSBP  55
+incs2  SPL3_RT_MSBP  56
+incs2  SPL4_RT_MSBP  57
+
+excs  CC_allr_custom  1
+excs  BStemr_exc_LT_custom  1
+excs  Cing_lobeGM_RT  2003
+excs  Cing_lobeWM_RT  4003
+excs  Thal_RT_ero2_custom  1
+excs  Temp_lobeGM_RT  2005
+excs  Temp_lobeWM_RT  4005
+excs  Putamen_RT_FS  51
+excs  Caudate_GM_RT_FS  50
+excs  rMFG_GM_RT_FS  2027
+excs  Occ_lobeGM_RT  2004
+excs  Occ_lobeWM_RT  4004
+excs  SPL5_RT_MSBP  58
+excs  SPL6_RT_MSBP  59
+excs  SPL7_RT_MSBP  60
+excs  hypothal_vDC_LT_excr_custom  1

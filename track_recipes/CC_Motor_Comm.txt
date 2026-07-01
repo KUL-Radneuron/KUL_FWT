@@ -1,0 +1,28 @@
+# Bundle: CC_Motor_Comm
+# type  name  label
+incs1  CC_isth_FS  252
+
+incs2  M1_GM_FS_LT  1024
+
+incs3  M1_GM_FS_RT  2024
+
+excs  AC_MAN  1
+excs  PC_MAN  2
+excs  CC_genu_FS  255
+excs  CC_ant_FS  254
+excs  CC_mid_FS  253
+excs  CC_splen_FS  251
+excs  Fornix_Fx  250
+excs  cMFG_GM_LT_FS  1003
+excs  cMFG_GM_RT_FS  2003
+excs  SFG_GM_LT_FS  1028
+excs  SFG_GM_RT_FS  2028
+excs  Pari_lobeGM_LT  1006
+excs  Pari_lobeGM_RT  2006
+excs  BStem_FS  16
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeGM_RT  2003
+excs  vDC_FS_LT  28
+excs  vDC_FS_RT  60
+excs  Thal_LT_FS  10
+excs  Thal_RT_FS  49

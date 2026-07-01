@@ -1,0 +1,12 @@
+# Bundle: DRT_RT
+# type  name  label
+incs1  Dent_LT_SUIT  29
+
+incs2  PD25_RN_RT_custom  1
+
+incs3  PD25_VL_RT_custom  1
+
+excs  CC_allr_custom  1
+excs  Medulla_MSBP  251
+excs  cIX_LT_SUIT  23
+excs  SegWM_RT_ALIC_custom  1

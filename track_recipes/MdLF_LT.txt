@@ -1,0 +1,34 @@
+# Bundle: MdLF_LT
+# type  name  label
+incs1  SPL_GM_LT_FS  1029
+incs1  IPL_GM_LT_FS  1008
+incs1  G_OSup_GM_LT_2009  1116
+incs1  Cun_GM_LT_FS  1005
+incs1  Pc_GM_LT_FS  1025
+
+incs2  STG5_MSBP_LT  228
+incs2  STG4_MSBP_LT  227
+incs2  STG3_MSBP_LT  226
+incs2  Temp_P_GM_LT_FS  1033
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  Phippo_GM_LT_FS  1016
+excs  Phippo_WM_LT_FS  3016
+excs  Ins_IFOF_exc_LT_custom  1
+excs  s3Put_LT_custom  1
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeWM_LT  3003
+excs  AC_midL_MAN  1
+excs  Hippo_GM_LT_FS  17
+excs  vDC_LT_FS  28
+excs  OptCh_FS  85
+excs  Insula_GM_LT_FS  1035
+excs  Insula_WM_LT_FS  3035
+excs  Front_lobeGM_LT  1001
+excs  Front_lobeWM_LT  3001
+excs  Fusi_GM_LT_FS  1007
+excs  Fusi_WM_LT_FS  3007
+excs  SegWM_LT_LPV_custom  1
+excs  ITG_GM_LT_FS  1009
+excs  ITG_WM_LT_FS  3009

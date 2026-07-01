@@ -1,0 +1,31 @@
+# Bundle: ILF_RT
+# type  name  label
+incs1  Occ_lobeGM_RT  2004
+
+incs2  ITG1_MSBP_RT  91
+incs2  ITG2_MSBP_RT  92
+incs2  MTG4_MSBP_RT  98
+incs2  TempP_GM_FS_RT  2033
+incs2  Fusi4_MSBP_RT  87
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  STG_GM_RT_FS  2030
+excs  G_OSup_GM_RT_2009  2116
+excs  Phippo_GM_RT_FS  2016
+excs  Phippo_WM_RT_FS  4016
+excs  Cing_lobeGM_LT  2003
+excs  Cing_lobeWM_LT  4003
+excs  AC_midL_MAN  1
+excs  Hippo_GM_RT_FS  53
+excs  vDC_RT_FS  60
+excs  OptCh_FS  85
+excs  Insula_GM_RT_FS  2035
+excs  Insula_WM_RT_FS  4035
+excs  Front_lobeGM_RT  2001
+excs  Front_lobeWM_RT  4001
+excs  Pari_lobeGM_RT  2006
+excs  Pari_lobeWM_RT  4006
+excs  SegWM_RT_MPV_custom  1
+excs  M1_GM_RT_FS  2024
+excs  M1_WM_RT_FS  4024

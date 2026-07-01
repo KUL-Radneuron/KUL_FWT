@@ -1,0 +1,28 @@
+# Bundle: PyT_PMC_LT
+# type  name  label
+incs1  BStem_FS  16
+
+incs2  cMFG_GM_LT_FS  1003
+
+excs  CC_allr_custom  1
+excs  BStemr_exc_RT_custom  1
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeWM_LT  2003
+excs  LT_ML_X_custom  1
+excs  Thal_LT_ero2_custom  1
+excs  Temp_lobeGM_LT  1005
+excs  Temp_lobeWM_LT  3005
+excs  Putamen_LT_FS  12
+excs  SFG_GM_LT_FS  1028
+excs  SFG_WM_LT_FS  3028
+excs  Caudate_GM_LT_FS  11
+excs  M1_GM_LT_FS  1024
+excs  M1_WM_LT_FS  2024
+excs  S1_GM_LT_FS  1022
+excs  S1_WM_LT_FS  3022
+excs  Occ_lobeGM_LT  1004
+excs  Occ_lobeWM_LT  3004
+excs  SegWM_LT_PPV_custom  1
+excs  rMFG5_MSBP_LT  142
+excs  rMFG6_MSBP_LT  143
+excs  hypothal_vDC_RT_excr_custom  1

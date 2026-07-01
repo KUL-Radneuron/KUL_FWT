@@ -1,0 +1,35 @@
+# Bundle: ThR_Sup_RT
+# type  name  label
+incs1  Thal_FS_RT  49
+
+incs2  M1_GM_RT_FS  2024
+incs2  S1_GM_RT_FS  2022
+incs2  ParaC_GM_RT_FS  2017
+incs2  SFG5_RT_MSBP  24
+incs2  SFG6_RT_MSBP  25
+incs2  SFG7_RT_MSBP  26
+incs2  SFG8_RT_MSBP  27
+incs2  cMFG_GM_RT_FS  2003
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  vDC_RT  60
+excs  AC_midline_MAN  1
+excs  hypothal_RT_excr_custom  1
+excs  Temp_lobeGM_RT  2005
+excs  Putamen_GM_RT_FS  12
+excs  Caudate_GM_RT_FS  11
+excs  PD25_Pulvi_RT_custom  1
+excs  Caud_ero_RT_custom  1
+excs  SFG1_MSBP_RT  20
+excs  SFG2_MSBP_RT  21
+excs  SFG3_MSBP_RT  22
+excs  SFG4_MSBP_RT  23
+excs  cACC_GM_FS_RT  2002
+excs  PD25_DM_RT_custom  1
+excs  PD25_DL_RT_custom  1
+excs  Fornix_Fx  250
+excs  Pari_lobeGM_RT  2006
+excs  Pari_lobeWM_RT  4006
+excs  rMFG_GM_RT_FS  2027
+excs  rMFG_WM_RT_FS  4027

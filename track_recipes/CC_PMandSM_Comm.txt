@@ -1,0 +1,32 @@
+# Bundle: CC_PMandSM_Comm
+# type  name  label
+incs1  CC_mid_FS  253
+
+incs2  cMFG_GM_LT_FS  1003
+incs2  SFG5_LT_MSBP  148
+incs2  SFG6_LT_MSBP  149
+incs2  SFG7_LT_MSBP  150
+incs2  SFG8_LT_MSBP  151
+
+incs3  cMFG_GM_RT_FS  2003
+incs3  SFG5_RT_MSBP  24
+incs3  SFG6_RT_MSBP  25
+incs3  SFG7_RT_MSBP  26
+incs3  SFG8_RT_MSBP  27
+
+excs  AC_MAN  1
+excs  PC_MAN  2
+excs  CC_genu_FS  255
+excs  CC_ant_FS  254
+excs  CC_isth_FS  252
+excs  CC_splen_FS  251
+excs  Fornix_Fx  250
+excs  BStem_FS  16
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeGM_RT  2003
+excs  SegWM_LT_ALIC_custom  1
+excs  SegWM_RT_ALIC_custom  1
+excs  vDC_FS_LT  28
+excs  vDC_FS_RT  60
+excs  Thal_LT_FS  10
+excs  Thal_RT_FS  49

@@ -1,0 +1,36 @@
+# Bundle: OR_RT
+# type  name  label
+incs1  PD25_Pulvi_RT_custom  1
+incs1  JuHA_LGN_RT_custom  1
+
+incs2  Calc_S_RT_2009  12145
+incs2  PeriCal_RT_GM_FS  2021
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  Phippo_GM_RT_FS  2016
+excs  RT_vDC_subseg2_custom  1
+excs  Ins_IFOF_exc_RT_custom  1
+excs  PD25_VA_VL_LT_custom  1
+excs  Cing_lobeGM_RT  2003
+excs  Cing_lobeWM_RT  4003
+excs  AC_midL_MAN  1
+excs  Hippo_GM_RT_FS  53
+excs  OptCh_FS  85
+excs  Insula_GM_RT_FS  2035
+excs  Front_lobeGM_RT  2001
+excs  Pari_lobeGM_RT  2006
+excs  SegWM_RT_PLIC_ex_custom  1
+excs  iPCC_GM_RT_FS  2010
+excs  Caudate_GM_RT_FS  50
+excs  SegWM_RT_ALIC_custom  1
+excs  SegWM_RT_MPV_custom  1
+excs  SegWM_RT_mIPV_custom  1
+excs  Ins_subseg3_RT_custom  1
+excs  Fusi4_MSBP_RT  87
+excs  TempP_GM_FS_RT  2033
+excs  TempP_WM_FS_RT  4033
+excs  ITG_GM_FS_RT  2009
+excs  ITG_WM_FS_RT  4009
+excs  Ins_infL_wm_RT_custom  1
+excs  Ins_subseg5_RT_custom  1

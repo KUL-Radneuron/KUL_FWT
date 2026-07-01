@@ -1,0 +1,35 @@
+# Bundle: ThR_Sup_LT
+# type  name  label
+incs1  Thal_FS_LT  10
+
+incs2  M1_GM_LT_FS  1024
+incs2  S1_GM_LT_FS  1022
+incs2  ParaC_GM_LT_FS  1017
+incs2  SFG5_LT_MSBP  148
+incs2  SFG6_LT_MSBP  149
+incs2  SFG7_LT_MSBP  150
+incs2  SFG8_LT_MSBP  151
+incs2  cMFG_GM_LT_FS  1003
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  vDC_LT  28
+excs  AC_midline_MAN  1
+excs  hypothal_LT_excr_custom  1
+excs  Temp_lobeGM_LT  1005
+excs  Putamen_GM_LT_FS  12
+excs  Caudate_GM_LT_FS  11
+excs  PD25_Pulvi_LT_custom  1
+excs  Caud_ero_LT_custom  1
+excs  SFG1_MSBP_LT  144
+excs  SFG2_MSBP_LT  145
+excs  SFG3_MSBP_LT  146
+excs  SFG4_MSBP_LT  147
+excs  cACC_GM_FS_LT  1002
+excs  PD25_DM_LT_custom  1
+excs  PD25_DL_LT_custom  1
+excs  Fornix_Fx  250
+excs  Pari_lobeGM_LT  1006
+excs  Pari_lobeWM_LT  3006
+excs  rMFG_GM_LT_FS  1027
+excs  rMFG_WM_LT_FS  3027

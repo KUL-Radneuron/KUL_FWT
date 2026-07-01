@@ -1,0 +1,21 @@
+# Bundle: TCing_LT
+# type  name  label
+incs1  Hippo_FS_LT  17
+
+incs2  Pc_GM_FS_LT  1025
+incs2  iPCC_GM_FS_LT  1010
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  PCC_GM_FS_LT  1023
+excs  PCC_WM_FS_LT  3023
+excs  Fusi_GM_FS_LT  1026
+excs  Fusi_WM_FS_LT  3026
+excs  Unseg_WM_FS_LT  5001
+excs  Insula_GM_FS_LT  1035
+excs  Insula_WM_FS_LT  3035
+excs  MedOF_GM_FS_LT  1014
+excs  MedOF_WM_FS_LT  3014
+excs  LatOF_GM_FS_LT  1012
+excs  LatOF_WM_FS_LT  3012
+excs  Amyg_FS_LT  18

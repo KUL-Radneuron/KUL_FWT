@@ -1,0 +1,34 @@
+# Bundle: SLF_III_RT
+# type  name  label
+incs1  IFGpTr_GM_RT_FS  2020
+incs1  IFGpOp_GM_RT_FS  2018
+incs1  IFGpOr_GM_RT_FS  2019
+
+incs2  IPL_GM_RT_FS  2008
+incs2  SMG_GM_RT_FS  2031
+
+excs  SFG1_RT_MSBP  20
+excs  SFG2_RT_MSBP  21
+excs  SFG3_RT_MSBP  22
+excs  SFG4_RT_MSBP  23
+excs  SFG5_RT_MSBP  24
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  s3Put_RT_custom  1
+excs  Thal_RT_FS  49
+excs  Temp_lobeGM_RT  2005
+excs  Temp_lobeWM_RT  4005
+excs  Phippo_GM_RT_FS  2016
+excs  Phippo_WM_RT_FS  4016
+excs  Insula_GM_RT_FS  2035
+excs  Insula_WM_RT_FS  4035
+excs  Cing_lobeGM_RT  2003
+excs  Cing_lobeWM_RT  4003
+excs  PCC_GM_RT_FS  2023
+excs  PCC_WM_RT_FS  4023
+excs  SFG6_RT_MSBP  25
+excs  SFG7_RT_MSBP  26
+excs  SFG8_RT_MSBP  27
+excs  cMFG_GM_RT_FS  2003
+excs  rMFG1_RT_MSBP  14
+excs  SPL_GM_RT_FS  2029

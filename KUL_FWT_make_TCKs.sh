@@ -5,7 +5,7 @@
 # This workflow belongs to the manuscript (under review) https://doi.org/10.1101/2021.10.13.464139, please consider citing if you will use it
 # KUL_FWT_make_TCKs.sh automatically generates fiber bundles for single subjects
 
-# version = v0.7_19072023
+# version = v2.0_01072026
 
 # to do:
 # add a fourth filtering method (relying on reconbundle with CSD templates)
@@ -26,11 +26,11 @@ cat <<USAGE
 
     Usage:
 
-    `basename $0` -p pat001 -s 01  -F /path_to/FS_dir/aparc+aseg.mgz -M /path_to/MSBP_dir/sub-pat001_label-L2018_desc-scale3_atlas.nii.gz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -T 2 -f 2
+    `basename $0` -p pat001 -s 01  -F /path_to/FS_dir/aparc+aseg.mgz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -T 2 -f 2
 
     Examples:
 
-    `basename $0` -p pat001 -s 01 -F /path_to/FS_dir/aparc+aseg.mgz -M /path_to/MSBP_dir/sub-pat001_label-L2018_desc-scale3_atlas.nii.gz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -n 6 -T 1 -f 1 -S -Q
+    `basename $0` -p pat001 -s 01 -F /path_to/FS_dir/aparc+aseg.mgz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -n 6 -T 1 -f 1 -S -Q
 
     Purpose:
 
@@ -41,7 +41,6 @@ cat <<USAGE
     -p:  BIDS participant name (anonymised name of the subject without the "sub-" prefix)
     -s:  BIDS participant session (session no. without the "ses-" prefix)
     -T:  Tracking and segmentation approach (1 = Bundle-specific tckgen, 2 = Whole brain tckgen & bundle segmentation, 3 = whole brain tckgen with mrtrix3 freesurfer ACT, 4 = Bundle specific seeding from the grey-white matter interface)
-    -M:  Full path and file name of scale 3 MSBP parcellation
     -F:  Full path and file name of aparc+aseg.mgz from FreeSurfer
     -c:  Path to config file with list of tracks to segment from the whole brain tractogram
     -d:  Path to directory with diffusion data (specific to subject and run)
@@ -55,6 +54,14 @@ cat <<USAGE
     -S:  If set screenshots will taken of each bundle
     -n:  Number of cpu for parallelisation (default is 6)
     -h:  Prints help menu
+
+    dMRI input overrides (for pipelines other than KUL_dwiprep):
+
+    -W:  Full path to WM FOD file; must be in the same space as the FA provided to KUL_FWT_make_VOIs.sh (which determines the output space of all VOIs); overrides auto-discovery from -d dir
+    -G:  Full path to FA map co-registered with the FOD (.nii.gz); overrides default \${prep_d}/fa.nii.gz
+    -B:  Full path to brain mask co-registered with the FOD (.nii.gz); overrides auto-discovery from -d dir
+    -L:  Full path to LoRE-SD ODF file (same space as VOI masks); overrides -W when provided
+    -C:  Full path to LoRE-SD contrasts directory; overrides auto-discovery from -d dir
 
 USAGE
 
@@ -74,13 +81,17 @@ p_flag=0
 s_flag=0
 T_flag=0
 F_flag=0
-M_flag=0
 c_flag=0
 d_flag=0
 o_flag=0
 a_flag=0
 Q_flag=0
 S_flag=0
+W_flag=0
+G_flag=0
+B_flag=0
+L_flag=0
+C_flag=0
 filt_fl1=0
 algo_f="iFOD2"
 
@@ -90,7 +101,7 @@ if [ "$#" -lt 1 ]; then
 
 else
 
-    while getopts "p:s:T:M:F:c:d:o:a:n:f:hQS" OPT; do
+    while getopts "p:s:T:F:c:d:o:a:n:f:W:G:B:L:C:hQS" OPT; do
 
         case $OPT in
         p) #participant
@@ -100,10 +111,6 @@ else
         s) #session
             s_flag=1
             ses=$OPTARG
-        ;;
-        M) #MSBP scale parcellation
-            M_flag=1
-            MS_sc3_in=$OPTARG
         ;;
         T) #Tractography approach
             T_flag=1
@@ -142,6 +149,26 @@ else
         n) #parallel
             n_flag=1
             ncpu=$OPTARG
+        ;;
+        W) # WM FOD file override
+            W_flag=1
+            subj_fod=$OPTARG
+        ;;
+        G) # FA map override
+            G_flag=1
+            subj_FA=$OPTARG
+        ;;
+        B) # brain mask override
+            B_flag=1
+            T1_brain_mask_inFA=$OPTARG
+        ;;
+        L) # LoRE-SD ODF override
+            L_flag=1
+            subj_lore_fod=$OPTARG
+        ;;
+        C) # LoRE-SD contrasts dir override
+            C_flag=1
+            subj_lore_contrasts_dir=$OPTARG
         ;;
         h) #help
             Usage >&2
@@ -194,14 +221,10 @@ srch_ddir_c=($(find ${diff_dir} -type d | grep  ${srch_ddir_str}))
 srch_FS_str=($(basename ${FS_apas_in})) ; FS_dir=($(dirname ${FS_apas_in}))
 srch_FS_c=($(find ${FS_dir} -type f | grep  ${srch_FS_str}))
 
-# MSBP dirs
-srch_MS_str=($(basename ${MS_sc3_in})) ; MS_dir=($(dirname ${MS_sc3_in}))
-srch_MS_c=($(find ${MS_dir} -type f | grep  ${srch_MS_str}))
+if [[ ${p_flag} -eq 0 ]] || [[ ${F_flag} -eq 0 ]] || [[ ${T_flag} -eq 0 ]] || [[ ${c_flag} -eq 0 ]] || [[ ${d_flag} -eq 0 ]]; then
 
-if [[ ${p_flag} -eq 0 ]] || [[ ${F_flag} -eq 0 ]] || [[ ${T_flag} -eq 0 ]] || [[ ${M_flag} -eq 0 ]] || [[ ${c_flag} -eq 0 ]] || [[ ${d_flag} -eq 0 ]]; then
-	
     echo
-    echo "Inputs to -p -F -M -d and -c must be set." >&2
+    echo "Inputs to -p -F -d and -c must be set." >&2
     echo
     exit 2
 	
@@ -211,15 +234,6 @@ else
     
         echo
         echo " Incorrect path to the FS aparc+aseg, please check the path and name "
-        echo
-        exit 2
-
-    fi
-
-    if [[ -z "${srch_MS_c}" ]]; then
-    
-        echo
-        echo " Incorrect path MSBP parcellation, please check the path and name "
         echo
         exit 2
 
@@ -243,7 +257,7 @@ else
 
     fi
 
-    if [[ ! ${d_dir} == *"${subj}"* ]] || [[ ! ${FS_dir} == *"${subj}"* ]] || [[ ! ${MS_dir} == *"${subj}"* ]]; then
+    if [[ ! ${d_dir} == *"${subj}"* ]] || [[ ! ${FS_dir} == *"${subj}"* ]]; then
 
         echo
         echo " Subject string does not match input files, please double check your inputs "
@@ -254,7 +268,7 @@ else
 
         if [[ ! -z ${ses} ]]; then
 
-            if [[ ! ${d_dir} == *"ses-${ses}"* ]] || [[ ! ${FS_dir} == *"ses-${ses}"* ]] || [[ ! ${MS_dir} == *"ses-${ses}"* ]]; then
+            if [[ ! ${d_dir} == *"ses-${ses}"* ]] || [[ ! ${FS_dir} == *"ses-${ses}"* ]]; then
 
                 echo
                 echo " Session string does not match input files, please double check your inputs "
@@ -267,7 +281,7 @@ else
 
     fi
 
-    echo "Inputs are -p  ${subj} -s ${ses} -c  ${conf_f} -d ${d_dir} -F ${FS_dir} -M ${MS_dir} -T ${T_app}"
+    echo "Inputs are -p  ${subj} -s ${ses} -c  ${conf_f} -d ${d_dir} -F ${FS_dir} -T ${T_app}"
 
 fi
 
@@ -484,7 +498,8 @@ processId=$(ps -ef | grep 'ABCD' | grep -v 'grep' | awk '{ printf $2 }')
 echo $processId
 
 echo "KUL_FWT_make_TCKs.sh @ ${d} with parent pid $$ and process pid $BASHPID " | tee -a ${prep_log2}
-echo "Inputs are -p  sub-${subj} -s ses-${ses} -c  ${conf_f} -d ${d_dir}  -F ${FS_dir}  -M ${MS_dir} " | tee -a ${prep_log2}
+echo "Inputs are -p  sub-${subj} -s ses-${ses} -c  ${conf_f} -d ${d_dir}  -F ${FS_dir} " | tee -a ${prep_log2}
+echo "Tool versions: $(mrconvert --version 2>&1 | head -1) | scilpy $(python -c 'import scilpy; print(scilpy.__version__)' 2>/dev/null || echo 'not found')" | tee -a ${prep_log2}
 
 # read the config file
 # if a hash is found this cell is populated with ##
@@ -754,7 +769,22 @@ function make_bundle {
             # removed --drawn_roi ${ROIs_d}/custom_VOIs/cerebrum_hemi_LT_X_nv.nii.gz any exclude
         auto_X="  -exclude ${ROIs_d}/custom_VOIs/cerebellum_Bil_X.nii.gz "
         auto_X_f="  --drawn_roi ${ROIs_d}/custom_VOIs/cerebellum_Bil_X.nii.gz any exclude"
-    
+
+    elif [[ ${TCK_2_make} == *"CPCT_LT"* ]] ; then
+
+        echo " Left Corticopontocerebellar bundle " | tee -a ${prep_log2}
+        auto_X=" -exclude ${ROIs_d}/custom_VOIs/cerebrum_hemi_RT_X_wv.nii.gz \
+        -exclude ${ROIs_d}/custom_VOIs/cerebellum_LT_X.nii.gz"
+        auto_X_f=" --drawn_roi ${ROIs_d}/custom_VOIs/cerebrum_hemi_RT_X_wv.nii.gz any \
+        exclude --drawn_roi ${ROIs_d}/custom_VOIs/cerebellum_LT_X.nii.gz any exclude"
+
+    elif [[ ${TCK_2_make} == *"CPCT_RT"* ]] ; then
+
+        echo " Right Corticopontocerebellar bundle " | tee -a ${prep_log2}
+        auto_X=" -exclude ${ROIs_d}/custom_VOIs/cerebrum_hemi_LT_X_wv.nii.gz \
+        -exclude ${ROIs_d}/custom_VOIs/cerebellum_RT_X.nii.gz"
+        auto_X_f=" --drawn_roi ${ROIs_d}/custom_VOIs/cerebrum_hemi_LT_X_wv.nii.gz any \
+        exclude --drawn_roi ${ROIs_d}/custom_VOIs/cerebellum_RT_X.nii.gz any exclude"
 
     else
 
@@ -861,13 +891,13 @@ function make_bundle {
         if [[ ${algo_f} == "FACT" ]] || [[ ${algo_f} == "Tensor_Det" ]] || [[ ${algo_f} == "Tensor_Prob" ]]; then
 
             cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} \
-            -select ${ns} -angle 60 -maxlength 280 -minlength 20 \
+            -select ${ns} -angle 60 -maxlength 280 -minlength 20 ${fod_cutoff_opt} \
             -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
 
         else
 
             cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} \
-            -select ${ns} -angle 45 -maxlength 280 -minlength 20 \
+            -select ${ns} -angle 45 -maxlength 280 -minlength 20 ${fod_cutoff_opt} \
             -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
 
         fi
@@ -1144,7 +1174,7 @@ function make_bundle {
 
                 if [[ ! -f ${tck_filt1} ]]; then
 
-                    task_in="scil_filter_tractogram.py -f --reference ${subj_FA} ${drawn_incs_str} ${drawn_excs_str} ${auto_X_f} -v ${tck_init_rs} ${tck_filt1}"
+                    task_in="scil_tractogram_filter_by_roi -f --reference ${subj_FA} ${drawn_incs_str} ${drawn_excs_str} ${auto_X_f} -v DEBUG ${tck_init_rs} ${tck_filt1}"
 
                     task_exec
 
@@ -1175,7 +1205,7 @@ function make_bundle {
 
                     if [[ ! -f ${tck_filt2} ]]; then
                     
-                        task_in="scil_detect_streamlines_loops.py -f --reference ${subj_FA} ${tck_filt1} ${tck_filt2}"
+                        task_in="scil_tractogram_detect_loops -f --reference ${subj_FA} ${tck_filt1} ${tck_filt2}"
 
                         task_exec
 
@@ -1183,30 +1213,46 @@ function make_bundle {
 
                     if [[ ! -f ${tck_filt3} ]]; then
                     
-                        task_in="scil_outlier_rejection.py -f --alpha ${Alfa} --reference ${subj_FA} ${tck_filt2} ${tck_filt3}"
+                        task_in="scil_bundle_reject_outliers -f --alpha ${Alfa} --reference ${subj_FA} ${tck_filt2} ${tck_filt3}"
 
                         task_exec
 
                     fi
 
                     if [[ ! -f ${tck_filt4} ]]; then
-                        
-                        task_in="scil_smooth_streamlines.py -f --gaussian 5 --reference ${subj_FA} ${tck_filt3} ${tck_filt4}"
+
+                        task_in="scil_tractogram_smooth -f --gaussian 5 --reference ${subj_FA} ${tck_filt3} ${tck_filt4}"
 
                         task_exec
+
+                    fi
+
+                    if [[ ! -f ${tck_filt4_inT} ]]; then
 
                         task_in="tcktransform -force ${tck_filt4} ${TCKs_w2temp} ${tck_filt4_inT}"
 
                         task_exec
-                    
+
                     fi
 
                     if [[ ! -f ${tck_filt5} ]]; then
 
-                        if [[ -f "${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck" ]]; then
-                            
-                            task_in="scil_recognize_single_bundle.py -f --reference ${UKBB_temp} --model_clustering_thr 4 --pruning_thr 8 --slr_threads ${ncpu} -v \
-                            ${tck_filt4_inT} ${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck ${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat ${tck_filt5_inT}"
+                        if [[ -f "${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck" ]] && \
+                           [[ -f "${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat" ]]; then
+
+                            # task_in="scil_tractogram_segment_with_recobundles -f --reference ${UKBB_temp} --model_clustering_thr 4 --pruning_thr 8 --slr_threads ${ncpu} -v \
+                            # ${tck_filt4_inT} ${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck ${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat ${tck_filt5_inT}"
+                            task_in="scil_tractogram_segment_with_recobundles -f \
+                            --in_tractogram_ref ${UKBB_temp} \
+                            --in_model_ref ${UKBB_temp} \
+                            --model_clustering_thr 4 \
+                            --pruning_thr 8 \
+                            --slr_threads ${ncpu} \
+                            -v INFO \
+                            ${tck_filt4_inT} \
+                            ${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck \
+                            ${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat \
+                            ${tck_filt5_inT}"
 
                             task_exec
 
@@ -1216,26 +1262,41 @@ function make_bundle {
 
                             count_checker=($(tckinfo ${tck_filt5} | grep "count:" | cut -d ":" -f2))
 
-                            # If this runs well but leaves nothing then grab what was there before it ran and continue with it
-                            if [[ ${count_checker[0]} == 0 ]]; then 
-                            
+                            # If recobundles ran but left nothing, fall back to filt4
+                            if [[ ${count_checker[0]} -eq 0 ]]; then
+
                                 task_in="mv ${tck_filt5} $(dirname ${tck_filt5})/$(basename ${tck_filt5} .tck)_failed.tck && \
                                 mv ${tck_filt4} ${tck_filt5} && mv ${tck_filt4_inT} ${tck_filt5_inT}"
 
                                 task_exec
-                            
+
                             fi
-                        
+
                         else
 
-                            # if the template bundle doesn't exist yet then we simple rename filt4 to fin
+                            # no template model or MNI_2_MNI mat not yet available — use filt4 as fin
+                            if [[ ! -f "${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat" ]]; then
+                                echo " MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat not found — skipping recobundles, using filt4 as fin" | tee -a ${prep_log2}
+                            fi
 
                             task_in="mv ${tck_filt4} ${tck_filt5} && mv ${tck_filt4_inT} ${tck_filt5_inT}"
 
                             task_exec
-                        
+
                         fi
 
+                    fi
+
+                    # Safety net: if filt5/fin still absent (e.g. recobundles crashed silently),
+                    # use filt4 as fin so downstream steps are not blocked
+                    if [[ ! -f ${tck_filt5} ]] && [[ -f ${tck_filt4} ]]; then
+                        echo " ${TCK_2_make} filt5/fin still missing after recobundles — falling back to filt4 as fin" | tee -a ${prep_log2}
+                        task_in="mv ${tck_filt4} ${tck_filt5}"
+                        task_exec
+                        if [[ -f ${tck_filt4_inT} ]]; then
+                            task_in="mv ${tck_filt4_inT} ${tck_filt5_inT}"
+                            task_exec
+                        fi
                     fi
 
                 else
@@ -1280,7 +1341,7 @@ function make_bundle {
 
                     if [[ ! -f ${tck_filt5} ]]; then
                     
-                        task_in="scil_smooth_streamlines.py -f --gaussian 5 --reference ${subj_FA} ${tck_filt1} ${tck_filt5}"
+                        task_in="scil_tractogram_smooth -f --gaussian 5 --reference ${subj_FA} ${tck_filt1} ${tck_filt5}"
 
                         task_exec
 
@@ -1405,13 +1466,13 @@ function make_bundle {
             # task_exec
 
             if [[ ! -f "${tck_filt5_centroid1}" ]]; then
-                task_in="scil_compute_centroid.py -f --reference ${subj_FA} --nb_points 50 ${tck_rs1_innat} ${tck_filt5_centroid1}"
+                task_in="scil_bundle_compute_centroid -f --reference ${subj_FA} --nb_points 50 ${tck_rs1_innat} ${tck_filt5_centroid1}"
 
                 task_exec
             fi
 
             if [[ ! -f "${Bundle_segs_dir}" ]]; then
-                task_in="scil_compute_bundle_voxel_label_map.py -f --reference ${subj_FA} ${tck_rs1_innat} ${tck_filt5_centroid1} ${Bundle_segs_dir}"
+                task_in="scil_bundle_label_map -f --reference ${subj_FA} ${tck_rs1_innat} ${tck_filt5_centroid1} ${Bundle_segs_dir}"
 
                 task_exec   
             fi
@@ -1613,11 +1674,11 @@ function make_bundle {
 
             if [[ ${TCK_2_make} == *"_RT_"* ]]; then
 
-                task_in="scil_screenshot_bundle.py -f --right --local_coloring 
+                task_in="scil_viz_bundle_screenshot_mni -f --right --local_coloring 
                 --out_dir ${TCK_out}/Screenshots --output_suffix \
                 ${TCK_2_make}_fin_${T}_${algo_f}+anat \
                 ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck ${subj_T1_in_UKBB} \
-                && scil_screenshot_bundle.py -f --right --local_coloring --out_dir \
+                && scil_viz_bundle_screenshot_mni -f --right --local_coloring --out_dir \
                 ${TCK_out}/Screenshots --anat_opacity 0 --output_suffix \
                 ${TCK_2_make}_fin_${T}_${algo_f} \
                 ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck ${subj_T1_in_UKBB}"
@@ -1626,11 +1687,11 @@ function make_bundle {
 
             else
 
-                task_in="scil_screenshot_bundle.py -f --local_coloring \
+                task_in="scil_viz_bundle_screenshot_mni -f --local_coloring \
                 --out_dir ${TCK_out}/Screenshots --output_suffix \
                 ${TCK_2_make}_fin_${T}_${algo_f}+anat \
                 ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck ${subj_T1_in_UKBB} \
-                && scil_screenshot_bundle.py -f --local_coloring --out_dir \
+                && scil_viz_bundle_screenshot_mni -f --local_coloring --out_dir \
                 ${TCK_out}/Screenshots --anat_opacity 0 --output_suffix \
                 ${TCK_2_make}_fin_${T}_${algo_f} \
                 ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck ${subj_T1_in_UKBB}"
@@ -1641,7 +1702,7 @@ function make_bundle {
 
             mkdir -p "${TCK_out}/Screenshots/mosaic_${T}_${algo_f}"
 
-            task_in="scil_visualize_bundles_mosaic.py -f --zoom 1.5 --reference ${subj_T1_in_UKBB} --opacity_background 0.3 --resolution_of_thumbnails 600 \
+            task_in="scil_viz_bundle_screenshot_mosaic -f --zoom 1.5 --reference ${subj_T1_in_UKBB} --opacity_background 0.3 --resolution_of_thumbnails 600 \
             ${subj_T1_in_UKBB} ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck \
             ${TCK_out}/Screenshots/mosaic_${T}_${algo_f}/sub-${subj}${ses_str}_${TCK_2_make}_fin_${T}_${algo_f}_inMNI_mosaic.pdf "
 
@@ -1711,7 +1772,9 @@ subj_vfd="${prep_d}/fd.nii.gz"
 
 subj_vdisp="${prep_d}/disp.nii.gz"
 
-subj_FA="${prep_d}/fa.nii.gz"
+if [[ -z "${subj_FA}" ]]; then
+    subj_FA="${prep_d}/fa.nii.gz"
+fi
 
 subj_ADC="${prep_d}/adc.nii.gz"
 
@@ -1830,8 +1893,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
     subj_FS_Fx_inFA="${prep_d}/sub-${subj}${ses_str}_FS_fornix_inFA.nii.gz"
 
-    # will use MS_2_UKBB here, as it will be normal in case of a lesion free brain
-    # and will be lesioned if using VBG filled FS input (as long as MSBP was run after VBG_FS recon-all)
+    # MS_2_UKBB is lesioned when VBG-filled FS was used; falls back to FS_2_UKBB otherwise
 
     if [[ ! -f "${prep_d}/MS_2_UKBB_${subj}${ses_str}_Warped.nii.gz" ]]; then
         
@@ -1848,6 +1910,13 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
     subj_dwi=($(find ${d_dir} -type f -name "dwi_preproced_reg2T1w.mif"))
 
     subj_fod=($(find ${d_dir} -type f -name "dhollander_wmfod_reg2T1w.mif"))
+
+    if [[ -z "${subj_lore_fod}" ]]; then
+        subj_lore_fod=($(find ${d_dir} -type f -name "odf_reg2T1w.mif" -path "*/lore_sd/*"))
+    fi
+    if [[ -z "${subj_lore_contrasts_dir}" ]]; then
+        subj_lore_contrasts_dir=$(find ${d_dir} -type d -name "lore_sd_contrasts" 2>/dev/null | head -1)
+    fi
 
     subj_dt=($(find ${d_dir} -type f -name "dwi_dt_reg2T1w.mif"))
 
@@ -1888,9 +1957,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
     fi
 
-    # Find your FODs
-    ## AR TO DO: make choice of wmfod up to the user
-
+    # Find your FODs — fallback chain for dhollander/CSD variants
     if [[ -z ${subj_fod} ]]; then
 
         subj_fod=($(find ${d_dir} -type f -name "*wmfod_reg2T1w.mif"))
@@ -1914,6 +1981,14 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
         fi
 
+    fi
+
+    # If LoRE-SD ODF is available, prefer it over CSD-based FOD
+    fod_cutoff_opt=""
+    if [[ -n ${subj_lore_fod} ]]; then
+        echo "LoRE-SD ODF found (${subj_lore_fod}), using it instead of CSD FOD" | tee -a ${prep_log2}
+        subj_fod=${subj_lore_fod}
+        fod_cutoff_opt="-cutoff 0.05"
     fi
 
     # find your brain mask in FA
@@ -2080,7 +2155,9 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
             subj_DT_vecs="${prep_d}/sub-${subj}_dwi_dt_vecs_reg2T1w.mif"
 
-            subj_FA="${prep_d}/fa.nii.gz"
+            if [[ -z "${subj_FA}" ]]; then
+                subj_FA="${prep_d}/fa.nii.gz"
+            fi
 
             subj_ADC="${prep_d}/sub-${subj}_dwi_dt_vecs_reg2T1w.mif"
 
@@ -2151,13 +2228,13 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
             if [[ ${T_app} -eq 3 ]]; then
 
-                task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_brain_mask_inFA} -select 10000000 -maxlength 300 -minlength 20 ${tracking_source} ${WB_tck}"
+                task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_brain_mask_inFA} -select 10000000 -maxlength 300 -minlength 20 ${fod_cutoff_opt} ${tracking_source} ${WB_tck}"
 
                 task_exec
 
             elif [[ ${T_app} -eq 2 ]]; then
-            
-                task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_BM_inFA_minCSF} -select 10000000 -maxlength 300 -minlength 20 ${tracking_source} ${WB_tck}"
+
+                task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_BM_inFA_minCSF} -select 10000000 -maxlength 300 -minlength 20 ${fod_cutoff_opt} ${tracking_source} ${WB_tck}"
 
                 task_exec
                 

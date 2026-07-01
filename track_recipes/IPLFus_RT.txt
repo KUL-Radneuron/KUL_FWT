@@ -1,0 +1,28 @@
+# Bundle: IPLFus_RT
+# type  name  label
+incs1  IPL1_MSBP_RT  61
+incs1  IPL2_MSBP_RT  62
+incs1  IPL3_MSBP_RT  63
+incs1  IPL4_MSBP_RT  64
+
+incs2  ITG4_MSBP_RT  94
+incs2  Fusi1_MSBP_RT  84
+incs2  Fusi2_MSBP_RT  85
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  PHip_GM_FS_RT  2016
+excs  PHip_WM_FS_RT  4016
+excs  Front_lobeGM_RT  2001
+excs  Front_lobeWM_RT  4001
+excs  STG_GM_FS_RT  2030
+excs  STG_WM_FS_RT  4030
+excs  Cune_GM_FS_RT  2005
+excs  Cune_WM_FS_RT  4005
+excs  Pc_GM_FS_RT  2025
+excs  SPL_GM_FS_RT  2029
+excs  ITG1_MSBP_RT  91
+excs  ITG2_MSBP_RT  92
+excs  ITG3_MSBP_RT  93
+excs  MTG_GM_FS_RT  2015
+excs  S1_GM_FS_RT  2022

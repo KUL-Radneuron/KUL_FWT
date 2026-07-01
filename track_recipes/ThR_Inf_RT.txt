@@ -1,0 +1,20 @@
+# Bundle: ThR_Inf_RT
+# type  name  label
+incs1  Thal_FS_RT  49
+incs1  JuHA_MGN_RT_custom  1
+
+incs2  TTG_MSBP_RT  105
+incs2  STG3_MSBP_RT  102
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  AC_midline_MAN  1
+excs  e2Put_RT_custom  1
+excs  Caudate_GM_RT_FS  50
+excs  Front_lobeGM_RT  2001
+excs  cACC_GM_FS_RT  2002
+excs  Occ_lobeGM_RT  2004
+excs  Occ_lobeWM_RT  4004
+excs  Pari_lobeGM_RT  2006
+excs  Pari_lobeWM_RT  4006
+excs  Ins_subseg1_RT_custom  1

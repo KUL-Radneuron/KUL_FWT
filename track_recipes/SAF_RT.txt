@@ -1,0 +1,28 @@
+# Bundle: SAF_RT
+# type  name  label
+incs1  SFG1_MSBP_RT  20
+incs1  SFG2_MSBP_RT  21
+incs1  MedOF_GM_RT_FS  2014
+incs1  LatOF_GM_RT_FS  2012
+
+incs2  SFG5_MSBP_RT  24
+incs2  SFG6_MSBP_RT  25
+incs2  SFG7_MSBP_RT  26
+incs2  SFG8_MSBP_RT  27
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  Insula_GM_RT_FS  2035
+excs  Insula_WM_RT_FS  4035
+excs  M1_GM_RT_FS  2024
+excs  M1_WM_RT_FS  4024
+excs  IFG_POp_GM_RT_FS  2018
+excs  IFG_POp_WM_RT_FS  4018
+excs  IFG_PTr_GM_RT_FS  2020
+excs  IFG_PTr_WM_RT_FS  4020
+excs  putamen_RT_FS  51
+excs  caudate_RT_FS  50
+excs  Cing_lobeGM_RT  2005
+excs  Cing_lobeWM_RT  4005
+excs  Thal_FS_RT  49
+excs  cMFG_GM_RT_FS  2003

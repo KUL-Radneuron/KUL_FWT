@@ -1,0 +1,35 @@
+# Bundle: UF_RT
+# type  name  label
+incs1  MTG4_MSBP_RT  98
+incs1  ITG1_MSBP_RT  91
+incs1  TempP_GM_FS_RT  2033
+incs1  EntoR_MSBP_RT  89
+
+incs2  IFG_PTr_GM_FS_RT  2020
+incs2  IFG_POr_GM_FS_RT  2019
+incs2  FrontP_GM_FS_RT  2032
+incs2  LatOF_GM_FS_RT  2012
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  Acc_FS_RT  58
+excs  Thal_FS_RT  49
+excs  Caud_FS_RT  50
+excs  Amyg_FS_RT  54
+excs  Hippo_FS_RT  53
+excs  Unseg_WM_RT  5002
+excs  Pari_lobeGM_RT  2006
+excs  Pari_lobeWM_RT  4006
+excs  Occ_lobeGM_RT  2004
+excs  Occ_lobeWM_RT  4004
+excs  rACC_GM_FS_RT  2026
+excs  rACC_WM_FS_RT  4026
+excs  IFG_POp_GM_RT  2018
+excs  IFG_POp_WM_RT  4018
+excs  M1_GM_FS_RT  2024
+excs  M1_WM_FS_RT  4024
+excs  Ins1_MSBP_RT  106
+excs  Ins2_MSBP_RT  107
+excs  Ins3_MSBP_RT  108
+excs  UF_Ins_exc_RT_custom  1
+excs  MedOF_GM_FS_RT  2014

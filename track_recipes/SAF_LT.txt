@@ -1,0 +1,28 @@
+# Bundle: SAF_LT
+# type  name  label
+incs1  SFG1_MSBP_LT  144
+incs1  SFG2_MSBP_LT  145
+incs1  MedOF_GM_LT_FS  1014
+incs1  LatOF_GM_LT_FS  1012
+
+incs2  SFG5_MSBP_LT  148
+incs2  SFG6_MSBP_LT  149
+incs2  SFG7_MSBP_LT  150
+incs2  SFG8_MSBP_LT  151
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  Insula_GM_LT_FS  1035
+excs  Insula_WM_LT_FS  3035
+excs  M1_GM_LT_FS  1024
+excs  M1_WM_LT_FS  3024
+excs  IFG_POp_GM_LT_FS  1018
+excs  IFG_POp_WM_LT_FS  3018
+excs  IFG_PTr_GM_LT_FS  1020
+excs  IFG_PTr_WM_LT_FS  3020
+excs  putamen_LT_FS  12
+excs  caudate_LT_FS  11
+excs  Cing_lobeGM_LT  1005
+excs  Cing_lobeWM_LT  3005
+excs  Thal_FS_LT  10
+excs  cMFG_GM_LT_FS  1003

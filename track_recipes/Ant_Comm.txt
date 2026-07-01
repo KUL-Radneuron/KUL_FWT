@@ -1,0 +1,16 @@
+# Bundle: Ant_Comm
+# type  name  label
+incs1  AC_MAN  1
+
+incs2  Temp_lobeGM_LT  1005
+incs2  Occ_lobeGM_LT  1004
+
+incs3  Temp_lobeGM_RT  2005
+incs3  Occ_lobeGM_RT  2004
+
+excs  CC_allr_custom  1
+excs  PC_MAN  2
+excs  BStem_FS  16
+excs  OptCh_FS  85
+excs  Thal_LT_FS  10
+excs  Thal_RT_FS  49

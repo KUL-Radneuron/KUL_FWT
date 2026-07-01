@@ -1,0 +1,15 @@
+# Bundle: CSHDP_LT
+# type  name  label
+incs1  STN_LT_DISTAL_STN  1
+
+incs2  M1_GM_FS_LT  1024
+
+excs  CC_allr_custom  1
+excs  hypothal_LT_excr_custom  1
+excs  BStem_FS  16
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeWM_LT  3003
+excs  Thal_LT_ero2_custom  1
+excs  SFG_GM_LT_FS  1028
+excs  SFG_WM_LT_FS  3028
+excs  SegWM_LT_ALIC_custom  1

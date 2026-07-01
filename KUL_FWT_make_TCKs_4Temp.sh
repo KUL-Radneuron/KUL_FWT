@@ -5,7 +5,7 @@
 # This workflow belongs to the manuscript (under review) https://doi.org/10.1101/2021.10.13.464139, please consider citing if you will use it
 # KUL_FWT_make_TCKs_4Temp.sh automatically generates fiber bundles for group template FOD data
 
-# version = v0.7_19072023
+# version = v2.0_01072026
 
 cwd="$(pwd)"
 
@@ -23,11 +23,11 @@ cat <<USAGE
 
     Usage:
 
-    `basename $0` -p pat001 -s 01  -F /path_to/FS_dir/aparc+aseg.mgz -M /path_to/MSBP_dir/sub-pat001_label-L2018_desc-scale3_atlas.nii.gz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -T 2 -f 2
+    `basename $0` -p pat001 -s 01  -F /path_to/FS_dir/aparc+aseg.mgz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -T 2 -f 2
 
     Examples:
 
-    `basename $0` -p pat001 -s 01 -F /path_to/FS_dir/aparc+aseg.mgz -M /path_to/MSBP_dir/sub-pat001_label-L2018_desc-scale3_atlas.nii.gz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -n 6 -T 1 -f 1 -S -Q
+    `basename $0` -p pat001 -s 01 -F /path_to/FS_dir/aparc+aseg.mgz -d /path_to/dMRI_dir -c /path_to/KUL_FWT_tracks_list.txt -o /fullpath/output -n 6 -T 1 -f 1 -S -Q
 
     Purpose:
 
@@ -38,7 +38,6 @@ cat <<USAGE
     -p:  BIDS participant name (anonymised name of the subject without the "sub-" prefix)
     -s:  BIDS participant session (session no. without the "ses-" prefix)
     -T:  Tracking and segmentation approach (1 = Bundle-specific tckgen, 2 = Whole brain tckgen & bundle segmentation, 3 = whole brain tckgen with mrtrix3 freesurfer ACT, 4 = Bundle specific seeding from the grey-white matter interface)
-    -M:  Full path and file name of scale 3 MSBP parcellation
     -F:  Full path and file name of aparc+aseg.mgz from FreeSurfer
     -c:  Path to config file with list of tracks to segment from the whole brain tractogram
     -d:  Path to directory with diffusion data (specific to subject and run)
@@ -71,7 +70,6 @@ p_flag=0
 s_flag=0
 T_flag=0
 F_flag=0
-M_flag=0
 c_flag=0
 d_flag=0
 o_flag=0
@@ -87,7 +85,7 @@ if [ "$#" -lt 1 ]; then
 
 else
 
-    while getopts "p:s:T:M:F:c:d:o:a:n:f:hQS" OPT; do
+    while getopts "p:s:T:F:c:d:o:a:n:f:hQS" OPT; do
 
         case $OPT in
         p) #participant
@@ -97,10 +95,6 @@ else
         s) #session
             s_flag=1
             ses=$OPTARG
-        ;;
-        M) #MSBP scale parcellation
-            M_flag=1
-            MS_sc3_in=$OPTARG
         ;;
         T) #Tractography approach
             T_flag=1
@@ -191,14 +185,10 @@ srch_ddir_c=($(find ${diff_dir} -type d | grep  ${srch_ddir_str}))
 srch_FS_str=($(basename ${FS_apas_in})) ; FS_dir=($(dirname ${FS_apas_in}))
 srch_FS_c=($(find ${FS_dir} -type f | grep  ${srch_FS_str}))
 
-# MSBP dirs
-srch_MS_str=($(basename ${MS_sc3_in})) ; MS_dir=($(dirname ${MS_sc3_in}))
-srch_MS_c=($(find ${MS_dir} -type f | grep  ${srch_MS_str}))
+if [[ ${p_flag} -eq 0 ]] || [[ ${F_flag} -eq 0 ]] || [[ ${T_flag} -eq 0 ]] || [[ ${c_flag} -eq 0 ]] || [[ ${d_flag} -eq 0 ]]; then
 
-if [[ ${p_flag} -eq 0 ]] || [[ ${F_flag} -eq 0 ]] || [[ ${T_flag} -eq 0 ]] || [[ ${M_flag} -eq 0 ]] || [[ ${c_flag} -eq 0 ]] || [[ ${d_flag} -eq 0 ]]; then
-	
     echo
-    echo "Inputs to -p -F -M -d and -c must be set." >&2
+    echo "Inputs to -p -F -d and -c must be set." >&2
     echo
     exit 2
 	
@@ -208,15 +198,6 @@ else
     
         echo
         echo " Incorrect path to the FS aparc+aseg, please check the path and name "
-        echo
-        exit 2
-
-    fi
-
-    if [[ -z "${srch_MS_c}" ]]; then
-    
-        echo
-        echo " Incorrect path MSBP parcellation, please check the path and name "
         echo
         exit 2
 
@@ -240,7 +221,7 @@ else
 
     fi
 
-    if [[ ! ${d_dir} == *"${subj}"* ]] || [[ ! ${FS_dir} == *"${subj}"* ]] || [[ ! ${MS_dir} == *"${subj}"* ]]; then
+    if [[ ! ${d_dir} == *"${subj}"* ]] || [[ ! ${FS_dir} == *"${subj}"* ]]; then
 
         echo
         echo " Subject string does not match input files, please double check your inputs "
@@ -251,7 +232,7 @@ else
 
         if [[ ! -z ${ses} ]]; then
 
-            if [[ ! ${d_dir} == *"ses-${ses}"* ]] || [[ ! ${FS_dir} == *"ses-${ses}"* ]] || [[ ! ${MS_dir} == *"ses-${ses}"* ]]; then
+            if [[ ! ${d_dir} == *"ses-${ses}"* ]] || [[ ! ${FS_dir} == *"ses-${ses}"* ]]; then
 
                 echo
                 echo " Session string does not match input files, please double check your inputs "
@@ -264,7 +245,7 @@ else
 
     fi
 
-    echo "Inputs are -p  ${subj} -s ${ses} -c  ${conf_f} -d ${d_dir} -F ${FS_dir} -M ${MS_dir} -T ${T_app}"
+    echo "Inputs are -p  ${subj} -s ${ses} -c  ${conf_f} -d ${d_dir} -F ${FS_dir} -T ${T_app}"
 
 fi
 
@@ -481,7 +462,7 @@ processId=$(ps -ef | grep 'ABCD' | grep -v 'grep' | awk '{ printf $2 }')
 echo $processId
 
 echo "KUL_FWT_make_TCKs_4Temp.sh @ ${d} with parent pid $$ and process pid $BASHPID " | tee -a ${prep_log2}
-echo "Inputs are -p  sub-${subj} -s ses-${ses} -c  ${conf_f} -d ${d_dir}  -F ${FS_dir}  -M ${MS_dir} " | tee -a ${prep_log2}
+echo "Inputs are -p  sub-${subj} -s ses-${ses} -c  ${conf_f} -d ${d_dir}  -F ${FS_dir} " | tee -a ${prep_log2}
 
 # read the config file
 # if a hash is found this cell is populated with ##
@@ -682,7 +663,22 @@ function make_bundle {
             # removed --drawn_roi ${ROIs_d}/custom_VOIs/cerebrum_hemi_LT_X_nv.nii.gz any exclude
         auto_X="  -exclude ${ROIs_d}/custom_VOIs/cerebellum_Bil_X.nii.gz "
         auto_X_f="  --drawn_roi ${ROIs_d}/custom_VOIs/cerebellum_Bil_X.nii.gz any exclude"
-    
+
+    elif [[ ${TCK_2_make} == *"CPCT_LT"* ]] ; then
+
+        echo " Left Corticopontocerebellar bundle " | tee -a ${prep_log2}
+        auto_X=" -exclude ${ROIs_d}/custom_VOIs/cerebrum_hemi_RT_X_wv.nii.gz \
+        -exclude ${ROIs_d}/custom_VOIs/cerebellum_LT_X.nii.gz"
+        auto_X_f=" --drawn_roi ${ROIs_d}/custom_VOIs/cerebrum_hemi_RT_X_wv.nii.gz any \
+        exclude --drawn_roi ${ROIs_d}/custom_VOIs/cerebellum_LT_X.nii.gz any exclude"
+
+    elif [[ ${TCK_2_make} == *"CPCT_RT"* ]] ; then
+
+        echo " Right Corticopontocerebellar bundle " | tee -a ${prep_log2}
+        auto_X=" -exclude ${ROIs_d}/custom_VOIs/cerebrum_hemi_LT_X_wv.nii.gz \
+        -exclude ${ROIs_d}/custom_VOIs/cerebellum_RT_X.nii.gz"
+        auto_X_f=" --drawn_roi ${ROIs_d}/custom_VOIs/cerebrum_hemi_LT_X_wv.nii.gz any \
+        exclude --drawn_roi ${ROIs_d}/custom_VOIs/cerebellum_RT_X.nii.gz any exclude"
 
     else
 
@@ -796,7 +792,7 @@ function make_bundle {
 
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
-        cmd_str="tckedit -force -nthreads ${ncpu} -maxlength 280 -minlength 10 -tck_weights_in ${TCKs_outd}/sub-${subj}${ses_str}_sift2_ws.txt \
+        cmd_str="tckedit -force -nthreads ${ncpu} -maxlength 280 -minlength 10 ${sift_str} \
         -mask ${tracking_mask} -minweight 0.08 ${includes_str} ${excludes_str} ${auto_X} ${WB_tck} ${tck_init}"
 
     elif [[ ${T_app} == 3 ]]; then 
@@ -1043,7 +1039,7 @@ function make_bundle {
 
                 if [[ ! -f ${tck_filt1} ]]; then
 
-                    task_in="scil_filter_tractogram.py -f --reference ${temp_fod1} ${drawn_incs_str} ${drawn_excs_str} ${auto_X_f} -v ${tck_init_rs} ${tck_filt1}"
+                    task_in="scil_tractogram_filter_by_roi -f --reference ${temp_fod1} ${drawn_incs_str} ${drawn_excs_str} ${auto_X_f} -v DEBUG ${tck_init_rs} ${tck_filt1}"
 
                     task_exec
 
@@ -1073,7 +1069,7 @@ function make_bundle {
 
                     if [[ ! -f ${tck_filt2} ]]; then
 
-                        task_in="scil_detect_streamlines_loops.py -f --reference ${temp_fod1} ${tck_filt1} ${tck_filt2}"
+                        task_in="scil_tractogram_detect_loops -f --reference ${temp_fod1} ${tck_filt1} ${tck_filt2}"
 
                         task_exec
 
@@ -1081,7 +1077,7 @@ function make_bundle {
 
                     if [[ ! -f ${tck_filt3} ]]; then
                     
-                        task_in="scil_outlier_rejection.py -f --alpha ${Alfa} --reference ${temp_fod1} ${tck_filt2} ${tck_filt3}"
+                        task_in="scil_bundle_reject_outliers -f --alpha ${Alfa} --reference ${temp_fod1} ${tck_filt2} ${tck_filt3}"
 
                         task_exec
 
@@ -1089,9 +1085,13 @@ function make_bundle {
 
                     if [[ ! -f ${tck_filt4} ]]; then
 
-                        task_in="scil_smooth_streamlines.py -f --gaussian 5 --reference ${temp_fod1} ${tck_filt3} ${tck_filt4}"
+                        task_in="scil_tractogram_smooth -f --gaussian 5 --reference ${temp_fod1} ${tck_filt3} ${tck_filt4}"
 
                         task_exec
+
+                    fi
+
+                    if [[ ! -f ${tck_filt4_inT} ]]; then
 
                         task_in="tcktransform -force ${tck_filt4} ${TCKs_w2temp} ${tck_filt4_inT}"
 
@@ -1101,27 +1101,52 @@ function make_bundle {
 
                     if [[ ! -f ${tck_filt5} ]]; then
                     
-                        if [[ -f "${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck" ]]; then
-                            
-                            task_in="scil_recognize_single_bundle.py -f --reference ${UKBB_temp} --model_clustering_thr 4 --pruning_thr 8 --slr_threads ${ncpu} -v \
-                            ${tck_filt4_inT} ${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck ${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat ${tck_filt5_inT}"
+                        if [[ -f "${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck" ]] && \
+                           [[ -f "${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat" ]]; then
+
+                            task_in="scil_tractogram_segment_with_recobundles -f \
+                            --in_tractogram_ref ${UKBB_temp} \
+                            --in_model_ref ${UKBB_temp} \
+                            --model_clustering_thr 4 \
+                            --pruning_thr 8 \
+                            --slr_threads ${ncpu} \
+                            -v INFO \
+                            ${tck_filt4_inT} \
+                            ${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck \
+                            ${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat \
+                            ${tck_filt5_inT}"
 
                             task_exec
 
                             task_in="tcktransform -force ${tck_filt5_inT} ${TCKs_wfromtemp} ${tck_filt5}"
 
                             task_exec
-                        
+
                         else
 
-                            # if the template bundle doesn't exist yet then we simple rename filt4 to fin
+                            # no template model or MNI_2_MNI mat not yet available — use filt4 as fin
+                            if [[ ! -f "${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat" ]]; then
+                                echo " MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat not found — skipping recobundles, using filt4 as fin" | tee -a ${prep_log2}
+                            fi
 
                             task_in="mv ${tck_filt4} ${tck_filt5} && mv ${tck_filt4_inT} ${tck_filt5_inT}"
 
                             task_exec
 
                         fi
-                    
+
+                    fi
+
+                    # Safety net: if filt5/fin still absent (e.g. recobundles crashed silently),
+                    # use filt4 as fin so downstream steps are not blocked
+                    if [[ ! -f ${tck_filt5} ]] && [[ -f ${tck_filt4} ]]; then
+                        echo " ${TCK_2_make} filt5/fin still missing after recobundles — falling back to filt4 as fin" | tee -a ${prep_log2}
+                        task_in="mv ${tck_filt4} ${tck_filt5}"
+                        task_exec
+                        if [[ -f ${tck_filt4_inT} ]]; then
+                            task_in="mv ${tck_filt4_inT} ${tck_filt5_inT}"
+                            task_exec
+                        fi
                     fi
 
                 else
@@ -1166,7 +1191,7 @@ function make_bundle {
 
                     if [[ ! -f ${tck_filt5} ]]; then
 
-                        task_in="scil_smooth_streamlines.py -f --gaussian 5 --reference ${temp_fod1} ${tck_filt1} ${tck_filt5}"
+                        task_in="scil_tractogram_smooth -f --gaussian 5 --reference ${temp_fod1} ${tck_filt1} ${tck_filt5}"
 
                         task_exec
 
@@ -1291,13 +1316,13 @@ function make_bundle {
             # task_exec
 
             if [[ ! -f "${tck_filt5_centroid1}" ]]; then
-                task_in="scil_compute_centroid.py -f --reference ${temp_fod1} --nb_points 50 ${tck_rs1_innat} ${tck_filt5_centroid1}"
+                task_in="scil_bundle_compute_centroid -f --reference ${temp_fod1} --nb_points 50 ${tck_rs1_innat} ${tck_filt5_centroid1}"
 
                 task_exec
             fi
 
             if [[ ! -f "${Bundle_segs_dir}" ]]; then
-                task_in="scil_compute_bundle_voxel_label_map.py -f --reference ${temp_fod1} ${tck_rs1_innat} ${tck_filt5_centroid1} ${Bundle_segs_dir}"
+                task_in="scil_bundle_label_map -f --reference ${temp_fod1} ${tck_rs1_innat} ${tck_filt5_centroid1} ${Bundle_segs_dir}"
 
                 task_exec   
             fi
@@ -1483,11 +1508,11 @@ function make_bundle {
 
             if [[ ${TCK_2_make} == *"_RT_"* ]]; then
 
-                task_in="scil_screenshot_bundle.py -f --right --local_coloring 
+                task_in="scil_viz_bundle_screenshot_mni -f --right --local_coloring 
                 --out_dir ${TCK_out}/Screenshots --output_suffix \
                 ${TCK_2_make}_fin_${T}_${algo_f}+anat \
                 ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck ${subj_T1_in_UKBB} \
-                && scil_screenshot_bundle.py -f --right --local_coloring --out_dir \
+                && scil_viz_bundle_screenshot_mni -f --right --local_coloring --out_dir \
                 ${TCK_out}/Screenshots --anat_opacity 0 --output_suffix \
                 ${TCK_2_make}_fin_${T}_${algo_f} \
                 ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck ${subj_T1_in_UKBB}"
@@ -1496,11 +1521,11 @@ function make_bundle {
 
             else
 
-                task_in="scil_screenshot_bundle.py -f --local_coloring \
+                task_in="scil_viz_bundle_screenshot_mni -f --local_coloring \
                 --out_dir ${TCK_out}/Screenshots --output_suffix \
                 ${TCK_2_make}_fin_${T}_${algo_f}+anat \
                 ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck ${subj_T1_in_UKBB} \
-                && scil_screenshot_bundle.py -f --local_coloring --out_dir \
+                && scil_viz_bundle_screenshot_mni -f --local_coloring --out_dir \
                 ${TCK_out}/Screenshots --anat_opacity 0 --output_suffix \
                 ${TCK_2_make}_fin_${T}_${algo_f} \
                 ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck ${subj_T1_in_UKBB}"
@@ -1511,7 +1536,7 @@ function make_bundle {
 
             mkdir -p "${TCK_out}/Screenshots/mosaic_${T}_${algo_f}"
 
-            task_in="scil_visualize_bundles_mosaic.py -f --zoom 1.5 --reference ${subj_T1_in_UKBB} --opacity_background 0.3 --resolution_of_thumbnails 600 \
+            task_in="scil_viz_bundle_screenshot_mosaic -f --zoom 1.5 --reference ${subj_T1_in_UKBB} --opacity_background 0.3 --resolution_of_thumbnails 600 \
             ${subj_T1_in_UKBB} ${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI.tck \
             ${TCK_out}/Screenshots/mosaic_${T}_${algo_f}/${TCK_2_make}_fin_${T}_${algo_f}_inMNI_mosaic.pdf "
 
@@ -1689,8 +1714,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
     subj_FS_Fx_inFOD="${prep_d}/sub-${subj}${ses_str}_FS_fornix_inFOD.nii.gz"
 
-    # will use MS_2_UKBB here, as it will be normal in case of a lesion free brain
-    # and will be lesioned if using VBG filled FS input (as long as MSBP was run after VBG_FS recon-all)
+    # MS_2_UKBB is lesioned when VBG-filled FS was used; falls back to FS_2_UKBB otherwise
 
     if [[ ! -f "${prep_d}/MS_2_UKBB_${subj}${ses_str}_Warped.nii.gz" ]]; then
         
@@ -2022,7 +2046,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
                 task_exec
 
-                sift_str=" -tck_weights_in ${TCKs_outd}/sub-${subj}_sift2_ws.txt "
+                sift_str=" -tck_weights_in ${TCKs_outd}/sub-${subj}${ses_str}_sift2_ws.txt "
 
             else
 

@@ -1,0 +1,31 @@
+# Bundle: ThR_OCD_DBS_LT
+# type  name  label
+incs1  PD25_DM_LT_custom  1
+incs1  STN_LT_DISTAL_STN  1
+
+incs2  SFG1_MSBP_LT  144
+incs2  SFG2_MSBP_LT  145
+incs2  SFG3_MSBP_LT  146
+incs2  SFG4_MSBP_LT  147
+incs2  MedOF_GM_LT_FS  1014
+incs2  LatOF_GM_LT_FS  1012
+incs2  FrP_GM_LT_FS  1032
+incs2  cACC_GM_FS_LT  1002
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  AC_midline_MAN  1
+excs  hypothal_LT_excr_custom  1
+excs  Temp_lobeGM_LT  1003
+excs  Putamen_GM_LT_FS  12
+excs  Caudate_GM_LT_FS  11
+excs  PD25_Pulvi_LT_custom  1
+excs  Fornix_Fx  250
+excs  Occ_lobeGM_LT  1004
+excs  Pari_lobeGM_LT  1006
+excs  M1_GM_FS_LT  1024
+excs  M1_WM_FS_LT  3024
+excs  PHipp_GM_LT_FS  1016
+excs  PHipp_WM_LT_FS  3016
+excs  Insula_GM_LT_FS  1035
+excs  Insula_WM_LT_FS  3035

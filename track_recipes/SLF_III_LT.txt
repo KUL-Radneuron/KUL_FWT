@@ -1,0 +1,34 @@
+# Bundle: SLF_III_LT
+# type  name  label
+incs1  IFGpTr_GM_LT_FS  1020
+incs1  IFGpOp_GM_LT_FS  1018
+incs1  IFGpOr_GM_LT_FS  1019
+
+incs2  SMG_GM_LT_FS  1031
+incs2  IPL_GM_LT_FS  1008
+
+excs  SFG1_LT_MSBP  144
+excs  SFG2_LT_MSBP  145
+excs  SFG3_LT_MSBP  146
+excs  SFG4_LT_MSBP  147
+excs  SFG5_LT_MSBP  148
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  s3Put_LT_custom  1
+excs  Thal_LT_FS  10
+excs  Temp_lobeGM_LT  1005
+excs  Temp_lobeWM_LT  3005
+excs  Phippo_GM_LT_FS  1016
+excs  Phippo_WM_LT_FS  3016
+excs  Insula_GM_LT_FS  1035
+excs  Insula_WM_LT_FS  3035
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeWM_LT  3003
+excs  PCC_GM_LT_FS  1023
+excs  PCC_WM_LT_FS  3023
+excs  SFG6_LT_MSBP  149
+excs  SFG7_LT_MSBP  150
+excs  SFG8_LT_MSBP  151
+excs  cMFG_GM_LT_FS  1003
+excs  rMFG1_LT_MSBP  138
+excs  SPL_GM_LT_FS  1029

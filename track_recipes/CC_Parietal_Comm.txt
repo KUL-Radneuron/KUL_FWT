@@ -1,0 +1,30 @@
+# Bundle: CC_Parietal_Comm
+# type  name  label
+incs1  CC_splen_FS  251
+
+incs2  Pari_lobeGM_LT  1006
+
+incs3  Pari_lobeGM_RT  2006
+
+excs  AC_MAN  1
+excs  PC_MAN  2
+excs  CC_genu_FS  255
+excs  CC_ant_FS  254
+excs  CC_mid_FS  253
+excs  CC_isth_FS  252
+excs  Fornix_Fx  250
+excs  Front_lobeGM_LT  1001
+excs  Front_lobeGM_RT  2001
+excs  S1_GM_FS_LT  1022
+excs  S1_GM_FS_RT  2022
+excs  BStem_FS  16
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeGM_RT  2003
+excs  Occ_lobeGM_LT  1004
+excs  Occ_lobeWM_LT  3004
+excs  Occ_lobeGM_RT  2004
+excs  Occ_lobeWM_RT  4004
+excs  vDC_FS_LT  28
+excs  vDC_FS_RT  60
+excs  Thal_LT_FS  10
+excs  Thal_RT_FS  49

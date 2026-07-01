@@ -1,0 +1,27 @@
+# Bundle: CCing_RT
+# type  name  label
+incs1  rACC_GM_FS_RT  2026
+incs1  cACC_GM_FS_RT  2002
+
+incs2  PCC_GM_FS_LT  2023
+incs2  iPCC_GM_FS_LT  2010
+incs2  Pc_GM_FS_LT  2025
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  STG_GM_FS_RT  2030
+excs  Unseg_WM_FS_RT  5002
+excs  vDC_FS_RT  60
+excs  IFG_POp_GM_FS_RT  2018
+excs  IFG_POp_WM_FS_RT  4018
+excs  IFG_PTr_GM_FS_RT  2020
+excs  IFG_PTr_WM_FS_RT  4020
+excs  Phippo_GM_FS_RT  2016
+excs  Phipp_WM_FS_RT  4016
+excs  SFG_GM_FS_RT  2028
+excs  Hippo_RT_FS  53
+excs  Temp_lobeGM_RT  2005
+excs  Temp_lobeWM_RT  4005
+excs  AC_midline_MAN  1
+excs  Insula_GM_FS_LT  2035
+excs  Insula_WM_FS_LT  4035

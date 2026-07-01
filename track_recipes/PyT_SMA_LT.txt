@@ -1,0 +1,32 @@
+# Bundle: PyT_SMA_LT
+# type  name  label
+incs1  BStem_FS  16
+
+incs2  SFG5_LT_MSBP  148
+incs2  SFG6_LT_MSBP  149
+incs2  SFG7_LT_MSBP  150
+incs2  SFG8_LT_MSBP  151
+
+excs  CC_allr_custom  1
+excs  BStemr_exc_RT_custom  1
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeWM_LT  2003
+excs  LT_ML_X_custom  1
+excs  Thal_LT_ero2_custom  1
+excs  Temp_lobeGM_LT  1005
+excs  Temp_lobeWM_LT  3005
+excs  Putamen_LT_FS  12
+excs  cMFG_GM_LT_FS  1003
+excs  rMFG_GM_LT_FS  1027
+excs  Caudate_GM_LT_FS  11
+excs  M1_GM_LT_FS  2024
+excs  M1_WM_LT_FS  4024
+excs  S1_GM_LT_FS  2022
+excs  S1_WM_LT_FS  4022
+excs  Occ_lobeGM_LT  1004
+excs  Occ_lobeWM_LT  3004
+excs  SFG1_LT_MSBP  144
+excs  SFG2_LT_MSBP  145
+excs  SFG3_LT_MSBP  146
+excs  SFG4_LT_MSBP  147
+excs  hypothal_vDC_RT_excr_custom  1

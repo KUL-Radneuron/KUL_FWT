@@ -1,0 +1,28 @@
+# Bundle: IPLFus_LT
+# type  name  label
+incs1  IPL1_MSBP_LT  185
+incs1  IPL2_MSBP_LT  186
+incs1  IPL3_MSBP_LT  187
+incs1  IPL4_MSBP_LT  188
+
+incs2  ITG4_MSBP_LT  218
+incs2  Fusi1_MSBP_LT  208
+incs2  Fusi2_MSBP_LT  209
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  PHip_GM_FS_LT  1016
+excs  PHip_WM_FS_LT  3016
+excs  Front_lobeGM_LT  1001
+excs  Front_lobeWM_LT  3001
+excs  STG_GM_FS_LT  2030
+excs  STG_WM_FS_LT  4030
+excs  Cune_GM_FS_LT  1005
+excs  Cune_WM_FS_LT  3005
+excs  Pc_GM_FS_LT  1025
+excs  SPL_GM_FS_LT  1029
+excs  ITG1_MSBP_LT  215
+excs  ITG2_MSBP_LT  216
+excs  ITG3_MSBP_LT  217
+excs  MTG_GM_FS_LT  1015
+excs  S1_GM_FS_LT  1022
