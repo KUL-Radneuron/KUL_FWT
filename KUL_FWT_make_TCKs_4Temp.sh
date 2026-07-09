@@ -1470,6 +1470,25 @@ function make_bundle {
                 task_exec &
             done
 
+            # --- BUAN-style along-tract profiling (additive, dipy.stats.analysis.afq_profile) ---
+            # Runs alongside the MRtrix fixel-based per-segment sampling above, writing to
+            # separate _buan_scores_ files rather than replacing it. This script has no
+            # per-subject DTI scalars (FA/ADC/AD/RD) in scope, only TDI/Length/Curve; fixel-only
+            # metrics (FD/Disp/Peaks/FC/logFC/FDC) have no BUAN equivalent and stay MRtrix-based.
+            # Streamlines are oriented via the bundle centroid before per-node averaging.
+            buan_metrics=("TDI" "Length" "Curve")
+            buan_scalars=("${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_tdi.nii.gz" \
+                "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_length.nii.gz" \
+                "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_curve.nii.gz")
+
+            for met in ${!buan_metrics[@]}; do
+                buan_out="${TCK_out}/QQ/sub-${subj}${ses_str}_${buan_metrics[$met]}_buan_scores_${TCK_2_make}.txt"
+                task_in="KUL_FWT_buan_profile.py ${tck_rs1_innat} ${temp_fod1} ${buan_scalars[$met]} \
+                    ${buan_metrics[$met]} ${buan_out} --n-points 50 --orient-by-tck ${tck_filt5_centroid1}"
+
+                task_exec &
+            done
+
             # sleep 10
 
             # new KUL_QQ_TCKs.py should be in the for loop above
