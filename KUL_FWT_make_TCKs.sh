@@ -62,6 +62,9 @@ cat <<USAGE
     -B:  Full path to brain mask co-registered with the FOD (.nii.gz); overrides auto-discovery from -d dir
     -L:  Full path to LoRE-SD ODF file (same space as VOI masks); overrides -W when provided
     -C:  Full path to LoRE-SD contrasts directory; overrides auto-discovery from -d dir
+    -U:  EXPERIMENTAL opt-in: if an rfa-modulated lore_sd FOD (rfa_modulated_fod_reg2T1w.mif,
+         from KUL_dwiprep.sh) is found, prefer it over the plain lore_sd ODF. Without -U,
+         behavior is unchanged (plain lore_sd ODF, if present, is still preferred over CSD).
 
 USAGE
 
@@ -92,6 +95,7 @@ G_flag=0
 B_flag=0
 L_flag=0
 C_flag=0
+use_rfa_mod_fod=0
 filt_fl1=0
 algo_f="iFOD2"
 
@@ -101,7 +105,7 @@ if [ "$#" -lt 1 ]; then
 
 else
 
-    while getopts "p:s:T:F:c:d:o:a:n:f:W:G:B:L:C:hQS" OPT; do
+    while getopts "p:s:T:F:c:d:o:a:n:f:W:G:B:L:C:hQSU" OPT; do
 
         case $OPT in
         p) #participant
@@ -169,6 +173,10 @@ else
         C) # LoRE-SD contrasts dir override
             C_flag=1
             subj_lore_contrasts_dir=$OPTARG
+        ;;
+        U) # opt-in: prefer the experimental rfa-modulated lore_sd FOD, when found,
+           # over the plain lore_sd ODF (see KUL_dwiprep.sh rfa_modulated_fod.mif)
+            use_rfa_mod_fod=1
         ;;
         h) #help
             Usage >&2
@@ -884,7 +892,7 @@ function make_bundle {
 
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
-        # cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} -angle 45 \
+        # cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} -angle 60 \
         # -select ${ns} -maxlength 280 -minlength 20 \
         # -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
 
@@ -897,7 +905,7 @@ function make_bundle {
         else
 
             cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} \
-            -select ${ns} -angle 45 -maxlength 280 -minlength 20 ${fod_cutoff_opt} \
+            -select ${ns} -angle 60 -maxlength 280 -minlength 20 ${fod_cutoff_opt} \
             -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
 
         fi
@@ -938,7 +946,7 @@ function make_bundle {
 
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
-        # cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} -angle 45 \
+        # cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} -angle 60 \
         # -select ${ns} -maxlength 280 -minlength 20 \
         # -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
 
@@ -951,7 +959,7 @@ function make_bundle {
         else
 
             cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} \
-            -select ${ns} -angle 45 -maxlength 280 -minlength 20 \
+            -select ${ns} -angle 60 -maxlength 280 -minlength 20 \
             -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
 
         fi
@@ -1917,6 +1925,10 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
     if [[ -z "${subj_lore_contrasts_dir}" ]]; then
         subj_lore_contrasts_dir=$(find ${d_dir} -type d -name "lore_sd_contrasts" 2>/dev/null | head -1)
     fi
+    subj_rfa_mod_fod=""
+    if [[ $use_rfa_mod_fod -eq 1 ]]; then
+        subj_rfa_mod_fod=($(find ${d_dir} -type f -name "rfa_modulated_fod_reg2T1w.mif" -path "*/lore_sd/*"))
+    fi
 
     subj_dt=($(find ${d_dir} -type f -name "dwi_dt_reg2T1w.mif"))
 
@@ -1983,9 +1995,15 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
     fi
 
-    # If LoRE-SD ODF is available, prefer it over CSD-based FOD
+    # If LoRE-SD ODF is available, prefer it over CSD-based FOD. If the experimental
+    # rfa-modulated FOD is available AND opted into (-U), prefer that over the plain
+    # lore_sd ODF instead.
     fod_cutoff_opt=""
-    if [[ -n ${subj_lore_fod} ]]; then
+    if [[ -n ${subj_rfa_mod_fod} ]]; then
+        echo "rfa-modulated lore_sd FOD found (${subj_rfa_mod_fod}), using it (opt-in -U)" | tee -a ${prep_log2}
+        subj_fod=${subj_rfa_mod_fod}
+        fod_cutoff_opt="-cutoff 0.05"
+    elif [[ -n ${subj_lore_fod} ]]; then
         echo "LoRE-SD ODF found (${subj_lore_fod}), using it instead of CSD FOD" | tee -a ${prep_log2}
         subj_fod=${subj_lore_fod}
         fod_cutoff_opt="-cutoff 0.05"
@@ -2125,7 +2143,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
         if [[ ${T_app} -gt 2 ]]; then
             
-            tracking_string=" -algorithm ${algo_f} -seed_gmwmi ${subj_gmwmi_inFA} -act ${subj_5tt_inFA} -angle 45 "
+            tracking_string=" -algorithm ${algo_f} -seed_gmwmi ${subj_gmwmi_inFA} -act ${subj_5tt_inFA} -angle 60 "
 
             tracking_source=" ${subj_fod} "
 
@@ -2222,7 +2240,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
             echo " Whole brain tractogram not found, generating " | tee -a ${prep_log2}
 
-            # task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_BM_inFA_minCSF} -select 10000000 -angle 45 -maxlength 300 -minlength 20 ${tracking_source} ${WB_tck}"
+            # task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_BM_inFA_minCSF} -select 10000000 -angle 60 -maxlength 300 -minlength 20 ${tracking_source} ${WB_tck}"
 
             # task_exec
 
