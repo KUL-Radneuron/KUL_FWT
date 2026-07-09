@@ -1448,30 +1448,17 @@ function make_bundle {
 
         # metrics+=("${MNI_segs}" "${MNI_agg}")
 
-        if [[ -f "${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}.tck" ]] && [[ ! -f "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_QQ_done.done" ]]; then 
+        if [[ -f "${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}.tck" ]] && [[ ! -f "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_QQ_done.done" ]]; then
 
             mkdir -p "${TCK_out}/QQ"
 
             mkdir -p "${TCK_out}/QQ/tmp"
 
-            # first we resample both in MNI and native space
-            task_in="tckresample -force -nthreads ${ncpu} -num_points 101 ${tck_filt5_inT} ${tck_rs1_inT}"
-
-            task_exec
-
+            # resample the bundle (native space) — feeds the centroid, the connectivity
+            # plot below, and every KUL_FWT_buan_profile.py call in the tractometry function
             task_in="tckresample -force -nthreads ${ncpu} -num_points 101 ${tck_filt5} ${tck_rs1_innat}"
 
             task_exec
-
-            # then we map and convert to a binary mask
-            task_in="tckmap -template ${subj_FA} -force ${tck_rs1_innat} - | mrthreshold -ignorezero -percentile 1 - - | mrcalc - 0 -gt ${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_rs1c_mask.nii.gz"
-
-            task_exec
-
-            # get the segments map
-            # task_in="KUL_Voxel_mask_segment.py -o ${TCK_out}/QQ/tmp ${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_rs1c_mask.nii.gz"
-
-            # task_exec
 
             if [[ ! -f "${tck_filt5_centroid1}" ]]; then
                 task_in="scil_bundle_compute_centroid -f --reference ${subj_FA} --nb_points 50 ${tck_rs1_innat} ${tck_filt5_centroid1}"
@@ -1479,77 +1466,14 @@ function make_bundle {
                 task_exec
             fi
 
-            if [[ ! -f "${Bundle_segs_dir}" ]]; then
-                task_in="scil_bundle_label_map -f --reference ${subj_FA} ${tck_rs1_innat} ${tck_filt5_centroid1} ${Bundle_segs_dir}"
-
-                task_exec   
-            fi
-
-            if [[ ! -f "${Bundle_segs_dir}/labels_map_inMNI.nii.gz" ]]; then
-                task_in="antsApplyTransforms -d 3 -i ${Bundle_segs_dir}/labels_map.nii.gz -o ${Bundle_segs_dir}/labels_map_inMNI.nii.gz -r ${UKBB_temp} \
-                -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz \
-                -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
-                -t ${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz \
-                -t [${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0] -n NearestNeighbor"
-
-                task_exec
-            fi
-            
-            if [[ ! -f "${Bundle_segs_dir}/labels_map_inMNI_segments_map.pdf" ]]; then
-                task_in="KUL_FWT_TCKsm_cap.py -i ${Bundle_segs_dir}/labels_map_inMNI.nii.gz"
-
-                task_exec
-            fi
-
-            if [[ ! -d "${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels_smoothed" ]]; then
-                # Replace zeros with nans in the resulting segments map
-                task_in="mrthreshold ${Bundle_segs_dir}/labels_map.nii.gz -abs 0.0 -comparison gt -nan ${Bundle_segs_dir}/bundle_mask_nan.nii.gz \
-                && mrcalc ${Bundle_segs_dir}/bundle_mask_nan.nii.gz ${Bundle_segs_dir}/labels_map.nii.gz -mult ${Bundle_segs_dir}/segments_nan.nii.gz -force \
-                && mrcalc ${Bundle_segs_dir}/labels_map.nii.gz 0 -gt ${Bundle_segs_dir}/bundle_mask.nii.gz -force"
-
-                task_exec
-                
-                # convert the tck to fixels
-                task_in="tck2fixel ${tck_rs1_innat} ${prep_d}/fixel_metrics ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_2_make}_native_fixels.mif -nthreads $ncpu -force "
-
-                task_exec
-
-                # convert the naned segments voxel map to fixels for this bundle
-                task_in="voxel2fixel ${Bundle_segs_dir}/segments_nan.nii.gz ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_segments_native_fixels ${TCK_2_make}_segments_nan.mif -nthreads $ncpu -force \
-                && voxel2fixel ${Bundle_segs_dir}/segments_nan.nii.gz ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_segments_native_fixels ${TCK_2_make}_segments_nan.mif -nthreads $ncpu -force"
-
-                task_exec
-
-                # probably need to do fixelconnectivity and fixelfilter here
-
-                task_in="fixelconnectivity ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${tck_rs1_innat} ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixel_matrix -nthreads ${ncpu} -force"
-
-                task_exec
-
-                task_in="fixelfilter -matrix ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixel_matrix -force -nthreads ${ncpu} ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels smooth ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels_smoothed"
-
-                task_exec
-            fi
-
-            # then use the results of that with a mask (generated from thresholding the segments fixels at i) to sample the fixel data at specific segments and dump all to a txt file
-            
-            # no need for the centroid of the bundle anymore - flawed concept anyway!
-            # task_in="scil_compute_centroid.py -f --reference ${UKBB_temp} --nb_points 101 ${tck_filt5_inT} ${tck_filt5_centroid1}"
-
-            # task_exec
-
-            # # this we still need, but there might be a better way of doing it.. we don't need to map the centroid obviously but the whole bundle
-            # task_in="tckmap -force -nthreads ${ncpu} -template ${UKBB_temp} ${tck_filt5_centroid1} - | mrcalc - 0 -gt - | maskfilter - dilate - -npass 2 | mrcalc - ${TCK_out}/${TCK_2_make}_incs_map_agg_inMNI.nii.gz -mult ${tck_cent1_HT_map} -force -nthreads ${ncpu} -datatype uint16"
-
-            # task_exec
-            
-            # no problems here
+            # length/curve/tdi as plain scalar volumes (not fixel data)
             task_in="tckmap -precise -force -stat_vox sum -contrast length -template ${subj_FA} ${tck_filt5} ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_length.nii.gz \
             && tckmap -precise -force -stat_vox sum -contrast curvature -template ${subj_FA} ${tck_filt5} ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_curve.nii.gz \
             && tckmap -precise -force -stat_vox sum -contrast tdi -template ${subj_FA} ${tck_filt5} ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_tdi.nii.gz"
 
             task_exec
 
+            # --- connectivity matrix (unrelated to tractometry, unchanged) ---
             task_in="antsApplyTransforms -d 3 -i ${CFP_aparc_inFA} \
             -o ${CFP_aparc_inMNI} -r ${UKBB_temp} \
             -t ${prep_d}/FS_2_UKBB_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/FS_2_UKBB_${subj}${ses_str}_0GenericAffine.mat,0] \
@@ -1560,122 +1484,21 @@ function make_bundle {
             task_in="KUL_FWT_plot_bundle_connectivity.py ${tck_rs1_innat} ${CFP_aparc_inFA} ${TCK_out}/QQ"
 
             task_exec
-            
-            # Works, voxelize the tractogram metrics
-            task_in="voxel2fixel -force ${Bundle_segs_dir}/bundle_mask_nan.nii.gz ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_bundle_mask ${TCK_2_make}_bundle_mask_nan.mif \
-            && voxel2fixel -force ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_length.nii.gz ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_length ${TCK_2_make}_length.mif \
-            && voxel2fixel -force ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_curve.nii.gz ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_curve ${TCK_2_make}_curve.mif \
-            && voxel2fixel -force ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_tdi.nii.gz ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_tdi ${TCK_2_make}_tdi.mif"
 
-            task_exec
+            # --- unified along-tract tractometry (dipy.stats.analysis.afq_profile) ---
+            # See KUL_FWT_tractometry_functions.sh: replaces the previous two-track design
+            # (MRtrix fixel-based 50-segment sampler + a separate additive BUAN pass) with
+            # one profiling path for all 13 metrics.
+            source "$(dirname "$0")/KUL_FWT_tractometry_functions.sh"
 
-            # fixelized the DTI metrics - need specific dir for these
-            task_in="mrcalc ${subj_FA} ${Bundle_segs_dir}/bundle_mask_nan.nii.gz -mult ${TCK_out}/QQ/tmp/${TCK_2_make}_fa.mif \
-            && mrcalc ${subj_ADC} ${Bundle_segs_dir}/bundle_mask_nan.nii.gz -mult ${TCK_out}/QQ/tmp/${TCK_2_make}_adc.mif \
-            && mrcalc ${subj_AD} ${Bundle_segs_dir}/bundle_mask_nan.nii.gz -mult ${TCK_out}/QQ/tmp/${TCK_2_make}_ad.mif \
-            && mrcalc ${subj_RD} ${Bundle_segs_dir}/bundle_mask_nan.nii.gz -mult ${TCK_out}/QQ/tmp/${TCK_2_make}_rd.mif"
-
-            task_exec
-
-            # output here can go to the native_fixels dir no problem
-            task_in="voxel2fixel -force ${TCK_out}/QQ/tmp/${TCK_2_make}_fa.mif ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_2_make}_fa.mif \
-            && voxel2fixel -force ${TCK_out}/QQ/tmp/${TCK_2_make}_adc.mif ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_2_make}_adc.mif \
-            && voxel2fixel -force ${TCK_out}/QQ/tmp/${TCK_2_make}_ad.mif ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_2_make}_ad.mif \
-            && voxel2fixel -force ${TCK_out}/QQ/tmp/${TCK_2_make}_rd.mif ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_2_make}_rd.mif"
-
-            task_exec
-
-            Bundle_tdi="${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_tdi/${TCK_2_make}_tdi.mif"
-            Bundle_length="${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_length/${TCK_2_make}_length.mif"
-            Bundle_curve="${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_curve/${TCK_2_make}_curve.mif"
-            Bundle_fa="${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_fa.mif"
-            Bundle_adc="${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_adc.mif"
-            Bundle_ad="${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_ad.mif"
-            Bundle_rd="${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_rd.mif"
-            
-            metrics=("FA" "ADC" "AD" "RD" "TDI" "Length" "Curve")
-            mets_fs=("${Bundle_fa}" "${Bundle_adc}" "${Bundle_ad}" "${Bundle_rd}" "${Bundle_tdi}" "${Bundle_length}" "${Bundle_curve}")
-
-            if [[ ${algo_f} == "iFOD2" ]] || [[ ${algo_f} == "iFOD1" ]] || [[ ${algo_f} == "SD_Stream" ]]; then
-
-                task_in="mrcalc ${prep_d}/fixel_metrics/${subj_ffd} ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_bundle_mask/${TCK_2_make}_bundle_mask_nan.mif -mult ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_fd.mif \
-                && mrcalc ${prep_d}/fixel_metrics/${subj_fdisp} ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_bundle_mask/${TCK_2_make}_bundle_mask_nan.mif -mult ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_disp.mif \
-                && mrcalc ${prep_d}/fixel_metrics/${subj_fpk} ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_bundle_mask/${TCK_2_make}_bundle_mask_nan.mif -mult ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_peaks.mif \
-                && mrcalc ${prep_d}/fixel_metrics/${subj_ffc} ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_bundle_mask/${TCK_2_make}_bundle_mask_nan.mif -mult ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_fc.mif \
-                && mrcalc ${prep_d}/fixel_metrics/${subj_flogfc} ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_bundle_mask/${TCK_2_make}_bundle_mask_nan.mif -mult ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_logfc.mif \
-                && mrcalc ${prep_d}/fixel_metrics/${subj_ffdc} ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_bundle_mask/${TCK_2_make}_bundle_mask_nan.mif -mult ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_fdc.mif"
-
-                task_exec
-
-                Bundle_ffd="${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_fd.mif"
-                Bundle_fdisp="${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_disp.mif"
-                Bundle_fpk="${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_peaks.mif"
-                Bundle_fc="${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_fc.mif"
-                Bundle_logfc="${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_logfc.mif"
-                Bundle_fdc="${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels/${TCK_2_make}_fdc.mif"
-
-                metrics+=("FD" "Disp" "Peaks" "FC" "logFC" "FDC")
-                mets_fs+=("${Bundle_ffd}" "${Bundle_fdisp}" "${Bundle_fpk}" "${Bundle_fc}" "${Bundle_logfc}" "${Bundle_fdc}")
-
-            fi
-
-            mkdir -p ${TCK_out}/QQ/tmp/${TCK_2_make}_sep_fixel_segments_native  
-            cp ${TCK_out}/QQ/tmp/${TCK_2_make}_segments_native_fixels/index.mif ${TCK_out}/QQ/tmp/${TCK_2_make}_segments_native_fixels/directions.mif ${TCK_out}/QQ/tmp/${TCK_2_make}_sep_fixel_segments_native/
-            if [[ ! -f "${TCK_out}/QQ/tmp/${TCK_2_make}_sep_fixel_segments_native/fixel_segment_50.mif" ]]; then
-                for iseg in {1..50}; do
-                    mrcalc ${TCK_out}/QQ/tmp/${TCK_2_make}_segments_native_fixels/${TCK_2_make}_segments_nan.mif ${iseg} -eq - | mrthreshold - -abs 0.0 -comparison gt ${TCK_out}/QQ/tmp/${TCK_2_make}_sep_fixel_segments_native/fixel_segment_${iseg}.mif
-                done
-            fi
-
-            unset iseg 
-            # echo "$(echo ${metrics[@]} | sed 's/ /, /g') " >> ${TCK_out}/QQ/mean_scores_fba_${TCK_2_make}.txt
-            # To measure these scalars from the fixel maps
-            for met in ${!metrics[@]}; do 
-                echo "Segments, Mean_${metrics[$met]}" > ${TCK_out}/QQ/sub-${subj}${ses_str}_${metrics[$met]}_scores_${TCK_2_make}.txt
-                for iseg in {1..50}; do
-                    # echo "mrstats -mask ${TCK_out}/QQ/tmp/${TCK_2_make}_sep_fixel_segments_native/fixel_segment_${iseg}.mif \
-                    #         -ignorezero -output mean ${TCK_out}/QQ/tmp/${mets_fs[$met]}"
-                    echo "${iseg}, $(mrstats -mask ${TCK_out}/QQ/tmp/${TCK_2_make}_sep_fixel_segments_native/fixel_segment_${iseg}.mif \
-                            -ignorezero -output mean ${mets_fs[$met]})" >> ${TCK_out}/QQ/sub-${subj}${ses_str}_${metrics[$met]}_scores_${TCK_2_make}.txt
-                done
-                
-                task_in="KUL_FWT_plot_fixel_bundle_metrics.py ${TCK_out}/QQ/sub-${subj}${ses_str}_${metrics[$met]}_scores_${TCK_2_make}.txt ${TCK_out}/QQ/sub-${subj}${ses_str}_${metrics[$met]}_scores_${TCK_2_make}_plot.pdf  ${Bundle_segs_dir}/labels_map_inMNI_segments_map.pdf"
-
-                task_exec &
-            done
-
-            # --- BUAN-style along-tract profiling (additive, dipy.stats.analysis.afq_profile) ---
-            # Runs alongside the MRtrix fixel-based per-segment sampling above, writing to
-            # separate _buan_scores_ files rather than replacing it, so both can be compared.
-            # Only covers the plain scalar/shape metrics (no BUAN equivalent for fixel data
-            # like FD/Disp/Peaks/FC/logFC/FDC, which stay MRtrix-fixel-based only).
-            # Streamlines are oriented via the bundle centroid (tck_filt5_centroid1) before
-            # per-node averaging — without this, streamlines with inconsistent start/end
-            # order would average together points from different anatomical locations.
+            tractometry_reference_nii="${subj_FA}"
             buan_metrics=("FA" "ADC" "AD" "RD" "TDI" "Length" "Curve")
             buan_scalars=("${subj_FA}" "${subj_ADC}" "${subj_AD}" "${subj_RD}" \
                 "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_tdi.nii.gz" \
                 "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_length.nii.gz" \
                 "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_curve.nii.gz")
 
-            for met in ${!buan_metrics[@]}; do
-                buan_out="${TCK_out}/QQ/sub-${subj}${ses_str}_${buan_metrics[$met]}_buan_scores_${TCK_2_make}.txt"
-                task_in="KUL_FWT_buan_profile.py ${tck_rs1_innat} ${subj_FA} ${buan_scalars[$met]} \
-                    ${buan_metrics[$met]} ${buan_out} --n-points 50 --orient-by-tck ${tck_filt5_centroid1}"
-
-                task_exec &
-            done
-
-            # sleep 10
-
-            # new KUL_QQ_TCKs.py should be in the for loop above
-            # this will take as input the resampled bundle, the centroid?, the metric of choice and the prep_d
-            # no need to make the QQ dir in there anymore
-            # csvs need to be read in then plotted line by line
-
-            # task_in="KUL_FWT_TCKsQQ.py -i ${tck_reor} -m ${prep_d}"
-
-            # task_exec
+            KUL_FWT_run_tractometry
 
             touch "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_QQ_done.done" && echo "${TCK_2_make}_fin_${T}_${algo_f} QQ work is done" | tee -a ${prep_log2}
 
