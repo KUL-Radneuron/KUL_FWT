@@ -778,7 +778,7 @@ function make_bundle {
         
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
-        cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} -angle 45 \
+        cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} -angle 60 \
         -power 2.0 -cutoff 0.08 -select ${ns} -maxlength 280 -minlength 20 \
         -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
 
@@ -819,7 +819,7 @@ function make_bundle {
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
         cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} \
-        -select ${ns} -angle 45 -maxlength 280 -minlength 20 \
+        -select ${ns} -angle 60 -maxlength 280 -minlength 20 \
         -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
     fi
 
@@ -1917,7 +1917,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
         
         fi
         
-        tracking_string=" -algorithm ${algo_f} -seed_gmwmi ${subj_gmwmi_inFOD} -act ${subj_5tt_inFOD} -angle 45 "
+        tracking_string=" -algorithm ${algo_f} -seed_gmwmi ${subj_gmwmi_inFOD} -act ${subj_5tt_inFOD} -angle 60 "
 
         tracking_source=" ${subj_fod} "
 
@@ -2012,7 +2012,7 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
             echo " Whole brain tractogram not found, generating " | tee -a ${prep_log2}
 
-            # task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_BM_inFOD_minCSF} -select 20000000 -angle 45 -cutoff 0.08 -power 2.0 -maxlength 300 -minlength 20 ${tracking_source} ${WB_tck}"
+            # task_in="tckgen -force -nthreads ${ncpu} ${tracking_string} -mask ${T1_BM_inFOD_minCSF} -select 20000000 -angle 60 -cutoff 0.08 -power 2.0 -maxlength 300 -minlength 20 ${tracking_source} ${WB_tck}"
 
             # task_exec
 
