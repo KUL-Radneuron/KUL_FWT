@@ -38,8 +38,10 @@ function KUL_FWT_run_tractometry {
         task_in="tck2fixel ${tck_rs1_innat} ${prep_d}/fixel_metrics ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_2_make}_native_fixels.mif -nthreads $ncpu -force"
         task_exec
 
-        # whole-bundle mask straight from the TDI footprint (no scil_bundle_label_map needed)
-        task_in="mrcalc ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_tdi.nii.gz 0 -gt -nan ${TCK_out}/QQ/tmp/${TCK_2_make}_bundle_mask_nan.nii.gz -force"
+        # whole-bundle mask straight from the TDI footprint (no scil_bundle_label_map needed).
+        # mrthreshold (not mrcalc — mrcalc has no -nan option) matches the -nan-fill idiom
+        # the original labels_map-based mask used.
+        task_in="mrthreshold ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_tdi.nii.gz -abs 0.0 -comparison gt -nan ${TCK_out}/QQ/tmp/${TCK_2_make}_bundle_mask_nan.nii.gz -force"
         task_exec
 
         task_in="voxel2fixel -force ${TCK_out}/QQ/tmp/${TCK_2_make}_bundle_mask_nan.nii.gz ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_bundle_mask ${TCK_2_make}_bundle_mask_nan.mif"

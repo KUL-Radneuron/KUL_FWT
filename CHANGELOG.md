@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased (working tree, 2026-07-10 — first real-data test, bugfix)
+
+Found via a real test run (`KUL_LOG_test_10072026`): the whole-bundle mask step
+in `KUL_FWT_tractometry_functions.sh` used `mrcalc <tdi> 0 -gt -nan <out> -force`
+— but `mrcalc` has no `-nan` option (only `mrthreshold` does; that's what the
+pre-existing labels_map-based mask used, before this session's unification).
+This broke immediately with `mrcalc: [ERROR] unknown option "-nan"`, cascading
+through every downstream step for the 6 fixel-only metrics per bundle
+(`voxel2fixel` → `fixel2voxel` → `KUL_FWT_buan_profile.py`, each failing on a
+file that was never created because the one before it failed). Fixed by
+switching back to `mrthreshold ... -abs 0.0 -comparison gt -nan ...`, the same
+tool/flag the original code used, just pointed at the TDI map instead of the
+removed label map.
+
+Also found in the same test run, **not from this session's changes** —
+flagging for separate investigation:
+- `warp2metric` segfaults (SIGSEGV) computing subject-level fiber
+  cross-section, but the wrapping `task_exec` still reports `exit status 0` —
+  it doesn't actually check subprocess exit codes, so a crash silently lets
+  the pipeline continue with missing/corrupt output.
+- `scil_tractogram_segment_with_recobundles` → `dipy.segment.bundles.RecoBundles`
+  crashes with `TypeError: unsupported format string passed to NoneType.__format__`
+  (`clust_thr` ends up `None` despite `--model_clustering_thr 4` being passed)
+  — hit 17 of 51 bundle-segmentation attempts in this run (AF_all_RT, CCing_LT/RT,
+  CST_LT/RT, FAT_RT, IFOF_LT/RT, ILF_LT/RT, MdLF_LT/RT, ML_LT, TCing_LT/RT,
+  UF_LT/RT), preventing those tracts from being generated at all. Looks like a
+  scilpy/dipy version-mismatch bug in how the CLI wrapper passes
+  `--model_clustering_thr` through to `RecoBundles`.
+
 ## Unreleased (working tree, 2026-07-09, batch 2 — QQ tractometry unification)
 
 **Supersedes the "additive, not a replacement" entry below** — the two-track
