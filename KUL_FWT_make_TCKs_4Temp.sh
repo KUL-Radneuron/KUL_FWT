@@ -543,29 +543,28 @@ function task_exec {
 
     echo " Started @ $(date "+%Y-%m-%d_%H-%M-%S")" | tee -a ${prep_log2}
 
-    eval ${task_in} 2>&1 | tee -a ${prep_log2} &
+    # Run via process substitution (not a literal pipe to tee) so the PID/exit status we
+    # capture below belong to the actual command, not to tee — a literal `cmd | tee &`
+    # backgrounds the whole pipeline and `wait`/$? end up reflecting tee, not cmd.
+    eval ${task_in} > >(tee -a "${prep_log2}") 2>&1 &
 
-    # echo " pid = $! basicPID = $BASHPID " | tee -a ${prep_log2}
+    pid=$!
 
-    echo " pid = $! " | tee -a ${prep_log2}
+    echo " pid = $pid " | tee -a ${prep_log2}
 
-    wait ${pid}
+    wait "$pid"
+
+    result=$?
 
     sleep 5
 
-    echo "exit status $?" | tee -a ${prep_log2}
+    echo "exit status $result" | tee -a ${prep_log2}
 
-    # if [ $? -eq 0 ]; then
-
-    #     echo Success >> ${prep_log2}
-
-    # else
-
-    #     echo Fail >> ${prep_log2}
-
-    #     exit 1
-
-    # fi
+    if [ "$result" -eq 0 ]; then
+        echo Success | tee -a ${prep_log2}
+    else
+        echo Fail | tee -a ${prep_log2}
+    fi
 
     echo " Finished @ $(date "+%Y-%m-%d_%H-%M-%S")" | tee -a ${prep_log2}
 
@@ -574,6 +573,10 @@ function task_exec {
     echo "" | tee -a ${prep_log2}
 
     unset task_in
+
+    if [ "$result" -ne 0 ]; then
+        exit 1
+    fi
 
 }
 
@@ -1361,9 +1364,11 @@ function make_bundle {
                 "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_length.nii.gz" \
                 "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_curve.nii.gz")
 
-            KUL_FWT_run_tractometry
-
-            touch "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_QQ_done.done" && echo "${TCK_2_make}_fin_${T}_${algo_f} QQ work is done" | tee -a ${prep_log2}
+            if KUL_FWT_run_tractometry; then
+                touch "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_QQ_done.done" && echo "${TCK_2_make}_fin_${T}_${algo_f} QQ work is done" | tee -a ${prep_log2}
+            else
+                echo "ERROR: ${TCK_2_make}_fin_${T}_${algo_f} QQ tractometry failed, not marking QQ done" | tee -a ${prep_log2}
+            fi
 
         fi
 
@@ -1424,9 +1429,9 @@ function make_bundle {
 
             task_exec
 
-        fi
+            touch "${TCK_out}/Screenshots/${TCK_2_make}_fin_${T}_${algo_f}_Sc_done.done" && echo "${TCK_2_make}_fin_${T}_${algo_f} screenshots work is done" | tee -a ${prep_log2}
 
-        touch "${TCK_out}/Screenshots/${TCK_2_make}_fin_${T}_${algo_f}_Sc_done.done" && echo "${TCK_2_make}_fin_${T}_${algo_f} screenshots work is done" | tee -a ${prep_log2}
+        fi
 
     fi
 
@@ -1538,12 +1543,12 @@ subj_FOD="${prep_d}/FOD.nii.gz"
 
 # We can start this workflow if pt1 & 2 of genVOIs is done
 
-if [[ -z "${ROIs_d}/Part1.done" ]] && [[ -z "${ROIs_d}/Part2.done" ]]; then
+if [[ ! -f "${ROIs_d}/Part1.done" ]] && [[ ! -f "${ROIs_d}/Part2.done" ]]; then
 
     echo " General purpose VOIs are not yet generated, please run KUL_genVOIs.sh first"
     exit 2
 
-elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; then
+elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
 
     # these should all be created by the genVOIs script
     # will probably need some for the tckseg script
@@ -1969,7 +1974,11 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
                 # per-bundle log (was one shared file for the whole run — unreadable
                 # once bundles run concurrently); captured into this bundle's own
-                # subshell at fork time, same as TCK_to_make/ns above.
+                # subshell at fork time, same as TCK_to_make/ns above. Point the main
+                # log at it so the main log stays a useful index rather than looking
+                # like it just stopped once bundle processing starts.
+                echo "Bundle ${TCK_to_make}: see ${output_d}/KUL_FWT_TCKs_GT_log_${subj}_${TCK_to_make}_${d}.txt" | tee -a ${prep_log2}
+
                 prep_log2="${output_d}/KUL_FWT_TCKs_GT_log_${subj}_${TCK_to_make}_${d}.txt"
 
                 KUL_throttle "$bundles_simultaneous"
@@ -2011,7 +2020,11 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
                 # per-bundle log (was one shared file for the whole run — unreadable
                 # once bundles run concurrently); captured into this bundle's own
-                # subshell at fork time, same as TCK_to_make/ns above.
+                # subshell at fork time, same as TCK_to_make/ns above. Point the main
+                # log at it so the main log stays a useful index rather than looking
+                # like it just stopped once bundle processing starts.
+                echo "Bundle ${TCK_to_make}: see ${output_d}/KUL_FWT_TCKs_GT_log_${subj}_${TCK_to_make}_${d}.txt" | tee -a ${prep_log2}
+
                 prep_log2="${output_d}/KUL_FWT_TCKs_GT_log_${subj}_${TCK_to_make}_${d}.txt"
 
                 KUL_throttle "$bundles_simultaneous"

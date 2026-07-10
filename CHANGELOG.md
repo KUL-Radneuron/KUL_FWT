@@ -1,5 +1,58 @@
 # Changelog
 
+## Unreleased (working tree, 2026-07-10 — logging/status-reporting correctness pass)
+
+Prompted by real test runs where a `warp2metric` SIGSEGV still logged "exit status 0" and
+where empty/misleading logs made debugging hard. Root cause across all four `task_exec`
+copies (`KUL_FWT_make_TCKs.sh`, `_4Temp.sh`, `KUL_FWT_make_VOIs.sh`, `_4Temp.sh`): the real
+success/fail branch was commented out, and `eval ${task_in} | tee -a ${prep_log2} &`
+backgrounded the whole pipeline, so `wait`/`$?` reflected `tee`'s exit status, not the actual
+command's.
+
+- **`task_exec` fixed in all four scripts**: switched from a literal pipe-to-`tee` to process
+  substitution (`eval ${task_in} > >(tee -a "${prep_log2}") 2>&1 &`), so the PID captured by
+  `$!` and the exit status captured by `wait "$pid"` belong to the real command. Restored the
+  real `Success`/`Fail` branch (previously commented out) with `exit 1` on failure. Verified in
+  an isolated bash harness: a clean success continues, a failing command (`false`) reports
+  `Fail` and aborts, and a real SIGSEGV (exit 139) is now correctly caught instead of silently
+  reported as `exit status 0`. For a bundle running in its own backgrounded subshell
+  (`make_bundle &`), `exit 1` only aborts that one bundle's remaining steps — it does not
+  affect concurrently-running bundles or the parent script.
+- **`KUL_FWT_make_VOIs.sh`/`_4Temp.sh` use `task_exec &`** (backgrounding the whole function,
+  54 call sites) rather than calling it bare, so the restored `exit 1` only kills that one
+  background job, not the caller — multiple `task_exec &` calls in a loop were not being
+  waited on before their `.done` marker was touched. Added a new helper,
+  `KUL_wait_all_bg_and_check` (waits on every currently-outstanding background job via
+  `jobs -p`, returns nonzero if any failed), and wrapped the 4 `.done`-marker sites in both
+  scripts (`priors_warped.done`, `Part1.done`, `Part2.done`, per-bundle `_VOIs.done`) so the
+  marker is only written if every backgrounded job actually succeeded.
+- **`KUL_FWT_tractometry_functions.sh`**: `KUL_FWT_run_tractometry`'s final per-metric
+  profiling loop backgrounds up to 13 `task_exec &` calls (one per along-tract metric) with no
+  `wait` before returning — the exact same class of bug just fixed in the VOIs scripts, just
+  discovered here on a final sweep. Added a wait+check loop at the end of the function; it now
+  returns nonzero (and logs an `ERROR` line) if any profiling job failed, instead of silently
+  returning success while jobs were still running or had crashed.
+- **`QQ_done.done`/`Sc_done.done` gating**, both `KUL_FWT_make_TCKs.sh` and `_4Temp.sh`:
+  `KUL_FWT_run_tractometry`'s return value is now checked before touching `QQ_done.done`
+  (`if KUL_FWT_run_tractometry; then touch ...; else echo ERROR ...; fi`) instead of touching
+  it unconditionally right after the call. Separately, the Screenshots `Sc_done.done` touch sat
+  *outside* the `if [[ -f ...inMNI.tck ]] && [[ ! -f ...Sc_done.done ]]` guard in both scripts —
+  meaning it was touched even when the source `.tck` didn't exist and no screenshot work ran at
+  all. Moved the touch inside the guarded block so it only fires after the screenshot commands
+  actually ran (and, via `task_exec`'s restored `exit 1`, only if they succeeded).
+- **Fixed a vacuous dead-code bug**, both TCKs scripts (~line 1712/1475 region): the VOIs-ready
+  guard tested `[[ -z "${ROIs_d}/Part1.done" ]]`/`[[ ! -z ... ]]` — a literal path *string*,
+  which is never empty, so the "VOIs not generated" branch could never fire and the "already
+  generated" branch always did, regardless of whether the files existed. Changed to
+  `[[ ! -f ... ]]`/`[[ -f ... ]]`, testing the actual file.
+- **Main-log pointer**: since `prep_log2` is reassigned per-bundle (from the earlier
+  parallelization work), the shared main log now gets one line
+  (`Bundle ${TCK_to_make}: see ${output_d}/...`) right before each per-bundle log is created, so
+  it stays a useful index into the per-bundle logs instead of looking like it stopped after the
+  run header.
+- Not run against real tractography data in this environment — same standing caveat as the
+  rest of this session's work; the next real test run is what will confirm no regressions.
+
 ## Unreleased (working tree, 2026-07-10 — parallelize tractography over and within bundles)
 
 Real test run took 4+ hours in `KUL_FWT_make_TCKs.sh` for one participant: bundles were

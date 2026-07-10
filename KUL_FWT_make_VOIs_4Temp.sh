@@ -406,29 +406,28 @@ function task_exec {
 
     echo " Started @ $(date "+%Y-%m-%d_%H-%M-%S")" | tee -a ${prep_log2}
 
-    eval ${task_in} 2>&1 | tee -a ${prep_log2} &
+    # Run via process substitution (not a literal pipe to tee) so the PID/exit status we
+    # capture below belong to the actual command, not to tee — a literal `cmd | tee &`
+    # backgrounds the whole pipeline and `wait`/$? end up reflecting tee, not cmd.
+    eval ${task_in} > >(tee -a "${prep_log2}") 2>&1 &
 
-    # echo " pid = $! basicPID = $BASHPID " | tee -a ${prep_log2}
+    pid=$!
 
-    echo " pid = $! " | tee -a ${prep_log2}
+    echo " pid = $pid " | tee -a ${prep_log2}
 
-    wait ${pid}
+    wait "$pid"
+
+    result=$?
 
     sleep 5
 
-    echo "exit status $?" | tee -a ${prep_log2}
+    echo "exit status $result" | tee -a ${prep_log2}
 
-    # if [ $? -eq 0 ]; then
-
-    #     echo Success >> ${prep_log2}
-
-    # else
-
-    #     echo Fail >> ${prep_log2}
-
-    #     exit 1
-
-    # fi
+    if [ "$result" -eq 0 ]; then
+        echo Success | tee -a ${prep_log2}
+    else
+        echo Fail | tee -a ${prep_log2}
+    fi
 
     echo " Finished @ $(date "+%Y-%m-%d_%H-%M-%S")" | tee -a ${prep_log2}
 
@@ -438,6 +437,24 @@ function task_exec {
 
     unset task_in
 
+    if [ "$result" -ne 0 ]; then
+        exit 1
+    fi
+
+}
+
+function KUL_wait_all_bg_and_check {
+    # Wait for every currently-outstanding background job (e.g. several `task_exec &`
+    # calls launched without an individual wait) and report failure if any of them failed.
+    # Used right before writing a .done marker, so a job that failed "silently" from the
+    # caller's perspective (task_exec's own `exit 1` only kills its own subshell) doesn't
+    # let the marker get written anyway.
+    local _fail=0
+    local _j
+    for _j in $(jobs -p); do
+        wait "$_j" || _fail=1
+    done
+    return $_fail
 }
 
 # script start here
@@ -1215,7 +1232,12 @@ if [[ -z ${srch_pt1_done} ]]; then
         # use the PD25 labels function
         PD25_lab_gen
 
-        touch ${ROIs_d}/priors_warped.done && echo "Priors warping done" >> ${ROIs_d}/priors_warped.done
+        if KUL_wait_all_bg_and_check; then
+            touch ${ROIs_d}/priors_warped.done && echo "Priors warping done" >> ${ROIs_d}/priors_warped.done
+        else
+            echo "ERROR: one or more background steps failed before priors_warped.done — not marking done" | tee -a ${prep_log2}
+            exit 1
+        fi
 
     else
 
@@ -1223,7 +1245,12 @@ if [[ -z ${srch_pt1_done} ]]; then
 
     fi
 
-    touch ${pt1_done} && echo "Part 1 done" >> ${pt1_done}
+    if KUL_wait_all_bg_and_check; then
+        touch ${pt1_done} && echo "Part 1 done" >> ${pt1_done}
+    else
+        echo "ERROR: one or more background steps failed before Part1.done — not marking done" | tee -a ${prep_log2}
+        exit 1
+    fi
 
 else
 
@@ -1742,7 +1769,12 @@ if [[ -z ${srch_pt2_done} ]]; then
 
     task_exec
 
-    touch ${pt2_done} && echo "Part 2 done" >> ${pt2_done}
+    if KUL_wait_all_bg_and_check; then
+        touch ${pt2_done} && echo "Part 2 done" >> ${pt2_done}
+    else
+        echo "ERROR: one or more background steps failed before Part2.done — not marking done" | tee -a ${prep_log2}
+        exit 1
+    fi
 
 else
 
@@ -1970,7 +2002,11 @@ function make_VOIs {
 
     # echo "${Vs_nms_other_str[@]}" > ${VOIs_LUT}
 
-    echo "${tck_list[$q]}_VOIs done" >> "${ROIs_d}/${tck_list[$q]}_VOIs.done"
+    if KUL_wait_all_bg_and_check; then
+        echo "${tck_list[$q]}_VOIs done" >> "${ROIs_d}/${tck_list[$q]}_VOIs.done"
+    else
+        echo "ERROR: one or more background steps failed for ${tck_list[$q]} VOIs — not marking done" | tee -a ${prep_log2}
+    fi
 
     unset z
 

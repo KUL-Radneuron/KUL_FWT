@@ -76,4 +76,17 @@ function KUL_FWT_run_tractometry {
         task_exec &
     done
 
+    # Wait for every backgrounded per-metric profiling job above before returning, so the
+    # caller's QQ_done.done marker (touched only if this function returns success) can never
+    # be written while a profiling job is still running or was silently lost.
+    local qq_fail=0
+    local _j
+    for _j in $(jobs -p); do
+        wait "$_j" || qq_fail=1
+    done
+    if [ "$qq_fail" -ne 0 ]; then
+        echo "ERROR: one or more tractometry profiling jobs failed for ${TCK_2_make} (see per-metric task_exec output above)" | tee -a ${prep_log2}
+        return 1
+    fi
+
 }
