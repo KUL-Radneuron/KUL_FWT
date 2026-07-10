@@ -511,6 +511,27 @@ done
 
 echo "You have asked to segment the following bundles from whole brain TCK ${tck_list[@]}" | tee -a ${prep_log2}
 
+# --- auto-scheduling: split $ncpu into "bundles running at once" x "threads per
+# bundle", same packing philosophy as KUL_fmriproc_spm_new.sh's -c auto mode. Many
+# bundles -> more concurrency; few bundles -> more threads each. Naturally capped
+# at $ncpu concurrent bundles.
+n_bundles_total=${#tck_list[@]}
+bundles_simultaneous=$(( n_bundles_total < ncpu ? n_bundles_total : ncpu ))
+[ "$bundles_simultaneous" -lt 1 ] && bundles_simultaneous=1
+ncpu_per_bundle=$(( ncpu / bundles_simultaneous ))
+[ "$ncpu_per_bundle" -lt 1 ] && ncpu_per_bundle=1
+echo "[auto] cores=$ncpu bundles=$n_bundles_total -> $bundles_simultaneous concurrent, $ncpu_per_bundle threads/bundle" | tee -a ${prep_log2}
+
+function KUL_throttle {
+    # Block until fewer than $1 background jobs are running.
+    # Portable: uses `wait -n` when available (bash>=4.3), else polls.
+    local max="$1"
+    [ "$max" -lt 1 ] && max=1
+    while [ "$(jobs -rp | wc -l | tr -d ' ')" -ge "$max" ]; do
+        wait -n 2>/dev/null || sleep 0.5
+    done
+}
+
 # Exec_all function
 # need to recreate this function to include proc. control
 
@@ -605,7 +626,7 @@ function make_bundle {
 
             if [[ ! -f "${ROIs_d}/${TCK_2_make}_VOIs/${TCK_2_make}_incs$((aw+1))/${TCK_2_make}_incs$((aw+1))_bin_gwi.nii.gz" ]]; then
             
-                task_in="maskfilter -force -nthreads ${ncpu} -npass 2 ${TCK_I_b[$aw]} dilate - | mrcalc - ${subj_gmwmi_inFOD} \
+                task_in="maskfilter -force -nthreads ${ncpu_per_bundle} -npass 2 ${TCK_I_b[$aw]} dilate - | mrcalc - ${subj_gmwmi_inFOD} \
                 -mult 0.05 -gt ${ROIs_d}/${TCK_2_make}_VOIs/${TCK_2_make}_incs$((aw+1))/${TCK_2_make}_incs$((aw+1))_bin_gwi.nii.gz -datatype uint16 -force"
 
                 task_exec
@@ -778,7 +799,7 @@ function make_bundle {
         
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
-        cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} -angle 60 \
+        cmd_str="tckgen -force -nthreads ${ncpu_per_bundle} -algorithm ${algo_f} -angle 60 \
         -power 2.0 -cutoff 0.08 -select ${ns} -maxlength 280 -minlength 20 \
         -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
 
@@ -792,7 +813,7 @@ function make_bundle {
 
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
-        cmd_str="tckedit -force -nthreads ${ncpu} -maxlength 280 -minlength 10 ${sift_str} \
+        cmd_str="tckedit -force -nthreads ${ncpu_per_bundle} -maxlength 280 -minlength 10 ${sift_str} \
         -mask ${tracking_mask} -minweight 0.08 ${includes_str} ${excludes_str} ${auto_X} ${WB_tck} ${tck_init}"
 
     elif [[ ${T_app} == 3 ]]; then 
@@ -805,7 +826,7 @@ function make_bundle {
 
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
-        cmd_str="tckedit -force -nthreads ${ncpu} -maxlength 280 -minlength 10 ${sift_str} \
+        cmd_str="tckedit -force -nthreads ${ncpu_per_bundle} -maxlength 280 -minlength 10 ${sift_str} \
         -mask ${tracking_mask} -minweight 0.08 ${includes_str} ${excludes_str} ${auto_X} ${WB_tck} ${tck_init}"
 
     elif [[ ${T_app} == 4 ]]; then 
@@ -818,7 +839,7 @@ function make_bundle {
 
         tck_init_inT="${TCK_out}/${TCK_2_make}_initial_${T}_${algo_f}_inMNI.tck"
 
-        cmd_str="tckgen -force -nthreads ${ncpu} -algorithm ${algo_f} \
+        cmd_str="tckgen -force -nthreads ${ncpu_per_bundle} -algorithm ${algo_f} \
         -select ${ns} -angle 60 -maxlength 280 -minlength 20 \
         -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
     fi
@@ -898,7 +919,7 @@ function make_bundle {
         
         fi
 
-        task_in="tckresample -force -nthreads ${ncpu} -num_points 101 ${tck_init} ${tck_init_rs}"
+        task_in="tckresample -force -nthreads ${ncpu_per_bundle} -num_points 101 ${tck_init} ${tck_init_rs}"
 
         task_exec
         
@@ -906,11 +927,11 @@ function make_bundle {
 
         task_exec
 
-        count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init_rs} -quiet ));
+        count=($(tckstats -force -nthreads ${ncpu_per_bundle} -output count ${tck_init_rs} -quiet ));
 
     else
 
-        count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init_rs} -quiet ));
+        count=($(tckstats -force -nthreads ${ncpu_per_bundle} -output count ${tck_init_rs} -quiet ));
 
         if [[ ! -f ${tck_init_inT} ]]; then
           
@@ -923,7 +944,7 @@ function make_bundle {
 
             echo " ${TCK_2_make}_initial.tck already done, skipping " | tee -a ${prep_log2}
 
-            # count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init} -quiet ));
+            # count=($(tckstats -force -nthreads ${ncpu_per_bundle} -output count ${tck_init} -quiet ));
 
             # report initial yield
             echo " ${TCK_2_make} has ${count} streamlines initially " | tee -a ${prep_log2}
@@ -934,7 +955,7 @@ function make_bundle {
 
             task_exec
 
-            count=($(tckstats -force -nthreads ${ncpu} -output count ${tck_init_rs} -quiet ));
+            count=($(tckstats -force -nthreads ${ncpu_per_bundle} -output count ${tck_init_rs} -quiet ));
 
         fi
 
@@ -948,18 +969,18 @@ function make_bundle {
         mrcal_strs=$(printf " %s "  "${TCK_I_b[0]}")
         for fun in $(seq 1 ${funn}); do
             ((funme=${fun}+1))
-            task_in="mrcalc -force -quiet -datatype uint16 -nthreads ${ncpu} ${TCK_I_b[$fun]} 0 -gt ${funme} -mult \
+            task_in="mrcalc -force -quiet -datatype uint16 -nthreads ${ncpu_per_bundle} ${TCK_I_b[$fun]} 0 -gt ${funme} -mult \
             ${tmpo_d}/${TCK_2_make}_incs_map_init${funme}.nii.gz"
             task_exec
             mrcal_strs+=$(printf " %s -add "  "${tmpo_d}/${TCK_2_make}_incs_map_init${funme}.nii.gz")
         done
 
         # WIP we mult the result agg map by 10 to ease separating heads from toes
-        task_in="mrcalc -force -quiet -datatype uint16 -nthreads ${ncpu} ${mrcal_strs} 0 -gt ${tmpo_d}/${TCK_2_make}_incs_map_agg_bin.nii.gz"
+        task_in="mrcalc -force -quiet -datatype uint16 -nthreads ${ncpu_per_bundle} ${mrcal_strs} 0 -gt ${tmpo_d}/${TCK_2_make}_incs_map_agg_bin.nii.gz"
 
         task_exec
 
-        task_in="mrcalc -force -quiet -datatype uint16 -nthreads ${ncpu} ${mrcal_strs} ${tmpo_d}/${TCK_2_make}_incs_map_agg_bin.nii.gz -mult 10 -mult ${TCK_out}/${TCK_2_make}_incs_map_agg.nii.gz"
+        task_in="mrcalc -force -quiet -datatype uint16 -nthreads ${ncpu_per_bundle} ${mrcal_strs} ${tmpo_d}/${TCK_2_make}_incs_map_agg_bin.nii.gz -mult 10 -mult ${TCK_out}/${TCK_2_make}_incs_map_agg.nii.gz"
 
         task_exec
 
@@ -1045,13 +1066,13 @@ function make_bundle {
 
                     sleep 2
 
-                    count2=($(tckstats -force -nthreads ${ncpu} -output count ${tck_filt1} -quiet ));
+                    count2=($(tckstats -force -nthreads ${ncpu_per_bundle} -output count ${tck_filt1} -quiet ));
 
                 else
 
                     echo " ${TCK_2_make} initial filtering already done, skipping " | tee -a ${prep_log2}
 
-                    count2=($(tckstats -force -nthreads ${ncpu} -output count ${tck_filt1} -quiet ));
+                    count2=($(tckstats -force -nthreads ${ncpu_per_bundle} -output count ${tck_filt1} -quiet ));
 
                 fi
 
@@ -1059,8 +1080,8 @@ function make_bundle {
 
                     if [[ ! -f "${TCK_out}/${TCK_2_make}_filt1_map_mask_${T}_${algo_f}.nii.gz" ]]; then
                     
-                        task_in="tckmap -precise -force -nthreads ${ncpu} -template ${temp_fod1} ${tck_filt1} \
-                        ${TCK_out}/${TCK_2_make}_filt1_map_${T}_${algo_f}.nii.gz && mrcalc -datatype uint16 -force -nthreads ${ncpu} \
+                        task_in="tckmap -precise -force -nthreads ${ncpu_per_bundle} -template ${temp_fod1} ${tck_filt1} \
+                        ${TCK_out}/${TCK_2_make}_filt1_map_${T}_${algo_f}.nii.gz && mrcalc -datatype uint16 -force -nthreads ${ncpu_per_bundle} \
                         ${TCK_out}/${TCK_2_make}_filt1_map_${T}_${algo_f}.nii.gz 0 -gt ${TCK_out}/${TCK_2_make}_filt1_map_mask_${T}_${algo_f}.nii.gz"
 
                         task_exec
@@ -1109,7 +1130,7 @@ function make_bundle {
                             --in_model_ref ${UKBB_temp} \
                             --model_clustering_thr 4 \
                             --pruning_thr 8 \
-                            --slr_threads ${ncpu} \
+                            --slr_threads ${ncpu_per_bundle} \
                             -v INFO \
                             ${tck_filt4_inT} \
                             ${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck \
@@ -1167,13 +1188,13 @@ function make_bundle {
 
                     sleep 2
 
-                    count2=($(tckstats -force -nthreads ${ncpu} -output count ${tck_filt1} -quiet ));
+                    count2=($(tckstats -force -nthreads ${ncpu_per_bundle} -output count ${tck_filt1} -quiet ));
 
                 else
 
                     echo " ${TCK_2_make} FBC filtering already finished, skipping " | tee -a ${prep_log2}
 
-                    count2=($(tckstats -force -nthreads ${ncpu} -output count ${tck_filt1} -quiet ));
+                    count2=($(tckstats -force -nthreads ${ncpu_per_bundle} -output count ${tck_filt1} -quiet ));
 
                 fi
 
@@ -1181,8 +1202,8 @@ function make_bundle {
 
                     if [[ ! -f "${TCK_out}/${TCK_2_make}_filt1_map_mask_${T}_${algo_f}.nii.gz" ]]; then
 
-                        task_in="tckmap -precise -force -nthreads ${ncpu} -template ${temp_fod1} ${tck_filt1} \
-                        ${TCK_out}/${TCK_2_make}_filt1_map_${T}_${algo_f}.nii.gz && mrcalc -datatype uint16 -force -nthreads ${ncpu} \
+                        task_in="tckmap -precise -force -nthreads ${ncpu_per_bundle} -template ${temp_fod1} ${tck_filt1} \
+                        ${TCK_out}/${TCK_2_make}_filt1_map_${T}_${algo_f}.nii.gz && mrcalc -datatype uint16 -force -nthreads ${ncpu_per_bundle} \
                         ${TCK_out}/${TCK_2_make}_filt1_map_${T}_${algo_f}.nii.gz 0 -gt ${TCK_out}/${TCK_2_make}_filt1_map_mask_${T}_${algo_f}.nii.gz"
 
                         task_exec
@@ -1195,7 +1216,7 @@ function make_bundle {
 
                         task_exec
 
-                        task_in="tcktransform -nthreads ${ncpu} -force ${tck_filt5} ${TCKs_w2temp} ${tck_filt5_inT}"
+                        task_in="tcktransform -nthreads ${ncpu_per_bundle} -force ${tck_filt5} ${TCKs_w2temp} ${tck_filt5_inT}"
 
                         task_exec
 
@@ -1209,7 +1230,7 @@ function make_bundle {
 
                         sleep 5
 
-                        task_in="tckmap -precise -force -nthreads ${ncpu} -template ${UKBB_temp} ${tck_filt1_inT} \
+                        task_in="tckmap -precise -force -nthreads ${ncpu_per_bundle} -template ${UKBB_temp} ${tck_filt1_inT} \
                         ${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}_inMNI.nii.gz"
 
                         task_exec
@@ -1226,19 +1247,19 @@ function make_bundle {
 
             if [[ ! -f "${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}_inMNI.nii.gz" ]]; then
 
-                task_in="tckmap -precise -force -nthreads ${ncpu} -template ${temp_fod1} ${tck_filt5} \
-                ${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}.nii.gz && mrcalc -datatype uint16 -force -nthreads ${ncpu} \
+                task_in="tckmap -precise -force -nthreads ${ncpu_per_bundle} -template ${temp_fod1} ${tck_filt5} \
+                ${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}.nii.gz && mrcalc -datatype uint16 -force -nthreads ${ncpu_per_bundle} \
                 ${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}.nii.gz 0 -gt ${TCK_out}/${TCK_2_make}_fin_map_mask_${T}_${algo_f}.nii.gz"
 
                 task_exec
 
-                # task_in="tcktransform -nthreads ${ncpu} -force ${tck_filt5} ${TCKs_w2temp} ${tck_filt5_inT}"
+                # task_in="tcktransform -nthreads ${ncpu_per_bundle} -force ${tck_filt5} ${TCKs_w2temp} ${tck_filt5_inT}"
 
                 # task_exec
 
                 # sleep 5
 
-                task_in="tckmap -precise -force -nthreads ${ncpu} \
+                task_in="tckmap -precise -force -nthreads ${ncpu_per_bundle} \
                 -template ${UKBB_temp} ${tck_filt5_inT} \
                 ${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}_inMNI.nii.gz"
 
@@ -1298,7 +1319,7 @@ function make_bundle {
 
             # resample the bundle (native space) — feeds the centroid, the connectivity
             # plot below, and every KUL_FWT_buan_profile.py call in the tractometry function
-            task_in="tckresample -force -nthreads ${ncpu} -num_points 101 ${tck_filt5} ${tck_rs1_innat}"
+            task_in="tckresample -force -nthreads ${ncpu_per_bundle} -num_points 101 ${tck_filt5} ${tck_rs1_innat}"
 
             task_exec
 
@@ -1946,13 +1967,20 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
                 ns="${nosts_list[$q]}"
 
-                make_bundle
+                # per-bundle log (was one shared file for the whole run — unreadable
+                # once bundles run concurrently); captured into this bundle's own
+                # subshell at fork time, same as TCK_to_make/ns above.
+                prep_log2="${output_d}/KUL_FWT_TCKs_GT_log_${subj}_${TCK_to_make}_${d}.txt"
 
-                unset TCK_to_make ns
+                KUL_throttle "$bundles_simultaneous"
+
+                make_bundle &
 
             fi
 
         done
+
+        wait   # barrier: all backgrounded bundles from this loop finish before continuing
 
         echo "tracking source is ${tracking_source}"
 
@@ -1981,13 +2009,20 @@ elif [[ ! -z "${ROIs_d}/Part1.done" ]] && [[ ! -z "${ROIs_d}/Part2.done" ]]; the
 
                 ns="${nosts_list[$q]}"
 
-                make_bundle
+                # per-bundle log (was one shared file for the whole run — unreadable
+                # once bundles run concurrently); captured into this bundle's own
+                # subshell at fork time, same as TCK_to_make/ns above.
+                prep_log2="${output_d}/KUL_FWT_TCKs_GT_log_${subj}_${TCK_to_make}_${d}.txt"
 
-                unset TCK_to_make ns
+                KUL_throttle "$bundles_simultaneous"
+
+                make_bundle &
 
             fi
 
         done
+
+        wait   # barrier: all backgrounded bundles from this loop finish before continuing
 
     fi
 

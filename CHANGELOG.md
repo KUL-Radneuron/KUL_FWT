@@ -1,5 +1,48 @@
 # Changelog
 
+## Unreleased (working tree, 2026-07-10 — parallelize tractography over and within bundles)
+
+Real test run took 4+ hours in `KUL_FWT_make_TCKs.sh` for one participant: bundles were
+processed strictly sequentially (`make_bundle` called plain, no `&`, at both call sites in
+both `KUL_FWT_make_TCKs.sh` and `KUL_FWT_make_TCKs_4Temp.sh`), ~51 bundle/hemisphere
+combinations one at a time.
+
+- **New auto-scheduling**, computed once from the existing `-n` (ncpu) flag right after
+  `tck_list` is populated, in both scripts:
+  ```
+  bundles_simultaneous = min(n_bundles_total, ncpu)   # capped at ncpu concurrent bundles
+  ncpu_per_bundle       = max(1, ncpu / bundles_simultaneous)
+  ```
+  Same core-packing philosophy as `KUL_fmriproc_spm_new.sh`'s `-c` auto mode: many bundles
+  -> more concurrency, few bundles -> more threads each.
+- **`KUL_throttle`** (job-pool limiter) ported from `KUL_fmriproc_spm_new.sh` as a local
+  function in both scripts — blocks until fewer than `$bundles_simultaneous` bundles are
+  running.
+- Both per-bundle loops (whole-brain-tractogram-segmentation and individual-bundle
+  tractography, in both scripts) now do `KUL_throttle "$bundles_simultaneous"; make_bundle &`
+  instead of a plain blocking call, with a `wait` barrier after each loop. Safe because
+  backgrounding a function call forks a subshell with its own copy-on-write snapshot of
+  every variable at fork time — nothing inside `make_bundle` needed to change for
+  correctness (same reasoning already validated for `KUL_run_fmriprep &`/`KUL_run_dwiprep &`
+  running in parallel).
+- Every `-nthreads`/`--slr_threads ${ncpu}` *inside* `make_bundle` (37 occurrences in
+  `KUL_FWT_make_TCKs.sh`, 29 in `_4Temp.sh`) now uses `${ncpu_per_bundle}` instead, so
+  concurrent bundles don't oversubscribe cores. Usages *outside* `make_bundle` (one-time
+  VOI-prep/whole-brain steps, not run concurrently with anything) were left at the full
+  `$ncpu` budget.
+- `prep_log2` is now set per-bundle (was one shared file for the entire run — unreadable
+  once ~10+ bundles write to it concurrently via `task_exec`'s `tee -a`).
+- Not touched: `task_exec`'s pre-existing `wait ${pid}` quirk (an unset variable, so it
+  degenerates to bare `wait`) — confirmed harmless here, since each bundle's own subshell
+  has an independent job table, so it behaves the same per-bundle as it already does
+  per-sequential-run today.
+- Out of scope for this pass: manual `-j`/`-J`/`-T`-style override flags on top of the auto
+  default (mirroring the fmriproc convention) — auto-only for now, since that's what was
+  asked for.
+- Not run against real tractography data in this environment — same standing caveat as
+  everything else this session. The next real test run is what will actually validate the
+  wall-clock improvement and confirm no oversubscription/log-interleaving problems remain.
+
 ## Unreleased (working tree, 2026-07-10 — first real-data test, bugfix)
 
 Found via a real test run (`KUL_LOG_test_10072026`): the whole-bundle mask step
