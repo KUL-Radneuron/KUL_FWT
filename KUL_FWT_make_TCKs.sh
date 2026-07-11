@@ -477,14 +477,15 @@ else
 fi
 
 # Report on quanti, quali and screenshot workflows
+# (conditions were inverted -- printed "switched on" when the flag was actually 0/off)
 
-if [[ "${Q_flag}" -eq 0 ]]; then 
+if [[ "${Q_flag}" -eq 1 ]]; then
 
     echo "Quantitative and qualitative analysis switched on" | tee -a ${prep_log2}
 
 fi
 
-if [[ "${S_flag}" -eq 0 ]]; then 
+if [[ "${S_flag}" -eq 1 ]]; then
 
     echo "Screenshots switched on" | tee -a ${prep_log2}
 
@@ -1274,12 +1275,27 @@ function make_bundle {
 
                             # task_in="scil_tractogram_segment_with_recobundles -f --reference ${UKBB_temp} --model_clustering_thr 4 --pruning_thr 8 --slr_threads ${ncpu_per_bundle} -v \
                             # ${tck_filt4_inT} ${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck ${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat ${tck_filt5_inT}"
+                            # --tractogram_clustering_thr: scilpy's own default-filling logic for this
+                            # flag is inverted (elif ...is not None: sets 8.0 -- backwards for "fill in
+                            # a default when unset"), so an unset flag stays None and crashes
+                            # RecoBundles' clust_thr formatting downstream. Passing any value here
+                            # (scilpy will coerce it to its documented default of 8.0 regardless) avoids
+                            # that crash without needing a scilpy patch.
+                            # --inverse: MNI_2_MNI_..._0GenericAffine.mat (KUL_FWT_make_VOIs.sh) is
+                            # computed as antsRegistrationSyN.sh -f ${UKBB_temp} -m <subject-in-template>,
+                            # i.e. fixed=template/moving=subject -- the opposite orientation from what
+                            # this script's own docstring prescribes (-m MODEL_REF -f SUBJ_REF, used with
+                            # --inverse). Applying it without --inverse previously increased the
+                            # pre/post-registration barycenter distance (0.0 -> 0.817 in a real run) --
+                            # exactly the symptom the docstring says --inverse should fix.
                             task_in="scil_tractogram_segment_with_recobundles -f \
                             --in_tractogram_ref ${UKBB_temp} \
                             --in_model_ref ${UKBB_temp} \
+                            --tractogram_clustering_thr 8 \
                             --model_clustering_thr 4 \
                             --pruning_thr 8 \
                             --slr_threads ${ncpu_per_bundle} \
+                            --inverse \
                             -v INFO \
                             ${tck_filt4_inT} \
                             ${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck \
@@ -1948,8 +1964,13 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
     fi
 
     # make some CSD based metrics
-
-    if [[ ! -f "${prep_d}/fixel_fc/sub-${subj}_fixel_fdc.mif"  ]]; then
+    # This whole block (fod2fixel + warp2metric -fc + derived mrcalc/fixel2voxel) only
+    # feeds the 6 fixel-only tractometry metrics (FD/Disp/Peaks/FC/logFC/FDC) profiled
+    # in KUL_FWT_tractometry_functions.sh -- nothing else in the pipeline reads any of
+    # these outputs. Previously ran unconditionally regardless of -Q, wasting real time
+    # (and, in a real run, crashing on warp2metric -fc) even when tractometry was never
+    # requested. Now gated on Q_flag so a -Q-less run skips it entirely.
+    if [[ "${Q_flag}" -eq 1 ]] && [[ ! -f "${prep_d}/fixel_fc/sub-${subj}_fixel_fdc.mif"  ]]; then
 
         if [[ -d "${prep_d}/fixel_metrics" ]]; then
 

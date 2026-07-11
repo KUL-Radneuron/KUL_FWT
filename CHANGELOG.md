@@ -1,5 +1,61 @@
 # Changelog
 
+## Unreleased (working tree, 2026-07-11 — fix the actual crash a -Q-less run hits, plus RecoBundles)
+
+Root-caused via a real failed test run (`sub-11072026trial`, no `-Q` passed): the run
+died in a one-time whole-brain prep step before any bundle-specific work even started.
+Also cross-referenced an older run (`sub-09072026trial`, before this session's
+`task_exec` fix) where the same crash was silently swallowed and the pipeline
+continued into per-bundle RecoBundles calls, which then failed too — giving visibility
+into both bugs in one investigation.
+
+- **`warp2metric -fc` was running unconditionally regardless of `-Q`.** Traced every
+  consumer of `fod2fixel`'s and `warp2metric`'s outputs (the 6 "fixel-only" metrics:
+  FD/Disp/Peaks/FC/logFC/FDC) — the only place any of them are read is
+  `KUL_FWT_tractometry_functions.sh`'s per-bundle profiling, which only runs when
+  `Q_flag==1`. So on a `-Q`-less run this entire block (including the crashing
+  `warp2metric -fc` call computing whole-brain fiber cross-section) was pure wasted
+  work that also happened to be exactly what crashed. Gated the whole block
+  (`fod2fixel`/`warp2metric`/`mrcalc`/`fixel2voxel`) behind `Q_flag==1` in both
+  `KUL_FWT_make_TCKs.sh` and `_4Temp.sh` — a `-Q`-less run now skips it entirely,
+  which would have avoided this crash outright. The underlying `warp2metric -fc`
+  SIGSEGV itself is not fixed by this (still occurs when `-Q` *is* used) — see
+  `../TODO.md`.
+- **Fixed inverted status-message logic**: `if [[ "${Q_flag}" -eq 0 ]]; then echo
+  "...switched on"` printed "switched on" precisely when the flag was off (same bug
+  for `S_flag`/Screenshots), in both TCKs scripts — this is why a `-Q`-less run's log
+  claimed "Quantitative and qualitative analysis switched on." Flipped both to `-eq 1`.
+- **RecoBundles fixes, both TCKs scripts** (`scil_tractogram_segment_with_recobundles`,
+  the per-bundle final-filtering step, independent of `-T`/tracking approach):
+  - `--tractogram_clustering_thr` was never passed. scilpy's own default-filling logic
+    for this flag (`scilpy/src/scilpy/cli/scil_tractogram_segment_with_recobundles.py`,
+    commit `f950a6fa`) is inverted — `elif args.tractogram_clustering_thr is not None:
+    args.tractogram_clustering_thr = 8.0` only fills in the default when the value is
+    *already* not `None`, so an unset flag stays `None` and crashes
+    `RecoBundles.__init__`'s `clust_thr` formatting downstream
+    (`TypeError: unsupported format string passed to NoneType.__format__`, confirmed
+    from a real traceback affecting 17-18 bundle-segmentation attempts). This is a
+    genuine scilpy regression (their own fix commit for a different bug introduced this
+    one), not something wrong on our end — but since passing *any* value for
+    `--tractogram_clustering_thr` flips it from `None` to scilpy's hardcoded `8.0`
+    regardless of what's passed, adding `--tractogram_clustering_thr 8` sidesteps the
+    crash entirely without needing to patch the local scilpy checkout.
+  - Added `--inverse`. The docstring for this scilpy script says the ANTs transform
+    should be computed `-m MODEL_REF -f SUBJ_REF` (moving=model, fixed=subject) and
+    used with `--inverse`; `MNI_2_MNI_..._0GenericAffine.mat`
+    (`KUL_FWT_make_VOIs.sh`/`_4Temp.sh`, `antsRegistrationSyN.sh -f ${UKBB_temp} -m
+    <subject-in-template>`) is computed in the opposite orientation
+    (fixed=template/moving=subject) without `--inverse` being passed at the recobundles
+    call site. A real run's log showed exactly the symptom the script's docstring says
+    this causes: pre/post-registration barycenter distance got *worse*, not better
+    (0.0 → 0.817), rather than a warning-free identity-close transform.
+  - Not verified against real data — no test dataset available in this environment.
+    The `--tractogram_clustering_thr 8` fix is a direct, mechanical read of scilpy's
+    own crashing code path and should be reliable. The `--inverse` fix is a
+    well-supported diagnosis (matches the script's own documented warning condition
+    exactly) but unverified — the next real run with actual bundle segmentation
+    results is what will confirm whether the resulting alignment is actually correct.
+
 ## Unreleased (working tree, 2026-07-10 — logging/status-reporting correctness pass)
 
 Prompted by real test runs where a `warp2metric` SIGSEGV still logged "exit status 0" and

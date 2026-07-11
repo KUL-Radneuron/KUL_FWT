@@ -433,14 +433,15 @@ else
 fi
 
 # Report on quanti, quali and screenshot workflows
+# (conditions were inverted -- printed "switched on" when the flag was actually 0/off)
 
-if [[ "${Q_flag}" -eq 0 ]]; then 
+if [[ "${Q_flag}" -eq 1 ]]; then
 
     echo "Quantitative and qualitative analysis switched on" | tee -a ${prep_log2}
 
 fi
 
-if [[ "${S_flag}" -eq 0 ]]; then 
+if [[ "${S_flag}" -eq 1 ]]; then
 
     echo "Screenshots switched on" | tee -a ${prep_log2}
 
@@ -1128,12 +1129,21 @@ function make_bundle {
                         if [[ -f "${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck" ]] && \
                            [[ -f "${prep_d}/MNI_2_MNI_${subj}${ses_str}_0GenericAffine.mat" ]]; then
 
+                            # --tractogram_clustering_thr / --inverse: see KUL_FWT_make_TCKs.sh's
+                            # identical recobundles call for the full reasoning -- scilpy's own
+                            # default-filling logic for --tractogram_clustering_thr is inverted
+                            # (crashes RecoBundles with clust_thr=None if left unset), and
+                            # MNI_2_MNI_..._0GenericAffine.mat (KUL_FWT_make_VOIs_4Temp.sh) is
+                            # computed fixed=template/moving=subject, the opposite orientation from
+                            # what this script's docstring prescribes without --inverse.
                             task_in="scil_tractogram_segment_with_recobundles -f \
                             --in_tractogram_ref ${UKBB_temp} \
                             --in_model_ref ${UKBB_temp} \
+                            --tractogram_clustering_thr 8 \
                             --model_clustering_thr 4 \
                             --pruning_thr 8 \
                             --slr_threads ${ncpu_per_bundle} \
+                            --inverse \
                             -v INFO \
                             ${tck_filt4_inT} \
                             ${pr_d}/TCK_models/${tck_list[$q]}_GN_symmetrical.tck \
@@ -1744,8 +1754,10 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
     # fi
 
     # make some CSD based metrics
-
-    if [[ ! -f "${prep_d}/fixel_fc/sub-${subj}_fixel_fdc.mif"  ]]; then
+    # See KUL_FWT_make_TCKs.sh's identical block for the full reasoning -- this only
+    # feeds the -Q tractometry fixel-only metrics, so gate it on Q_flag rather than
+    # running (and, in a real run, crashing on warp2metric -fc) unconditionally.
+    if [[ "${Q_flag}" -eq 1 ]] && [[ ! -f "${prep_d}/fixel_fc/sub-${subj}_fixel_fdc.mif"  ]]; then
 
         if [[ -d "${prep_d}/fixel_metrics" ]]; then
 
