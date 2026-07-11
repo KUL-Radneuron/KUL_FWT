@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased (working tree, 2026-07-12 — fix middle-inclusion-VOI array indexing bug)
+
+Spotted live during a real test run: `KUL_FWT_make_TCKs.sh: line 1044: <path>.nii.gz:
+syntax error: operand expected` for `ML_LT`/`ML_RT` (non-fatal -- printed to stderr,
+script continued). Both TCKs scripts, in the multi-VOI drawn-ROI-string construction
+(`vsz -gt 2` branch, any bundle with more than 2 inclusion VOIs):
+```bash
+for vi in ${TCK_I_b[@]:1:$((vsz-2))}; do
+    drawn_incs_str+=$(printf ... "${TCK_I_b[$vi]}")   # bug
+done
+```
+`${TCK_I_b[@]:offset:len}` yields the array's *values* (VOI paths), not indices --
+`vi` already holds the path itself. Re-indexing with `${TCK_I_b[$vi]}` tried to
+arithmetically evaluate a filesystem path as an array subscript, which bash rejects
+with exactly the observed "syntax error: operand expected," and the expansion then
+evaluates to empty -- silently dropping every middle inclusion VOI from
+`drawn_incs_str` for the duration of that loop iteration. Verified the real impact
+with a synthetic 4-element array: the old code kept only the final VOI (the two
+middle ones silently vanished, only their syntax errors printed); the fix keeps all
+of them. For any bundle with 3+ inclusion VOIs (confirmed hit: `ML_LT`/`ML_RT`), this
+meant `scil_tractogram_filter_by_roi` was applying a less restrictive "start + end
+only" filter than intended -- the middle-waypoint constraints were never actually
+enforced, degrading tract specificity (not a crash, so this had been running silently
+wrong, not obviously broken). Fixed in both `KUL_FWT_make_TCKs.sh` and `_4Temp.sh` by
+using `${vi}` directly instead of re-indexing.
+
 ## Unreleased (working tree, 2026-07-11 — fix the actual crash a -Q-less run hits, plus RecoBundles)
 
 Root-caused via a real failed test run (`sub-11072026trial`, no `-Q` passed): the run

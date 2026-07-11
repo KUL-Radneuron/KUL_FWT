@@ -896,9 +896,12 @@ function make_bundle {
 
         elif [[ ${vsz} -gt 2 ]]; then
 
+            # See KUL_FWT_make_TCKs.sh's identical loop for the full reasoning -- vi already
+            # holds the VOI path from the array slice, not an index; re-indexing with
+            # ${TCK_I_b[$vi]} tried to arithmetically evaluate a path as a subscript.
             for vi in ${TCK_I_b[@]:1:$((vsz-2))}; do
 
-                drawn_incs_str+=$(printf " --drawn_roi %s any include "  "${TCK_I_b[$vi]}")
+                drawn_incs_str+=$(printf " --drawn_roi %s any include "  "${vi}")
 
             done
 

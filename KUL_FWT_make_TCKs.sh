@@ -1039,9 +1039,14 @@ function make_bundle {
 
         elif [[ ${vsz} -gt 2 ]]; then
 
+            # ${TCK_I_b[@]:offset:len} yields the array's VALUES (VOI paths), not indices --
+            # vi already holds the path itself, so re-indexing with ${TCK_I_b[$vi]} tried to
+            # arithmetically evaluate a filesystem path as an array subscript ("syntax error:
+            # operand expected"), silently dropping this middle inclusion VOI from
+            # drawn_incs_str for any bundle with more than 2 inclusion VOIs (e.g. ML_LT/ML_RT).
             for vi in ${TCK_I_b[@]:1:$((vsz-2))}; do
 
-                drawn_incs_str+=$(printf " --drawn_roi %s any include "  "${TCK_I_b[$vi]}")
+                drawn_incs_str+=$(printf " --drawn_roi %s any include "  "${vi}")
 
             done
 
