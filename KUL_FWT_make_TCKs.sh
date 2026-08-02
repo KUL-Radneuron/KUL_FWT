@@ -557,16 +557,21 @@ done
 
 echo "You have asked to segment the following bundles from whole brain TCK ${tck_list[@]}" | tee -a ${prep_log2}
 
-# --- auto-scheduling: split $ncpu into "bundles running at once" x "threads per
-# bundle", same packing philosophy as KUL_fmriproc_spm_new.sh's -c auto mode. Many
-# bundles -> more concurrency; few bundles -> more threads each. Naturally capped
-# at $ncpu concurrent bundles.
+# --- auto-scheduling: guarantee each bundle gets >= min_threads_per_bundle
+# threads, cap concurrent bundles accordingly, then dynamically re-derive the
+# actual per-bundle thread count at EVERY dispatch as jobs finish (see
+# KUL_dispatch_bundles / running_threads ledger below). Replaces the old
+# static once-computed split, which pinned every bundle (incl. the last few
+# large/slow ones) to whatever thread count it started with, leaving cores
+# idle near the end of the run.
 n_bundles_total=${#tck_list[@]}
-bundles_simultaneous=$(( n_bundles_total < ncpu ? n_bundles_total : ncpu ))
+min_threads_per_bundle=8
+[ "$min_threads_per_bundle" -gt "$ncpu" ] && min_threads_per_bundle=$ncpu
+[ "$min_threads_per_bundle" -lt 1 ] && min_threads_per_bundle=1
+bundles_simultaneous=$(( ncpu / min_threads_per_bundle ))
 [ "$bundles_simultaneous" -lt 1 ] && bundles_simultaneous=1
-ncpu_per_bundle=$(( ncpu / bundles_simultaneous ))
-[ "$ncpu_per_bundle" -lt 1 ] && ncpu_per_bundle=1
-echo "[auto] cores=$ncpu bundles=$n_bundles_total -> $bundles_simultaneous concurrent, $ncpu_per_bundle threads/bundle" | tee -a ${prep_log2}
+ncpu_per_bundle=$min_threads_per_bundle
+echo "[auto] cores=$ncpu bundles=$n_bundles_total -> at most $bundles_simultaneous concurrent, >= $min_threads_per_bundle threads/bundle floor (recomputed dynamically per dispatch)" | tee -a ${prep_log2}
 
 function KUL_throttle {
     # Block until fewer than $1 background jobs are running.
@@ -576,6 +581,97 @@ function KUL_throttle {
     while [ "$(jobs -rp | wc -l | tr -d ' ')" -ge "$max" ]; do
         wait -n 2>/dev/null || sleep 0.5
     done
+}
+
+# Builds the runnable-bundle set, dispatches smallest-workload-first, and
+# dynamically re-splits $ncpu across whatever bundles are actually still
+# running at each dispatch point (not a static one-time split). Called once
+# from each of the two mutually-exclusive T_app branches below; encapsulates
+# the entire loop body so each call site is a single line.
+function KUL_dispatch_bundles {
+
+    # pass 1: which indices are runnable (VOIs .done marker present)? Same
+    # check as before, just split out of the dispatch step so we can sort
+    # before dispatching.
+    declare -a dotdones
+    declare -a srch_dotdones
+    declare -a runnable_idx=()
+
+    for q in ${!tck_list[@]}; do
+        dotdones[$q]="${ROIs_d}/${tck_list[$q]}_VOIs.done"
+        srch_dotdones[$q]=$(find ${ROIs_d} -not -path '*/\.*' -type f | grep "${tck_list[$q]}_VOIs.done")
+        if [[ ! -z ${srch_dotdones[$q]} ]]; then
+            runnable_idx+=("$q")
+        fi
+    done
+
+    # pass 2: sort runnable indices ascending by seed count (nosts_list) --
+    # small/fast bundles dispatch first, large/slow ones last, so
+    # concurrency has already thinned out (more free cores) by the time the
+    # big ones launch. "none"/commented config rows never produce a
+    # matching .done file, so they're already excluded from runnable_idx
+    # before this sort runs.
+    declare -a sorted_idx=()
+    if [ "${#runnable_idx[@]}" -gt 0 ]; then
+        while IFS=' ' read -r _ idx; do
+            sorted_idx+=("$idx")
+        done < <(
+            for q in "${runnable_idx[@]}"; do
+                printf '%s %s\n' "${nosts_list[$q]}" "$q"
+            done | sort -n -k1,1
+        )
+    fi
+
+    # pass 3: dispatch in sorted order, recomputing the thread split live at
+    # each dispatch from a ledger of currently-running bundles. This never
+    # touches an already-launched tckgen/tckedit process's thread count --
+    # that's fixed for its whole lifetime once started. It only decides the
+    # -nthreads value baked into the NEXT bundle about to be launched.
+    local -A running_threads=()
+    local n_remaining="${#sorted_idx[@]}"
+    local pos=0
+
+    for q in "${sorted_idx[@]}"; do
+
+        pos=$((pos+1))
+        TCK_to_make="${tck_list[$q]}"
+        ns="${nosts_list[$q]}"
+
+        echo "Bundle ${TCK_to_make}: see ${output_d}/KUL_FWT_TCKs_log_${subj}_${TCK_to_make}_${d}.txt" | tee -a ${prep_log2}
+        prep_log2="${output_d}/KUL_FWT_TCKs_log_${subj}_${TCK_to_make}_${d}.txt"
+
+        KUL_throttle "$bundles_simultaneous"
+
+        # reap PIDs of bundles that finished while we were waiting
+        for pid in "${!running_threads[@]}"; do
+            if ! kill -0 "$pid" 2>/dev/null; then
+                unset "running_threads[$pid]"
+            fi
+        done
+
+        local used_threads=0
+        for pid in "${!running_threads[@]}"; do
+            used_threads=$(( used_threads + running_threads[$pid] ))
+        done
+        local free_threads=$(( ncpu - used_threads ))
+
+        local remaining_to_dispatch=$(( n_remaining - pos + 1 ))
+        local concurrency_cap_remaining=$remaining_to_dispatch
+        [ "$concurrency_cap_remaining" -gt "$bundles_simultaneous" ] && concurrency_cap_remaining=$bundles_simultaneous
+        [ "$concurrency_cap_remaining" -lt 1 ] && concurrency_cap_remaining=1
+
+        ncpu_per_bundle=$(( free_threads / concurrency_cap_remaining ))
+        [ "$ncpu_per_bundle" -lt "$min_threads_per_bundle" ] && ncpu_per_bundle=$min_threads_per_bundle
+
+        echo "[auto] dispatch ${TCK_to_make}: used=${used_threads} free=${free_threads} cap=${concurrency_cap_remaining} -> ${ncpu_per_bundle} threads" | tee -a ${prep_log2}
+
+        make_bundle &
+        running_threads[$!]=$ncpu_per_bundle
+
+    done
+
+    wait   # barrier: all backgrounded bundles from this call finish before continuing
+
 }
 
 # Exec_all function
@@ -1161,7 +1257,13 @@ function make_bundle {
 
     tck_filt5="${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}.tck"
 
-    tck_filt5_centroid1="${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_inMNI_centroid1.tck"
+    tck_filt5_centroid1_raw="${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_inMNI_centroid1_raw.tck"
+
+    tck_filt5_centroid1_inT="${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_inMNI_centroid1_inT.tck"
+
+    tck_filt5_centroid1_inT_uniform="${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_inMNI_centroid1_inT_uniform.tck"
+
+    tck_filt5_centroid1="${TCK_out}/QQ/tmp/${TCK_2_make}_fin_${T}_${algo_f}_inMNI_centroid1_uniform.tck"
 
     tck_filt1_inT="${TCK_out}/${TCK_2_make}_filt1_${T}_${algo_f}_inMNI.tck"
 
@@ -1506,14 +1608,60 @@ function make_bundle {
             task_exec
 
             if [[ ! -f "${tck_filt5_centroid1}" ]]; then
-                task_in="scil_bundle_compute_centroid -f --reference ${subj_FA} --nb_points 50 ${tck_rs1_innat} ${tck_filt5_centroid1}"
 
+                task_in="scil_bundle_compute_centroid -f --reference ${subj_FA} --nb_points 50 ${tck_rs1_innat} ${tck_filt5_centroid1_raw}"
                 task_exec
+
+                # Orient the centroid consistently so node 1 means the same anatomical end
+                # across every run/session/subject/side, instead of depending on
+                # scil_bundle_compute_centroid's own (streamline-order-dependent, therefore
+                # non-reproducible under multi-threaded tckgen) choice of reference streamline.
+                # Prefer the shared population model when this bundle has one -- LT/RT pairs
+                # are built symmetrically ("_GN_symmetrical"), so this also guarantees
+                # side-consistency for free. Fall back to this subject's own incs1 VOI (always
+                # present -- every track_recipes/*.txt needs at least one incs1 entry to
+                # seed/include the bundle in the first place) for a newly-added bundle that
+                # doesn't have a model yet.
+                if [[ -f "${pr_d}/TCK_models/${TCK_2_make}_GN_symmetrical.tck" ]]; then
+
+                    # Round-trip through UKBB_temp space (where the model lives) via
+                    # TCKs_w2temp/TCKs_wfromtemp -- computed unconditionally, unlike
+                    # MNI_2_MNI_*, which gates RecoBundles and can be missing. Flip/no-flip is
+                    # a pure point-order decision, so it survives the round trip unchanged.
+                    task_in="tcktransform -force ${tck_filt5_centroid1_raw} ${TCKs_w2temp} ${tck_filt5_centroid1_inT}"
+                    task_exec
+
+                    task_in="scil_bundle_uniformize_endpoints -f --centroid ${pr_d}/TCK_models/${TCK_2_make}_GN_symmetrical.tck --reference ${UKBB_temp} ${tck_filt5_centroid1_inT} ${tck_filt5_centroid1_inT_uniform}"
+                    task_exec
+
+                    task_in="tcktransform -force ${tck_filt5_centroid1_inT_uniform} ${TCKs_wfromtemp} ${tck_filt5_centroid1}"
+                    task_exec
+
+                else
+
+                    echo " no TCK_models/${TCK_2_make}_GN_symmetrical.tck -- orienting ${TCK_2_make} centroid by its own incs1 VOI instead" | tee -a ${prep_log2}
+
+                    task_in="scil_bundle_uniformize_endpoints -f --target_roi ${ROIs_d}/${TCK_2_make}_VOIs/${TCK_2_make}_incs1/${TCK_2_make}_incs1_bin.nii.gz --reference ${subj_FA} ${tck_filt5_centroid1_raw} ${tck_filt5_centroid1}"
+                    task_exec
+
+                fi
+
             fi
 
-            # length/curve/tdi as plain scalar volumes (not fixel data)
-            task_in="tckmap -precise -force -stat_vox sum -contrast length -template ${subj_FA} ${tck_filt5} ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_length.nii.gz \
-            && tckmap -precise -force -stat_vox sum -contrast curvature -template ${subj_FA} ${tck_filt5} ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_curve.nii.gz \
+            # length/curve/tdi as plain scalar volumes (not fixel data).
+            # length and curvature are per-streamline scalars (curvature reduced
+            # to one value per streamline via the default -stat_tck mean), scattered
+            # into every voxel that streamline touches -- -stat_vox sum then just
+            # reproduces streamline density (more streamlines through a voxel ->
+            # bigger sum, regardless of the actual length/curvature values), making
+            # both maps shaped like TDI no matter what. -stat_vox mean divides that
+            # out, giving the actual average value independent of density -- this is
+            # the documented, published convention for length (Pannek et al.'s
+            # "average pathlength map", cited directly in `tckmap -help`).
+            # tdi itself stays sum: that summation is the literal definition of
+            # track density, not a confound to remove.
+            task_in="tckmap -precise -force -stat_vox mean -contrast length -template ${subj_FA} ${tck_filt5} ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_length.nii.gz \
+            && tckmap -precise -force -stat_vox mean -contrast curvature -template ${subj_FA} ${tck_filt5} ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_curve.nii.gz \
             && tckmap -precise -force -stat_vox sum -contrast tdi -template ${subj_FA} ${tck_filt5} ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_tdi.nii.gz"
 
             task_exec
@@ -1533,15 +1681,28 @@ function make_bundle {
             # --- unified along-tract tractometry (dipy.stats.analysis.afq_profile) ---
             # See KUL_FWT_tractometry_functions.sh: replaces the previous two-track design
             # (MRtrix fixel-based 50-segment sampler + a separate additive BUAN pass) with
-            # one profiling path for all 13 metrics.
+            # one profiling path over whichever of the candidate metrics below actually
+            # exist for this subject (KUL_FWT_add_metric_if_present skips, doesn't fail,
+            # on anything missing -- DTI scalars, fixel metrics and LoRE-SD contrasts are
+            # all independently optional; the QQ_done.done marker still requires only that
+            # whatever was profiled has succeeded).
             source "$(dirname "$0")/KUL_FWT_tractometry_functions.sh"
 
             tractometry_reference_nii="${subj_FA}"
-            buan_metrics=("FA" "ADC" "AD" "RD" "TDI" "Length" "Curve")
-            buan_scalars=("${subj_FA}" "${subj_ADC}" "${subj_AD}" "${subj_RD}" \
-                "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_tdi.nii.gz" \
-                "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_length.nii.gz" \
-                "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_curve.nii.gz")
+            buan_metrics=()
+            buan_scalars=()
+            KUL_FWT_add_metric_if_present "FA" "${subj_FA}"
+            KUL_FWT_add_metric_if_present "ADC" "${subj_ADC}"
+            KUL_FWT_add_metric_if_present "AD" "${subj_AD}"
+            KUL_FWT_add_metric_if_present "RD" "${subj_RD}"
+            KUL_FWT_add_metric_if_present "TDI" "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_tdi.nii.gz"
+            KUL_FWT_add_metric_if_present "Length" "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_length.nii.gz"
+            KUL_FWT_add_metric_if_present "Curve" "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_curve.nii.gz"
+            KUL_FWT_add_metric_if_present "PeakCount" "${subj_vpkcount}"
+            KUL_FWT_add_metric_if_present "LoRE_RFA" "${prep_d}/lore_sd_rfa.nii.gz"
+            KUL_FWT_add_metric_if_present "LoRE_IntraAx" "${prep_d}/lore_sd_intra_axonal_contrast.nii.gz"
+            KUL_FWT_add_metric_if_present "LoRE_ExtraAx" "${prep_d}/lore_sd_extra_axonal_contrast.nii.gz"
+            KUL_FWT_add_metric_if_present "LoRE_FreeWater" "${prep_d}/lore_sd_free_water_contrast.nii.gz"
 
             if KUL_FWT_run_tractometry; then
                 touch "${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_QQ_done.done" && echo "${TCK_2_make}_fin_${T}_${algo_f} QQ work is done" | tee -a ${prep_log2}
@@ -1660,17 +1821,13 @@ subj_ffd="sub-${subj}_fixel_fd.mif"
 
 subj_fdisp="sub-${subj}_fixel_disp.mif"
 
-subj_ffc="sub-${subj}_fixel_fc.mif"
-
-subj_flogfc="sub-${subj}_fixel_logfc.mif"
-
-subj_ffdc="sub-${subj}_fixel_fdc.mif"
-
 subj_vpk="${prep_d}/peaks.nii.gz"
 
 subj_vfd="${prep_d}/fd.nii.gz"
 
 subj_vdisp="${prep_d}/disp.nii.gz"
+
+subj_vpkcount="${prep_d}/peakcount.nii.gz"
 
 if [[ -z "${subj_FA}" ]]; then
     subj_FA="${prep_d}/fa.nii.gz"
@@ -1969,13 +2126,14 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
     fi
 
     # make some CSD based metrics
-    # This whole block (fod2fixel + warp2metric -fc + derived mrcalc/fixel2voxel) only
-    # feeds the 6 fixel-only tractometry metrics (FD/Disp/Peaks/FC/logFC/FDC) profiled
-    # in KUL_FWT_tractometry_functions.sh -- nothing else in the pipeline reads any of
-    # these outputs. Previously ran unconditionally regardless of -Q, wasting real time
-    # (and, in a real run, crashing on warp2metric -fc) even when tractometry was never
-    # requested. Now gated on Q_flag so a -Q-less run skips it entirely.
-    if [[ "${Q_flag}" -eq 1 ]] && [[ ! -f "${prep_d}/fixel_fc/sub-${subj}_fixel_fdc.mif"  ]]; then
+    # This block (fod2fixel + derived fixel2voxel) feeds the 3 fixel-only tractometry
+    # metrics (FD/Disp/Peaks) profiled in KUL_FWT_tractometry_functions.sh -- nothing
+    # else in the pipeline reads any of these outputs. Gated on Q_flag so a -Q-less run
+    # skips it entirely. FC/logFC/FDC (warp2metric -fc against the ANTs-derived warp)
+    # were dropped: that metric is the log-Jacobian of the warp to a *population*
+    # template (Raffelt et al. FBA) and is only interpretable against a cohort, which a
+    # single clinical subject doesn't have -- and it kept failing warp2metric besides.
+    if [[ "${Q_flag}" -eq 1 ]] && [[ ! -f "${prep_d}/fixel_metrics/${subj_ffd}" ]]; then
 
         if [[ -d "${prep_d}/fixel_metrics" ]]; then
 
@@ -1984,26 +2142,13 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
 
         fi
 
-        if [[ ! -f "${prep_d}/fixel_metrics/${subj_ffd}" ]]; then
-            task_in="fod2fixel -force -quiet -nthreads ${ncpu} -afd ${subj_ffd} -disp ${subj_fdisp} -peak_amp ${subj_fpk} ${subj_fod} ${prep_d}/fixel_metrics"           
-            task_exec
-        fi
-
-        if [[ ! -f "${prep_d}/fixel_metrics/sub-${subj}_fixel_fdc.mif" ]]; then 
-            task_in="warp2metric ${TCKs_wfromtemp} -fc ${prep_d}/fixel_metrics ${prep_d}/fixel_fc sub-${subj}_fixel_fc.mif -force"
-            task_exec
-
-            task_in="mrcalc ${prep_d}/fixel_fc/sub-${subj}_fixel_fc.mif -log ${prep_d}/fixel_fc/sub-${subj}_fixel_logfc.mif \
-            && mrcalc ${prep_d}/fixel_metrics/${subj_ffd} ${prep_d}/fixel_fc/sub-${subj}_fixel_fc.mif -mult ${prep_d}/fixel_fc/sub-${subj}_fixel_fdc.mif"
-            task_exec
-
-            task_in="cp ${prep_d}/fixel_fc/sub-${subj}_fixel_fc.mif ${prep_d}/fixel_fc/sub-${subj}_fixel_logfc.mif ${prep_d}/fixel_fc/sub-${subj}_fixel_fdc.mif ${prep_d}/fixel_metrics/"
-            task_exec
-        fi
+        task_in="fod2fixel -force -quiet -nthreads ${ncpu} -afd ${subj_ffd} -disp ${subj_fdisp} -peak_amp ${subj_fpk} ${subj_fod} ${prep_d}/fixel_metrics"
+        task_exec
 
         task_in="fixel2voxel -force -quiet -nthreads ${ncpu} ${prep_d}/fixel_metrics/${subj_ffd} mean ${subj_vfd} -weighted ${prep_d}/fixel_metrics/${subj_ffd} \
         && fixel2voxel -force -quiet -nthreads ${ncpu} ${prep_d}/fixel_metrics/${subj_fdisp} mean ${subj_vdisp} -weighted ${prep_d}/fixel_metrics/${subj_fdisp} \
-        && fixel2voxel -force -quiet -nthreads ${ncpu} ${prep_d}/fixel_metrics/${subj_fpk} mean ${subj_vpk} -weighted ${prep_d}/fixel_metrics/${subj_fpk}"
+        && fixel2voxel -force -quiet -nthreads ${ncpu} ${prep_d}/fixel_metrics/${subj_fpk} mean ${subj_vpk} -weighted ${prep_d}/fixel_metrics/${subj_fpk} \
+        && fixel2voxel -force -quiet -nthreads ${ncpu} ${prep_d}/fixel_metrics/${subj_ffd} count ${subj_vpkcount}"
 
         task_exec
 
@@ -2021,7 +2166,29 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
         # -t ${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_1Warp.nii.gz -t [${prep_d}/fa_2_UKBB_vFS_${subj}${ses_str}_0GenericAffine.mat,0]"
 
         # task_exec
-    
+
+    fi
+
+    # LoRE-SD contrasts (rfa/intra_axonal/extra_axonal/free_water), if this subject has
+    # them (see KUL_dwiprep.sh's lore_decomposition2contrast + KUL_dwiprep_anat.sh's
+    # _reg2T1w registration). Converted once to .nii.gz and cached in prep_d since
+    # KUL_FWT_buan_profile.py reads scalars via nibabel, which can't open .mif. Purely
+    # additive to tractometry's candidate metric set -- see KUL_FWT_add_metric_if_present
+    # in KUL_FWT_tractometry_functions.sh for how missing ones are skipped, not fatal.
+    if [[ "${Q_flag}" -eq 1 ]] && [[ -n "${subj_lore_contrasts_dir}" ]]; then
+
+        for lore_contrast in rfa intra_axonal_contrast extra_axonal_contrast free_water_contrast; do
+
+            lore_mif="${subj_lore_contrasts_dir}/${lore_contrast}_reg2T1w.mif"
+            lore_nii="${prep_d}/lore_sd_${lore_contrast}.nii.gz"
+
+            if [[ -f "${lore_mif}" ]] && [[ ! -f "${lore_nii}" ]]; then
+                task_in="mrconvert -force ${lore_mif} ${lore_nii}"
+                task_exec
+            fi
+
+        done
+
     fi
 
     if [[ ${T_app} -gt 2 ]]; then
@@ -2192,42 +2359,7 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
 
         echo " Starting whole brain tractogram segmentation stage  " | tee -a ${prep_log2}
 
-        declare -a dotdones
-
-        declare -a srch_dotdones
-
-        for q in ${!tck_list[@]}; do
-
-            echo $q
-            echo ${tck_list[$q]}
-
-            dotdones[$q]="${ROIs_d}/${tck_list[$q]}_VOIs.done"
-            srch_dotdones[$q]=$(find ${ROIs_d} -not -path '*/\.*' -type f | grep "${tck_list[$q]}_VOIs.done")
-
-            if [[ ! -z ${srch_dotdones[$q]} ]]; then
-
-                TCK_to_make="${tck_list[$q]}"
-
-                ns="${nosts_list[$q]}"
-
-                # per-bundle log (was one shared file for the whole run — unreadable
-                # once bundles run concurrently); captured into this bundle's own
-                # subshell at fork time, same as TCK_to_make/ns above. Point the main
-                # log at it so the main log stays a useful index rather than looking
-                # like it just stopped once bundle processing starts.
-                echo "Bundle ${TCK_to_make}: see ${output_d}/KUL_FWT_TCKs_log_${subj}_${TCK_to_make}_${d}.txt" | tee -a ${prep_log2}
-
-                prep_log2="${output_d}/KUL_FWT_TCKs_log_${subj}_${TCK_to_make}_${d}.txt"
-
-                KUL_throttle "$bundles_simultaneous"
-
-                make_bundle &
-
-            fi
-
-        done
-
-        wait   # barrier: all backgrounded bundles from this loop finish before continuing
+        KUL_dispatch_bundles
 
         echo "tracking source is ${tracking_source}"
 
@@ -2235,43 +2367,21 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
 
         echo " You have asked for inidividual bundle tractography  " | tee -a ${prep_log2}
 
-        declare -a dotdones
-
-        declare -a srch_dotdones
-
-        for q in ${!tck_list[@]}; do
-
-            echo $q
-            echo ${tck_list[$q]}
-
-            dotdones[$q]="${ROIs_d}/${tck_list[$q]}_VOIs.done"
-            srch_dotdones[$q]=$(find ${ROIs_d} -not -path '*/\.*' -type f | grep "${tck_list[$q]}_VOIs.done")
-
-            if [[ ! -z ${srch_dotdones[$q]} ]]; then
-
-                TCK_to_make="${tck_list[$q]}"
-
-                ns="${nosts_list[$q]}"
-
-                # per-bundle log (was one shared file for the whole run — unreadable
-                # once bundles run concurrently); captured into this bundle's own
-                # subshell at fork time, same as TCK_to_make/ns above. Point the main
-                # log at it so the main log stays a useful index rather than looking
-                # like it just stopped once bundle processing starts.
-                echo "Bundle ${TCK_to_make}: see ${output_d}/KUL_FWT_TCKs_log_${subj}_${TCK_to_make}_${d}.txt" | tee -a ${prep_log2}
-
-                prep_log2="${output_d}/KUL_FWT_TCKs_log_${subj}_${TCK_to_make}_${d}.txt"
-
-                KUL_throttle "$bundles_simultaneous"
-
-                make_bundle &
-
-            fi
-
-        done
-
-        wait   # barrier: all backgrounded bundles from this loop finish before continuing
+        KUL_dispatch_bundles
 
     fi
+
+fi
+
+# Assemble every bundle's QQ metrics into one bundle x metric summary and one
+# spider plot per bundle. Runs once per subject, after every dispatched bundle's
+# own QQ work (KUL_dispatch_bundles blocks on its own internal `wait` above) --
+# needs every bundle's scores in hand before it can normalize each metric's axis.
+if [[ "${Q_flag}" -eq 1 ]]; then
+
+    echo " Assembling QQ metrics and generating spider plots per bundle " | tee -a ${prep_log2}
+
+    task_in="KUL_FWT_bundle_spider_plot.py ${TCKs_outd} ${subj} ${ses_str}"
+    task_exec
 
 fi
