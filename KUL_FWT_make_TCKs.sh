@@ -557,6 +557,19 @@ done
 
 echo "You have asked to segment the following bundles from whole brain TCK ${tck_list[@]}" | tee -a ${prep_log2}
 
+# tckgen renamed -seed_image to -seed_voxels (mrtrix3 dev commit ca77f843d, Oct 2025).
+# The dev branch's git-describe numbering isn't stable/comparable across installs
+# (different clones report against different reachable tags, e.g. "3.0.8-2097-g..."
+# vs "nightly-dev-365-g..." for the same commit), so a version-number threshold isn't
+# reliable here -- probe the actual installed binary's supported option instead.
+# -help renders option names bold via backspace-overstrike (each char as X<BS>X), which
+# breaks a plain substring grep -- col -b strips that before matching.
+if tckgen -help 2>&1 | col -b | grep -q -- '-seed_voxels'; then
+    tckgen_seed_opt="-seed_voxels"
+else
+    tckgen_seed_opt="-seed_image"
+fi
+
 # --- auto-scheduling: guarantee each bundle gets >= min_threads_per_bundle
 # threads, cap concurrent bundles accordingly, then dynamically re-derive the
 # actual per-bundle thread count at EVERY dispatch as jobs finish (see
@@ -966,7 +979,7 @@ function make_bundle {
 
     includes_str=$(printf " -include %s"  "${TCK_I_b[@]}")
 
-    seeds_str=$(printf " -seed_image %s"  "${TCK_I_b[@]}")
+    seeds_str=$(printf " ${tckgen_seed_opt} %s"  "${TCK_I_b[@]}")
 
     excludes_str=$(printf " -exclude %s"  "${TCK_X_b[@]}")
 
@@ -2270,12 +2283,12 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
 
         fi
 
-        tracking_string=" -algorithm ${algo_f} -seed_image ${T1_BM_inFA_minCSF} "
+        tracking_string=" -algorithm ${algo_f} ${tckgen_seed_opt} ${T1_BM_inFA_minCSF} "
         tracking_source=" ${subj_DT_vecs} "
 
     elif [[ ${algo_f} == "Tensor_Det" ]] || [[ ${algo_f} == "Tensor_Prob" ]]; then
 
-        tracking_string=" -algorithm ${algo_f} -seed_image ${T1_BM_inFA_minCSF} "
+        tracking_string=" -algorithm ${algo_f} ${tckgen_seed_opt} ${T1_BM_inFA_minCSF} "
         tracking_source=" ${subj_dwi} "
 
     fi
