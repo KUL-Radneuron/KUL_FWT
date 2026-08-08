@@ -343,11 +343,17 @@ Also affected: `CCing_{LT,RT}` and `TCing_{LT,RT}` carry the same
 
 ### 5.3 Recommended fix, cheapest first
 
-1. **Drop `Unseg_WM_FS_*` from `UF_{LT,RT}`.** It is a deep-WM catch-all, not an
-   anatomical constraint. If specific deep-WM territory genuinely needs
-   excluding, use the sub-VOIs the pipeline **already derives** from it
-   (`SegWM_*_ALIC`, `SegWM_*_PLIC`, `SegWM_*_{M,L,P}PV`) rather than the union.
-   Lowest risk, largest expected effect.
+1. **Drop `Unseg_WM_FS_*` from `UF_{LT,RT}`.** — **APPLIED, `17c64d8`.** It is a
+   deep-WM catch-all, not an anatomical constraint. If specific deep-WM
+   territory genuinely needs excluding, use the sub-VOIs the pipeline **already
+   derives** from it (`SegWM_*_ALIC`, `SegWM_*_PLIC`, `SegWM_*_{M,L,P}PV`)
+   rather than the union.
+
+   The remaining excludes still close every escape route it was covering:
+   Pari/Occ lobes (GM+WM) posteriorly, M1 GM+WM superiorly, rACC and MedOF
+   medially, `CC_allr` across the midline, `BStem` and `Thal` inferiorly. An
+   IFOF- or ILF-like streamline leaving the temporal stem is caught by the
+   occipital exclude. `CCing`/`TCing` still carry the same exclude — open.
 2. **Diagnose before tuning.** `filter_by_roi` supports `--save_rejected` and
    `--display_counts`, neither of which the pipeline uses. Running UF once with
    `--save_rejected` isolates exactly which exclude removes the trunk instead of
@@ -484,7 +490,8 @@ later, not from existing outputs.
 | Priority | Action | Ref |
 |---|---|---|
 | High | Regenerate DRT and PyT_SMA model bundles — both materially changed | §1, §2.1 |
-| High | Drop `Unseg_WM_FS_*` from `UF`; review `CCing`/`TCing` | §5.2, §5.3 |
+| High | ~~Drop `Unseg_WM_FS_*` from `UF`~~ — done, `17c64d8`. `CCing`/`TCing` still open | §5.2, §5.3 |
+| High | **Clear `<bundle>_VOIs.done` markers + VOI dirs for already-processed subjects** — every recipe fix in this document is inert until then | §9 |
 | High | Add the `mode` column; set terminal cortical VOIs to `either_end` | §5.4, §4.1 |
 | Medium | Move resampling to after ROI filtering | §4.2 |
 | Medium | Per-stage streamline count logging | §4.4 |
@@ -492,3 +499,49 @@ later, not from existing outputs.
 | Medium | Run the recipe linter in CI (side, atlas, label range, duplicate names) | §2 |
 | Low | Recipe inheritance to stop family drift (CST/PyT, SLF) | §2.6 |
 | Low | RecoBundles provenance stamp | §4.6 |
+
+---
+
+## 9. Operational caveat: recipe edits are inert for processed subjects
+
+`KUL_FWT_make_VOIs.sh` gates VOI creation on a per-bundle marker:
+
+```bash
+dotdones[$q]="${ROIs_d}/${tck_list[$q]}_VOIs.done"
+srch_dotdones[$q]=$(find ${ROIs_d} ... | grep "${tck_list[$q]}_VOIs.done")
+
+if [[ -z ${srch_dotdones[$q]} ]]; then
+    ...parse recipe, build VOIs...
+else
+    echo "${tck_list[$q]}_VOIs already generated, skip"
+fi
+```
+
+The recipe is only read when the marker is **absent**. For any subject already
+processed, **every fix in this document — the DRT `incs4`, all of §2, §3, and
+the UF change — has no effect until the marker and the VOI directory are
+cleared**:
+
+```bash
+rm -rf  <ROIs_d>/<bundle>_VOIs  <ROIs_d>/<bundle>_VOIs_inMNI
+rm -f   <ROIs_d>/<bundle>_VOIs.done
+```
+
+`make_TCKs.sh` caches independently on the presence of the output `.tck` files,
+so those need clearing too for the bundle to be re-tracked.
+
+Bundles affected by this session's changes, and therefore needing a rebuild:
+
+- **§1** `DRT_LT`, `DRT_RT`
+- **§2.1** `PyT_SMA_LT/RT`, `PyT_PMC_LT`, `ThR_Sup_RT`, `IPLFus_LT`, `SRF_LT`,
+  `VOFc_LT`, `Fx_RT`, `OR_RT`, `OR_occlobe_RT`
+- **§2.2–2.4** `ILF_LT/RT`, `MdLF_LT/RT`, `OR_LT`, `OR_occlobe_LT`, `SRF_RT`,
+  `IFOF_LT`, `CC_Sensory_Comm`, `SLF_I_RT`, `VOFc_LT/RT`
+- **§2.5** `UF_LT/RT`, `ThR_Par_LT/RT`, `ThR_S1_LT/RT`, `ThR_Sup_LT/RT`
+- **§2.6** `SLF_IId_LT`, `SLF_IIv_LT`
+- **§3** `ThR_Ant_LT/RT`, `ThR_OCD_DBS_LT/RT`, `SAF_LT/RT`
+- **§5.3** `UF_LT/RT`
+
+A `--force-voi-rebuild` flag, or hashing the recipe file into the `.done`
+marker so it self-invalidates when the recipe changes, would remove this
+footgun permanently. Recommended.
