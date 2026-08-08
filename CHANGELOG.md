@@ -1,5 +1,61 @@
 # Changelog
 
+## Unreleased (committed locally, 2026-08-08 — build the PD25 VIM composite)
+
+`PD25_labels_LT/RT` has always listed `PD25_VIM_LT/RT`, but `PD25_lab_gen` never
+built a composite for it — the arrays that get assembled are VA, VL, VPL, VPM,
+PUL, VC and Pulvi_exc. So no VIM VOI has ever existed on disk, which is why the
+DRT recipes use `PD25_VL_{LT,RT}_custom` as `incs3`: VL is what actually exists,
+and it spans all 14 VLa+VLp labels rather than the VIM target.
+
+Now built, from `PD25-histo-labels.csv`:
+
+| label | Schaltenbrand-Wahren | Hirai & Jones | 1 mm atlas vol (RT) |
+|---|---|---|---|
+| 91 | Ventro-intermedius internus (V.im.i) | VLp | 157 mm³ |
+| 94 | Ventro-intermedius externus (V.im.e) | VLp | 248 mm³ |
+| 104 | Ventro-intermedius internus (V.im.i) | VLp | 3 mm³ |
+
+91 and 94 carry essentially all of it; 104 is a sliver that vanishes once warped
+to dMRI resolution and is kept only for completeness. Label 122 (also
+*Ventro-intermedius externus*, 6 mm³) is deliberately excluded: it duplicates
+94's name but is mapped to VLa rather than VLp and is already excluded from the
+VL composite. Whether it belongs is an anatomical judgement, flagged in a comment
+rather than decided silently.
+
+Same construction as the other composites — union, threshold, smooth, largest
+connected component, masked by the FreeSurfer thalamus.
+
+### How it compares to the FreeSurfer thalamic segmentation
+
+Built both on a real subject (sub-VanRooyRosalia) and compared in the subject's
+FA space:
+
+| | PD25 VIM | FS VLp | Dice | PD25 VIM inside FS VLp |
+|---|---|---|---|---|
+| right | 222 mm³ | 751 mm³ | 0.23 | 51.5 % |
+| left | 279 mm³ | 824 mm³ | 0.28 | 55.1 % |
+
+Controls, to separate registration error from atlas-convention differences:
+
+| comparison | Dice | centroid offset |
+|---|---|---|
+| PD25 nuclei-union vs FS whole thalamus | 0.73–0.74 | 2.7 mm (100 % contained) |
+| PD25_VL vs FS VLp | 0.47–0.48 | 1.4–2.0 mm |
+| PD25 VIM vs FS VLp | 0.23–0.28 | 4.5–4.8 mm |
+
+Registration is not grossly wrong — the PD25 nuclei land fully inside the FS
+thalamus with Dice 0.73. But the two "VIM" definitions genuinely disagree: only
+about half of the PD25 VIM falls inside FS VLp, even though the CSV crosswalk
+maps V.im to VLp, i.e. containment should be near-total if the atlases agreed.
+Part of the low Dice is simply that VIM is a small subregion of a much larger
+VLp; the containment figure is the meaningful one.
+
+Practical consequence: intersecting a DRT with FS VLp would intersect it with a
+structure the tract was never constrained by — only ~42–46 % of PD25_VL (the
+tract's actual `incs3`) falls inside FS VLp. Intersecting with PD25_VIM is
+coherent, since VIM is a subset of the VL the tract already passes through.
+
 ## Unreleased (committed locally, 2026-08-08 — optic-radiation _fin_map_inMNI)
 
 In the `${TCK_2_make} == "O"*` branch of `make_bundle` — the FBC-filtering path

@@ -670,6 +670,28 @@ function PD25_lab_gen {
         "111" "112" "114" "120" "123");
         VL_rois_LT=("8600" "8700" "8800" "9000" "9100" "9200" "9300" "9400" "10400" \
         "11100" "11200" "11400" "12000" "12300");
+        # VIM -- the stereotactic VIM target (Schaltenbrand-Wahren ventralis
+        # intermedius). PD25_labels_* has always listed PD25_VIM_LT/RT, but no
+        # composite was ever built for it, so no VIM VOI existed on disk and the
+        # DRT recipes fall back to the much larger PD25_VL.
+        #
+        # Membership, from PD25-histo-labels.csv:
+        #    91  Ventro-intermedius internus (V.im.i)  -> VLp
+        #    94  Ventro-intermedius externus (V.im.e)  -> VLp
+        #   104  Ventro-intermedius internus (V.im.i)  -> VLp
+        # 91 and 94 carry essentially all of it (157 and 248 mm3 on the right in
+        # the 1 mm atlas); 104 is a 3 mm3 sliver that vanishes once warped to
+        # dMRI resolution, kept only for completeness.
+        #
+        # Label 122 (Ventro-intermedius externus, V.im.e) is deliberately NOT
+        # included: it duplicates 94's Schaltenbrand-Wahren name but is mapped to
+        # VLa rather than VLp, is 6 mm3, and is excluded from the VL composite
+        # above. Whether it belongs here is an anatomical judgement, not an
+        # obvious omission -- add it if you decide it does.
+        #
+        # Note VIM is a strict subset of VL, which spans all 14 VLa+VLp labels.
+        VIM_rois_RT=("91" "94" "104");
+        VIM_rois_LT=("9100" "9400" "10400");
         VPL_rois_RT=("96" "97" "98" "115" "117" "118");
         VPL_rois_LT=("9600" "9700" "9800" "11500" "11700" "11800");
         VPM_rois_RT=("95" "113");
@@ -742,6 +764,23 @@ function PD25_lab_gen {
         task_in="mrcalc -force -datatype uint16 -force -nthreads 1 ${tmpo_d}/PD25_ROI_8600_LT_custom.nii.gz ${tmpo_d}/PD25_ROI_8700_LT_custom.nii.gz -add \
         ${VL_adds_LT} 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
         ${ROIs_d}/custom_VOIs/Thalamus_LT_FS_custom.nii.gz -mult ${ROIs_d}/custom_VOIs/PD25_VL_LT_custom.nii.gz -force"
+        task_exec &
+
+        #################################
+
+        # VIM
+        VIM_adds_RT=$(printf " ${tmpo_d}/PD25_ROI_%s_RT_custom.nii.gz -add"  "${VIM_rois_RT[@]:2}")
+
+        task_in="mrcalc -force -datatype uint16 -force -nthreads 1 ${tmpo_d}/PD25_ROI_91_RT_custom.nii.gz ${tmpo_d}/PD25_ROI_94_RT_custom.nii.gz -add \
+        ${VIM_adds_RT} 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
+        ${ROIs_d}/custom_VOIs/Thalamus_RT_FS_custom.nii.gz -mult ${ROIs_d}/custom_VOIs/PD25_VIM_RT_custom.nii.gz -force"
+        task_exec &
+
+        VIM_adds_LT=$(printf " ${tmpo_d}/PD25_ROI_%s_LT_custom.nii.gz -add"  "${VIM_rois_LT[@]:2}")
+
+        task_in="mrcalc -force -datatype uint16 -force -nthreads 1 ${tmpo_d}/PD25_ROI_9100_LT_custom.nii.gz ${tmpo_d}/PD25_ROI_9400_LT_custom.nii.gz -add \
+        ${VIM_adds_LT} 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
+        ${ROIs_d}/custom_VOIs/Thalamus_LT_FS_custom.nii.gz -mult ${ROIs_d}/custom_VOIs/PD25_VIM_LT_custom.nii.gz -force"
         task_exec &
 
         #################################
