@@ -1518,21 +1518,6 @@ function make_bundle {
                         task_exec
 
                     fi
-    
-                    if [[ ! -f "${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}_inMNI.nii.gz" ]]; then
-
-                        task_in="tcktransform -force ${tck_filt1} ${TCKs_w2temp} ${tck_filt1_inT}"
-
-                        task_exec
-
-                        sleep 5
-
-                        task_in="tckmap -precise -force -nthreads ${ncpu_per_bundle} -template ${UKBB_temp} ${tck_filt1_inT} \
-                        ${TCK_out}/${TCK_2_make}_fin_map_${T}_${algo_f}_inMNI.nii.gz"
-
-                        task_exec
-
-                    fi
 
                 else
 

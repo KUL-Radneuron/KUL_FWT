@@ -1,5 +1,37 @@
 # Changelog
 
+## Unreleased (committed locally, 2026-08-08 — optic-radiation _fin_map_inMNI)
+
+In the `${TCK_2_make} == "O"*` branch of `make_bundle` — the FBC-filtering path
+used for the optic radiations — `${TCK_2_make}_fin_map_${T}_${algo_f}_inMNI.nii.gz`
+was written from `tck_filt1_inT`, i.e. from `tck_filt1`, the tractogram *before*
+`scil_tractogram_smooth`. A second block ~15 lines later writes the same filename
+from `tck_filt5_inT`, the smoothed `_fin_` streamlines the name refers to.
+
+Both are guarded by `if [[ ! -f <that same file> ]]`, so the first always won and
+the second always skipped. The MNI-space map for OR bundles was the unsmoothed
+filt1 geometry under a "fin" name. Streamline counts are identical either way —
+smoothing moves points, it does not drop streamlines — so this is invisible in
+`tckstats` and shows up only in the map.
+
+Confirmed on an existing dataset (sub-VanRooyRosalia, `OR_occlobe_LT`) by
+rebuilding the map from each candidate and differencing against the shipped file:
+
+| rebuilt from | max abs diff | nonzero voxels |
+|---|---|---|
+| `filt1_inMNI` | 9.2e-05 (float rounding) | 24411 (= shipped) |
+| `fin_inMNI` | 125.9 | 23247 |
+
+The tell-tale `OR_occlobe_LT_filt1_BT_iFOD2_inMNI.tck`, which only the removed
+block produces, is present for the OR bundles and absent for all others.
+
+**Scope:** only bundles matching `"O"*` take this branch. Everything else reaches
+the correct block directly — verified on `CST_LT` from the same subject, whose map
+matches its `fin` tract to float precision. The subject-space `_fin_map` is
+correct for all bundles.
+
+Removed the earlier block so the correct one runs.
+
 ## Unreleased (working tree, 2026-07-12 — fix middle-inclusion-VOI array indexing bug)
 
 Spotted live during a real test run: `KUL_FWT_make_TCKs.sh: line 1044: <path>.nii.gz:
