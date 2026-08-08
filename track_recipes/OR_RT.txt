@@ -11,7 +11,7 @@ excs  BStem_FS  16
 excs  Phippo_GM_RT_FS  2016
 excs  RT_vDC_subseg2_custom  1
 excs  Ins_IFOF_exc_RT_custom  1
-excs  PD25_VA_VL_LT_custom  1
+excs  PD25_VA_VL_RT_custom  1
 excs  Cing_lobeGM_RT  2003
 excs  Cing_lobeWM_RT  4003
 excs  AC_midL_MAN  1

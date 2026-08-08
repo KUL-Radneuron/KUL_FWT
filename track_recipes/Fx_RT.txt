@@ -22,8 +22,8 @@ excs  Amyg_FS_RT  54
 excs  rACC_GM_FS_RT  2026
 excs  ChorP_FS_LT  31
 excs  ChorP_FS_RT  63
-excs  SegWM_LT_ALIC_custom  1
+excs  SegWM_RT_ALIC_custom  1
 excs  Caudate_FS_RT  50
 excs  vDC_FS_LT  28
-excs  Insula_GM_RT_FS  1035
-excs  Insula_WM_RT_FS  3035
+excs  Insula_GM_LT_FS  1035
+excs  Insula_WM_LT_FS  3035

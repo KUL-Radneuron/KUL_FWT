@@ -2,7 +2,7 @@
 # type  name  label
 incs1  SPL_GM_LT_FS  1029
 incs1  IPL_GM_LT_FS  1008
-incs1  G_OSup_GM_LT_2009  1116
+incs1  G_OSup_GM_LT_2009  11120
 incs1  Cun_GM_LT_FS  1005
 incs1  Pc_GM_LT_FS  1025
 

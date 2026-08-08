@@ -15,8 +15,8 @@ excs  PHip_GM_FS_LT  1016
 excs  PHip_WM_FS_LT  3016
 excs  Front_lobeGM_LT  1001
 excs  Front_lobeWM_LT  3001
-excs  STG_GM_FS_LT  2030
-excs  STG_WM_FS_LT  4030
+excs  STG_GM_FS_LT  1030
+excs  STG_WM_FS_LT  3030
 excs  Cune_GM_FS_LT  1005
 excs  Cune_WM_FS_LT  3005
 excs  Pc_GM_FS_LT  1025

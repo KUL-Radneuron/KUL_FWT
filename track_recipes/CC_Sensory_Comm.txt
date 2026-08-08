@@ -21,6 +21,6 @@ excs  M1_GM_FS_LT  1024
 excs  M1_GM_FS_RT  2024
 excs  BStem_FS  16
 excs  Occ_lobeGM_LT  1004
-excs  Occ_lobeGM_LT  2004
+excs  Occ_lobeGM_RT  2004
 excs  Cing_lobeGM_LT  1003
 excs  Cing_lobeGM_RT  2003

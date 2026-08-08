@@ -5,7 +5,7 @@ incs1  SPL7_MSBP_LT  184
 incs1  IPL3_MSBP_LT  187
 
 incs2  LOcc5_MSBP_LT  204
-incs2  LOcc5_MSBP_LT  203
+incs2  LOcc4_MSBP_LT  203
 incs2  Fusi1_MSBP_LT  208
 
 excs  CC_allr_custom  1
@@ -15,7 +15,7 @@ excs  PHip_WM_FS_LT  3016
 excs  Front_lobeGM_LT  1001
 excs  Front_lobeWM_LT  3001
 excs  STG_GM_FS_LT  1030
-excs  STG_WM_FS_LT  4030
+excs  STG_WM_FS_LT  3030
 excs  Pc_GM_FS_LT  1025
 excs  ITG1_MSBP_LT  215
 excs  ITG2_MSBP_LT  216

@@ -29,4 +29,7 @@ excs  PCC_WM_LT_FS  3023
 excs  SFG6_LT_MSBP  149
 excs  SFG7_LT_MSBP  150
 excs  SFG8_LT_MSBP  151
+excs  IFGpTr_GM_LT_FS  1020
+excs  IFGpOp_GM_LT_FS  1018
+excs  IFGpOr_GM_LT_FS  1019
 excs  SPL_GM_LT_FS  1029

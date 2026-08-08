@@ -28,7 +28,7 @@ excs  Cing_lobeWM_RT  4003
 excs  PCC_GM_RT_FS  2023
 excs  PCC_WM_RT_FS  4023
 excs  cMFG_GM_RT_FS  2003
-excs  cMFG_GM_RT_FS  2027
+excs  rMFG_GM_RT_FS  2027
 excs  IFGpTr_GM_RT_FS  2020
 excs  IFGpOp_GM_RT_FS  2018
 excs  IFGpOr_GM_RT_FS  2019

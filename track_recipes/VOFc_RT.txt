@@ -5,7 +5,7 @@ incs1  SPL7_MSBP_RT  60
 incs1  IPL3_MSBP_RT  63
 
 incs2  LOcc5_MSBP_RT  80
-incs2  LOcc5_MSBP_RT  79
+incs2  LOcc4_MSBP_RT  79
 incs2  Fusi1_MSBP_RT  84
 
 excs  CC_allr_custom  1

@@ -6,7 +6,7 @@ incs2  S1_GM_RT_FS  2022
 
 excs  CC_allr_custom  1
 excs  BStem_FS  16
-excs  vDC_RT  60
+excs  vDC_RT_aseg  60
 excs  AC_midline_MAN  1
 excs  SegWM_RT_ALIC_custom  1
 excs  hypothal_RT_excr_custom  1

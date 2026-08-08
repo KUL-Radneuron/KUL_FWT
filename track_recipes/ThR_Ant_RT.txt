@@ -6,8 +6,8 @@ incs2  SFG1_MSBP_RT  20
 incs2  SFG2_MSBP_RT  21
 incs2  SFG3_MSBP_RT  22
 incs2  SFG4_MSBP_RT  23
-incs2  MedOF_GM_LT_FS  2014
-incs2  LatOF_GM_LT_FS  2012
+incs2  MedOF_GM_RT_FS  2014
+incs2  LatOF_GM_RT_FS  2012
 incs2  FrP_GM_RT_FS  2032
 
 excs  CC_allr_custom  1

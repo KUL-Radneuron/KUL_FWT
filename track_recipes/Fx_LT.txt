@@ -25,5 +25,5 @@ excs  ChorP_FS_RT  63
 excs  SegWM_LT_ALIC_custom  1
 excs  Caudate_FS_LT  11
 excs  vDC_FS_RT  60
-excs  Insula_GM_LT_FS  2035
-excs  Insula_WM_LT_FS  4035
+excs  Insula_GM_RT_FS  2035
+excs  Insula_WM_RT_FS  4035

@@ -11,7 +11,7 @@ incs2  Fusi4_MSBP_LT  211
 excs  CC_allr_custom  1
 excs  BStem_FS  16
 excs  STG_GM_LT_FS  1030
-excs  G_OSup_GM_LT_2009  1116
+excs  G_OSup_GM_LT_2009  11120
 excs  Phippo_GM_LT_FS  1016
 excs  Phippo_WM_LT_FS  3016
 excs  Cing_lobeGM_LT  1003
@@ -22,10 +22,10 @@ excs  vDC_LT_FS  28
 excs  OptCh_FS  85
 excs  Insula_GM_LT_FS  1035
 excs  Insula_WM_LT_FS  3035
-excs  Front_lobeGM_FS  1001
-excs  Front_lobeWM_FS  3001
-excs  Pari_lobeGM_FS  1006
-excs  Pari_lobeWM_FS  3006
+excs  Front_lobeGM_LT  1001
+excs  Front_lobeWM_LT  3001
+excs  Pari_lobeGM_LT  1006
+excs  Pari_lobeWM_LT  3006
 excs  SegWM_LT_MPV_custom  1
 excs  M1_GM_LT_FS  1024
 excs  M1_WM_LT_FS  3024

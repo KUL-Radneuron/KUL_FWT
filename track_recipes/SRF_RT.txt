@@ -1,8 +1,8 @@
 # Bundle: SRF_RT
 # type  name  label
 incs1  Ling3_MSBP_RT  83
-incs1  Fusi2_MSBP_RT  86
-incs1  Fusi3_MSBP_RT  87
+incs1  Fusi2_MSBP_RT  85
+incs1  Fusi3_MSBP_RT  86
 incs1  Fusi4_GMWM_RT_custom  1
 
 incs2  SPL5_MSBP_RT  58

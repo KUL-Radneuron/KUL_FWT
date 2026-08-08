@@ -15,7 +15,7 @@ excs  RT_ML_X_custom  1
 excs  Thal_RT_ero2_custom  1
 excs  Temp_lobeGM_RT  2005
 excs  Temp_lobeWM_RT  4005
-excs  Putamen_RT_FS  12
+excs  Putamen_GM_RT_FS  51
 excs  cMFG_GM_RT_FS  2003
 excs  rMFG_GM_RT_FS  2027
 excs  Caudate_GM_RT_FS  50

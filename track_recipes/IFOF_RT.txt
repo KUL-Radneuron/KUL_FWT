@@ -7,12 +7,12 @@ incs1  Pc_GM_RT_FS  2025
 incs1  Fusi1_RT_MSBP  84
 incs1  Fusi2_RT_MSBP  85
 
-incs2  rMFG5_LT_MSBP  18
-incs2  rMFG6_LT_MSBP  19
-incs2  FP_GM_LT_FS  2032
-incs2  IFGpTr_GM_LT_FS  2020
-incs2  MedOF1_LT_MSBP  7
-incs2  LatOF_GM_LT_FS  2012
+incs2  rMFG5_RT_MSBP  18
+incs2  rMFG6_RT_MSBP  19
+incs2  FP_GM_RT_FS  2032
+incs2  IFGpTr_GM_RT_FS  2020
+incs2  MedOF1_RT_MSBP  7
+incs2  LatOF_GM_RT_FS  2012
 
 excs  CC_allr_custom  1
 excs  BStem_FS  16

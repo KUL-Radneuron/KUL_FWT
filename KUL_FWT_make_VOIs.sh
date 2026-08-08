@@ -2077,6 +2077,12 @@ function make_VOIs {
 
         # ((pew=${pew}%${pow}))
 
+        # Clear the previous VOI's source map first. The chain below has no else branch, so a
+        # name matching none of its patterns used to silently inherit whatever atlas the previous
+        # entry resolved to -- a wrong-atlas read that depends only on line order. Cleared, an
+        # unmatched name falls through to the custom-VOI path and fails loudly on a missing file.
+        unset source_map
+
         # select source maps
         # one condition per source map
         # custom ones are made in step 1
@@ -2322,35 +2328,38 @@ for q in ${!tck_list[@]}; do
 
                 bname="${tck_list[$q]}"
 
+                # Inclusion segments are discovered from the recipe rather than assumed to stop
+                # at incs3. A fixed incs1..incs3 list silently drops anything beyond it: DRT_LT/RT
+                # carry an incs4 (the M1 cortical endpoint) that was parsed away, so restoring it
+                # to track_recipes/ alone had no effect on the VOIs actually built.
+                unset _inc_segs _s _n
+                _inc_segs=($(grep -oE '^[[:space:]]*incs[0-9]+' "${recipe_f}" \
+                    | sed 's/[[:space:]]//g; s/^incs//' | sort -n -u | sed 's/^/incs/'))
+
                 # Initialise all segment arrays empty
-                eval "${bname}_incs1_Ls=()" ; eval "${bname}_incs1_Is=()"
-                eval "${bname}_incs2_Ls=()" ; eval "${bname}_incs2_Is=()"
-                eval "${bname}_incs3_Ls=()" ; eval "${bname}_incs3_Is=()"
-                eval "${bname}_excs_Ls=()"  ; eval "${bname}_excs_Is=()"
+                for _s in "${_inc_segs[@]}" excs; do
+                    eval "${bname}_${_s}_Ls=()" ; eval "${bname}_${_s}_Is=()"
+                done
 
                 # Parse recipe file — format: <type>  <VOI_name>  <label>
                 while IFS=" " read -r _seg _vname _vlabel _rest; do
                     [[ -z "${_seg}" || "${_seg}" == \#* ]] && continue
                     case "${_seg}" in
-                        incs1) eval "${bname}_incs1_Ls+=(\"\${_vname}\")"; eval "${bname}_incs1_Is+=(\"\${_vlabel}\")" ;;
-                        incs2) eval "${bname}_incs2_Ls+=(\"\${_vname}\")"; eval "${bname}_incs2_Is+=(\"\${_vlabel}\")" ;;
-                        incs3) eval "${bname}_incs3_Ls+=(\"\${_vname}\")"; eval "${bname}_incs3_Is+=(\"\${_vlabel}\")" ;;
-                        excs)  eval "${bname}_excs_Ls+=(\"\${_vname}\")";  eval "${bname}_excs_Is+=(\"\${_vlabel}\")"  ;;
+                        incs[0-9]|incs[0-9][0-9]|excs)
+                            eval "${bname}_${_seg}_Ls+=(\"\${_vname}\")"
+                            eval "${bname}_${_seg}_Is+=(\"\${_vlabel}\")"
+                            ;;
                     esac
                 done < "${recipe_f}"
 
-                # Call make_VOIs for each segment present in the recipe
-                eval "_n=\${#${bname}_incs1_Ls[@]}"
-                [[ ${_n} -gt 0 ]] && tck_VOIs_2seg="${bname}_incs1" && make_VOIs
-
-                eval "_n=\${#${bname}_incs2_Ls[@]}"
-                [[ ${_n} -gt 0 ]] && tck_VOIs_2seg="${bname}_incs2" && make_VOIs
-
-                eval "_n=\${#${bname}_incs3_Ls[@]}"
-                [[ ${_n} -gt 0 ]] && tck_VOIs_2seg="${bname}_incs3" && make_VOIs
-
-                eval "_n=\${#${bname}_excs_Ls[@]}"
-                [[ ${_n} -gt 0 ]] && tck_VOIs_2seg="${bname}_excs" && make_VOIs
+                # Call make_VOIs for each segment present in the recipe, in numerical order.
+                # Keep the count below 10: make_TCKs.sh collects these VOIs with an incs* glob,
+                # which orders lexically, so an incs10 would sort ahead of incs2 and scramble the
+                # first/last inclusion used to build the scilpy filtering string.
+                for _s in "${_inc_segs[@]}" excs; do
+                    eval "_n=\${#${bname}_${_s}_Ls[@]}"
+                    [[ ${_n} -gt 0 ]] && tck_VOIs_2seg="${bname}_${_s}" && make_VOIs
+                done
 
             fi
 

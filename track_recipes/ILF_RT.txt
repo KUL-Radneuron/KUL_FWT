@@ -11,11 +11,11 @@ incs2  Fusi4_MSBP_RT  87
 excs  CC_allr_custom  1
 excs  BStem_FS  16
 excs  STG_GM_RT_FS  2030
-excs  G_OSup_GM_RT_2009  2116
+excs  G_OSup_GM_RT_2009  12120
 excs  Phippo_GM_RT_FS  2016
 excs  Phippo_WM_RT_FS  4016
-excs  Cing_lobeGM_LT  2003
-excs  Cing_lobeWM_LT  4003
+excs  Cing_lobeGM_RT  2003
+excs  Cing_lobeWM_RT  4003
 excs  AC_midL_MAN  1
 excs  Hippo_GM_RT_FS  53
 excs  vDC_RT_FS  60

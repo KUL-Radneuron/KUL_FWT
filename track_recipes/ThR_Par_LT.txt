@@ -6,7 +6,7 @@ incs2  Pari_lobeGM_LT  1006
 
 excs  CC_allr_custom  1
 excs  BStem_FS  16
-excs  vDC_LT  28
+excs  vDC_LT_aseg  28
 excs  AC_midline_MAN  1
 excs  SegWM_LT_ALIC_custom  1
 excs  hypothal_LT_excr_custom  1

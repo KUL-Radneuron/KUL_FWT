@@ -2,7 +2,7 @@
 # type  name  label
 incs1  SPL_GM_RT_FS  2029
 incs1  IPL_GM_RT_FS  2008
-incs1  G_OSup_GM_RT_2009  2116
+incs1  G_OSup_GM_RT_2009  12120
 incs1  Cun_GM_RT_FS  2005
 incs1  Pc_GM_RT_FS  2025
 

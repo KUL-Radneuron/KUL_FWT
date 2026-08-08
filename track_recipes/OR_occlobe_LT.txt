@@ -17,8 +17,8 @@ excs  Hippo_GM_LT_FS  17
 excs  OptCh_FS  85
 excs  Insula_GM_LT_FS  1035
 excs  SegWM_LT_PLIC_ex_custom  1001
-excs  Front_lobeGM_LT  1006
-excs  Pari_lobeGM_LT  1
+excs  Front_lobeGM_LT  1001
+excs  Pari_lobeGM_LT  1006
 excs  iPCC_GM_LT_FS  1010
 excs  Caudate_GM_LT_FS  11
 excs  SegWM_LT_ALIC_custom  1

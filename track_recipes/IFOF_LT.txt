@@ -7,8 +7,8 @@ incs1  Pc_GM_LT_FS  1025
 incs1  Fusi1_LT_MSBP  208
 incs1  Fusi2_LT_MSBP  209
 
-incs2  rMFG5_LT_MSBP  141
-incs2  rMFG6_LT_MSBP  142
+incs2  rMFG5_LT_MSBP  142
+incs2  rMFG6_LT_MSBP  143
 incs2  FP_GM_LT_FS  1032
 incs2  IFGpTr_GM_LT_FS  1020
 incs2  MedOF1_LT_MSBP  131
