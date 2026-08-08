@@ -986,25 +986,27 @@ function make_bundle {
     # run tckgen or tckedit depending on the ${T_app}
     # Must differentiate between BST and WBTS
 
-    tracking_mask="${T1_brain_mask_inFA}"
-
-    # if it's an OR or AF use the minCSF
-   if [[ ${TCK_2_make} == *"OR_"* ]] || [[ ${TCK_2_make} == *"AF_"* ]] || [[ ${TCK_2_make} == *"CP_"* ]] || [[ ${TCK_2_make} == *"DRT_"* ]] ; then
+    # The CSF-stripped mask is the default for every bundle. It used to be reached only by
+    # OR_/AF_/CP_/DRT_ and by T_app 4, so everything else -- UF, ILF, IFOF, SLF, CST, FAT,
+    # ThR, MdLF -- tracked inside the full brain mask with sulcal CSF included, and nothing
+    # prevented a streamline crossing a sulcus as long as there was FOD amplitude on the
+    # far side. The include/exclude VOIs do not help here: they constrain where a bundle
+    # ends, not what it does between the inclusions. That also matters more now the FOD
+    # cutoff is 0.05 for every reconstruction rather than 0.10, because bridging a thin CSF
+    # gap is exactly what a lower termination threshold permits.
+    #
+    # Falls back to the full brain mask if the minCSF image is missing: this is now every
+    # bundle's mask rather than four families', so an absent file should degrade the run
+    # rather than break all of it.
+    if [[ -f "${T1_BM_inFA_minCSF}" ]]; then
 
         tracking_mask="${T1_BM_inFA_minCSF}"
 
     else
 
-        # use the bm minCSF for bundle specific psuedo-ACT
-        if [[ ${T_app} == 4 ]]; then
+        echo " WARNING: ${T1_BM_inFA_minCSF} not found — using the full brain mask for ${TCK_2_make}; streamlines may cross sulcal CSF" | tee -a ${prep_log2}
 
-            tracking_mask="${T1_BM_inFA_minCSF}"
-        
-        else
-
-            tracking_mask="${T1_brain_mask_inFA}"
-
-        fi
+        tracking_mask="${T1_brain_mask_inFA}"
 
     fi
 

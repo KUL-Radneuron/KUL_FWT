@@ -1353,11 +1353,29 @@ if [[ -z ${srch_pt1_done} ]]; then
 
         task_exec
 
-        # Make the CSF inverse mask for downstream atlas masking
-        task_in="mrcalc -force -datatype uint16 -nthreads ${ncpu} -force -quiet ${subj_aseg_inFA} 4 0 -replace - | mrcalc -force -datatype uint16 - 43 0 -replace - | mrcalc -force -datatype uint16 - 24 0 \
-        -replace - | mrcalc -force -datatype uint16 - 14 0 -replace - | mrcalc -force -datatype uint16 - 31 0 -replace - | mrcalc -force -datatype uint16 - 63 0 -replace - | mrcalc -force -datatype uint16 - 15 0 -replace 0 -gt \
-        ${T1_brain_mask_inFA} -sub -1 -eq 0.9 -ge ${FS_csf_mask} -force && fslmaths ${FS_csf_mask} -binv ${FS_csf_mask_binv} \
-        && mrcalc -force -datatype uint16 -nthreads ${ncpu} ${T1_brain_mask_inFA} ${FS_csf_mask_binv} -mult ${T1_BM_inFA_minCSF}"
+        # Make the CSF inverse mask for downstream atlas masking.
+        #
+        # This used to strip the CSF labels out of the aseg, binarise, subtract the brain
+        # mask and keep whatever equalled -1. That relies on the brain mask being exactly 1
+        # inside the brain, and it is not: T1bm_MSinFA_Warped is Float64 carrying warped
+        # intensities (range 0-174 on sub-Alhajri, with 82 voxels equal to 1). So the -1
+        # test matched almost nothing -- 88 voxels against the 80673 the aseg actually calls
+        # CSF or ventricle inside the mask, about 10% of the tracking volume. tckgen never
+        # complained because -mask treats any nonzero value as inside; only the arithmetic
+        # was wrong. The consequence is that T1_BM_inFA_minCSF has been all but identical to
+        # the plain brain mask, so the bundles that asked for it -- the ORs, AFs, CPs and
+        # DRTs -- were never actually tracked with CSF excluded, and streamlines could cross
+        # sulcal CSF anywhere.
+        #
+        # Stated directly instead: the CSF mask is the union of the CSF and ventricle labels
+        # intersected with the brain mask, with both operands binarised so no assumption
+        # about their value range survives. 31 and 63 are kept for FreeSurfer 7 subjects;
+        # FreeSurfer 8 does not emit them and the -eq simply contributes nothing.
+        task_in="mrcalc -force -datatype uint16 -nthreads ${ncpu} -quiet \
+        ${subj_aseg_inFA} 4 -eq ${subj_aseg_inFA} 43 -eq -add ${subj_aseg_inFA} 14 -eq -add ${subj_aseg_inFA} 15 -eq -add \
+        ${subj_aseg_inFA} 24 -eq -add ${subj_aseg_inFA} 31 -eq -add ${subj_aseg_inFA} 63 -eq -add 0 -gt \
+        ${T1_brain_mask_inFA} 0 -gt -mult ${FS_csf_mask} -force && fslmaths ${FS_csf_mask} -binv ${FS_csf_mask_binv} \
+        && mrcalc -force -datatype uint16 -nthreads ${ncpu} ${T1_brain_mask_inFA} 0 -gt ${FS_csf_mask_binv} -mult ${T1_BM_inFA_minCSF}"
 
         task_exec
 
