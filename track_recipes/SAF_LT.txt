@@ -22,7 +22,7 @@ excs  IFG_PTr_GM_LT_FS  1020
 excs  IFG_PTr_WM_LT_FS  3020
 excs  putamen_LT_FS  12
 excs  caudate_LT_FS  11
-excs  Cing_lobeGM_LT  1005
-excs  Cing_lobeWM_LT  3005
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeWM_LT  3003
 excs  Thal_FS_LT  10
 excs  cMFG_GM_LT_FS  1003

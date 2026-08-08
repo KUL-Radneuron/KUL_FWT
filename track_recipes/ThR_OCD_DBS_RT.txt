@@ -16,7 +16,7 @@ excs  CC_allr_custom  1
 excs  BStem_FS  16
 excs  AC_midline_MAN  1
 excs  hypothal_RT_excr_custom  1
-excs  Temp_lobeGM_RT  2003
+excs  Temp_lobeGM_RT  2005
 excs  Putamen_GM_RT_FS  51
 excs  Caudate_GM_RT_FS  50
 excs  PD25_Pulvi_RT_custom  1

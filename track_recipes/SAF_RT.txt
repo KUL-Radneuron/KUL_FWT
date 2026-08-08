@@ -22,7 +22,7 @@ excs  IFG_PTr_GM_RT_FS  2020
 excs  IFG_PTr_WM_RT_FS  4020
 excs  putamen_RT_FS  51
 excs  caudate_RT_FS  50
-excs  Cing_lobeGM_RT  2005
-excs  Cing_lobeWM_RT  4005
+excs  Cing_lobeGM_RT  2003
+excs  Cing_lobeWM_RT  4003
 excs  Thal_FS_RT  49
 excs  cMFG_GM_RT_FS  2003
