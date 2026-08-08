@@ -3,6 +3,7 @@
 incs1  Occ_lobeGM_LT  1004
 
 incs2  PD25_Pulvi_LT_custom  1
+incs2  JuHA_LGN_LT_custom  1
 
 excs  CC_allr_custom  1
 excs  BStem_FS  16
@@ -10,6 +11,7 @@ excs  Phippo_GM_LT_FS  1016
 excs  LT_vDC_subseg2_custom  1
 excs  Ins_IFOF_exc_LT_custom  1
 excs  PD25_VA_VL_LT_custom  1
+excs  Thal_min_Pulvi_LT_custom  1
 excs  Cing_lobeGM_LT  1003
 excs  Cing_lobeWM_LT  3003
 excs  AC_midL_MAN  1
