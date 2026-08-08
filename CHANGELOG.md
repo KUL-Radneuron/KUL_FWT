@@ -1,5 +1,32 @@
 # Changelog
 
+## Unreleased (committed locally, 2026-08-08 — restore DRT's cortical inclusion)
+
+**Regression, introduced 2026-07-01 in c4accb8** ("KUL_FWT v2.0: externalise
+bundle recipes"). The hardcoded definitions had four inclusion VOIs for DRT:
+
+```
+DRT_LT_incs4_Ls=("M1_GM_FS_LT");  DRT_LT_incs4_Is=("1024")
+DRT_RT_incs4_Ls=("M1_GM_FS_RT");  DRT_RT_incs4_Is=("2024")
+```
+
+`incs4` was dropped when the recipes moved to `track_recipes/`, leaving DRT with
+only dentate, red nucleus and VL — no cortical endpoint. Every DRT reconstructed
+since then terminates at the thalamus rather than in M1, and, because nothing
+constrained the cortical end, streamlines were free to end anywhere after VL and
+still satisfy all inclusions. For an ET DBS target that is the difference between
+a dentato-rubro-thalamic and a dentato-rubro-thalamo-*cortical* tract.
+
+Restored verbatim. Also note `incs4` becomes a seed as well as a waypoint, since
+`seeds_str` in KUL_FWT_make_TCKs.sh is built from every inclusion VOI — which is
+how it behaved before c4accb8 too.
+
+Every bundle was re-checked against the pre-externalisation definitions
+programmatically: DRT_LT/RT were the **only** ones that lost a VOI. The two
+`ThR_OCD_DBS` bundles differ deliberately (STN added to `incs1`, frontal-lobe GM
+refined into specific SFG/OFC/FrP/cACC parcels); all other 80+ bundles transcribe
+exactly.
+
 ## Unreleased (committed locally, 2026-08-08 — build the PD25 VIM composite)
 
 `PD25_labels_LT/RT` has always listed `PD25_VIM_LT/RT`, but `PD25_lab_gen` never
