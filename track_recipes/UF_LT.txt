@@ -17,7 +17,8 @@ excs  Thal_FS_LT  10
 excs  Caud_FS_LT  11
 excs  Amyg_FS_LT  18
 excs  Hippo_FS_LT  17
-excs  Unseg_WM_FS_LT  5001
+# Unseg_WM_FS_LT (5001) removed: wmparc 5001 is ALL left deep WM, including the
+# temporal stem the UF trunk must cross. See KUL_FWT_dev_work/ audit, section 5.2.
 excs  Pari_lobeGM_LT  1006
 excs  Pari_lobeWM_LT  3006
 excs  Occ_lobeGM_LT  1004
