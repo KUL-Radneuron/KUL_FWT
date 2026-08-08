@@ -1092,8 +1092,11 @@ function make_bundle {
 
         else
 
+            # T_app 4 never passed the cutoff, so it tracked at MRtrix's 0.10 default even
+            # for lore_sd. Its name says ACT but it does not pass -act -- the anatomical
+            # constraint here is the minCSF mask -- so nothing halved it either.
             cmd_str="tckgen -force -nthreads ${ncpu_per_bundle} -algorithm ${algo_f} \
-            -select ${ns} -angle 60 -maxlength 280 -minlength 20 \
+            -select ${ns} -angle 60 -maxlength 280 -minlength 20 ${fod_cutoff_opt} \
             -mask ${tracking_mask} ${seeds_str} ${includes_str} ${excludes_str} ${auto_X} ${tracking_source} ${tck_init}"
 
         fi
@@ -2045,15 +2048,38 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
     # If LoRE-SD ODF is available, prefer it over CSD-based FOD. If the experimental
     # rfa-modulated FOD is available AND opted into (-U), prefer that over the plain
     # lore_sd ODF instead.
-    fod_cutoff_opt=""
+    # FOD amplitude cutoff, applied to every reconstruction rather than only to lore_sd.
+    # MRtrix's default is 0.10 (Defaults::cutoff_fod), halved to 0.05 only when -act is in
+    # use (Defaults::cutoff_act_multiplier). None of the bundle-specific modes pass -act --
+    # T_app 4 is pseudo-ACT via the minCSF mask, not the real thing -- so a CSD run tracked
+    # at 0.10 while a lore_sd run was pinned to 0.05 here. That made the termination
+    # threshold depend on which reconstruction happened to be found, which is a confound
+    # for any comparison between them, and it bit hardest exactly where FOD amplitudes are
+    # lowest: the temporal stem, where Meyer's loop lives.
+    #
+    # Setting it explicitly is safe under ACT. Tractography::load only writes the option
+    # into properties["threshold"], and Properties::set lets a user-supplied value win over
+    # the algorithm's computed default, so an explicit 0.05 stays 0.05 rather than being
+    # halved again to 0.025 for T_app 3.
+    fod_cutoff_opt="-cutoff 0.05"
+
+    # For the tensor and FACT algorithms -cutoff is an FA threshold, not an FOD amplitude,
+    # and the two are not on the same scale: 0.05 FA would track through almost anything.
+    # Those stay on the MRtrix default (0.10 FA). Note this was already being mis-applied to
+    # them whenever a lore_sd ODF was present, which is why the branches below no longer set
+    # the cutoff themselves.
+    if [[ ${algo_f} == "FACT" ]] || [[ ${algo_f} == "Tensor_Det" ]] || [[ ${algo_f} == "Tensor_Prob" ]]; then
+
+        fod_cutoff_opt=""
+
+    fi
+
     if [[ -n ${subj_rfa_mod_fod} ]]; then
         echo "rfa-modulated lore_sd FOD found (${subj_rfa_mod_fod}), using it (opt-in -U)" | tee -a ${prep_log2}
         subj_fod=${subj_rfa_mod_fod}
-        fod_cutoff_opt="-cutoff 0.05"
     elif [[ -n ${subj_lore_fod} ]]; then
         echo "LoRE-SD ODF found (${subj_lore_fod}), using it instead of CSD FOD" | tee -a ${prep_log2}
         subj_fod=${subj_lore_fod}
-        fod_cutoff_opt="-cutoff 0.05"
     fi
 
     # find your brain mask in FA
