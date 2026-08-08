@@ -2,7 +2,7 @@
 # type  name  label
 incs1  Occ_lobeGM_LT  1004
 
-incs2  PD25_Pulvi_LT_custom  10
+incs2  PD25_Pulvi_LT_custom  1
 
 excs  CC_allr_custom  1
 excs  BStem_FS  16
@@ -16,7 +16,7 @@ excs  AC_midL_MAN  1
 excs  Hippo_GM_LT_FS  17
 excs  OptCh_FS  85
 excs  Insula_GM_LT_FS  1035
-excs  SegWM_LT_PLIC_ex_custom  1001
+excs  SegWM_LT_PLIC_ex_custom  1
 excs  Front_lobeGM_LT  1001
 excs  Pari_lobeGM_LT  1006
 excs  iPCC_GM_LT_FS  1010

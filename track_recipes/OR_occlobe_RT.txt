@@ -2,7 +2,7 @@
 # type  name  label
 incs1  Occ_lobeGM_RT  2004
 
-incs2  PD25_Pulvi_RT_custom  49
+incs2  PD25_Pulvi_RT_custom  1
 
 excs  CC_allr_custom  1
 excs  BStem_FS  16

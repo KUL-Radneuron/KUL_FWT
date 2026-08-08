@@ -2248,6 +2248,44 @@ function make_VOIs {
     # echo "${Vs_nms_other_str[@]}" > ${VOIs_LUT}
 
     if KUL_wait_all_bg_and_check; then
+
+        # Empty-VOI check. Constituent VOI z was scaled to z+1 in _map.nii.gz, so a count of
+        # 0 for that value means the VOI contributed nothing -- its label is absent from the
+        # atlas its name dispatched to. Merging into one mask hides this: the segment still
+        # looks healthy while a specific constraint has silently disappeared. Real cases:
+        # OptCh_FS (85) is empty wherever FreeSurfer does not segment the optic chiasm, and
+        # with it the vDC_subseg2 exclude seeded from it, leaving 18 recipes -- both optic
+        # tracts and all four optic radiations among them -- with a dead exclude; and
+        # Front_lobeWM_FS (3001) was empty because "FS" in the name routed a lobes label to
+        # the aparc. Warn rather than fail: an empty VOI is usually wrong but not always
+        # fatal, and a VOI fully covered by an earlier entry in the same segment also reads
+        # as 0 here, since earlier entries win the -replace chain.
+        _voi_map="${VOIs_dir}/${tck_VOIs_2seg}_map.nii.gz"
+
+        if [[ -f "${_voi_map}" ]]; then
+
+            for _vz in ${!Vs_Ls[@]}; do
+
+                ((_vv=${_vz}+1))
+
+                _vc=$(mrcalc -quiet -force "${_voi_map}" ${_vv} -eq - 2>/dev/null | mrstats - -output count -ignorezero -quiet 2>/dev/null)
+
+                [[ -z "${_vc}" ]] && _vc=0
+
+                if [[ ${_vc} -eq 0 ]]; then
+
+                    echo " WARNING: ${tck_VOIs_2seg} — VOI ${Vs_Ls[$_vz]} (label ${Vs_Is[$_vz]}) is EMPTY, 0 voxels" | tee -a ${prep_log2}
+
+                fi
+
+            done
+
+            unset _vz _vv _vc
+
+        fi
+
+        unset _voi_map
+
         echo "${tck_list[$q]}_VOIs done" >> "${ROIs_d}/${tck_list[$q]}_VOIs.done"
     else
         echo "ERROR: one or more background steps failed for ${tck_list[$q]} VOIs — not marking done" | tee -a ${prep_log2}
