@@ -29,8 +29,9 @@ excs  SegWM_RT_mIPV_custom  1
 excs  Ins_subseg3_RT_custom  1
 excs  Fusi4_MSBP_RT  87
 excs  TempP_GM_FS_RT  2033
-excs  TempP_WM_FS_RT  4033
+# TempP/ITG white matter excludes dropped: Meyer's loop and the ventral OR run
+# through inferior temporal WM, and as 'any exclude' these clipped the trunk.
+# The GM parcels are kept -- the bundle should not terminate in that cortex.
 excs  ITG_GM_FS_RT  2009
-excs  ITG_WM_FS_RT  4009
 excs  Ins_infL_wm_RT_custom  1
 excs  Ins_subseg5_RT_custom  1
