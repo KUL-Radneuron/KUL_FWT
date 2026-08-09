@@ -5,6 +5,30 @@ set -x
 # This workflow belongs to the manuscript (under review) https://doi.org/10.1101/2021.10.13.464139, please consider citing if you will use it
 # KUL_FWT_make_VOIs.sh automatically generates anatomical VOIs for single subject fiber tractography
 
+# ----------------------------------------------------------------------------
+# NOTE ON THE "MS" FILENAMES
+#
+# MSBP (multiscalebrainparcellator) is no longer used anywhere in this pipeline.
+# Several intermediate files still carry MS/MSBP in their names purely for
+# historical reasons -- renaming them would invalidate every existing subject's
+# cached prep stage -- but all of them are now FreeSurfer- or Lausanne-derived:
+#
+#   sub-X_T1brain_MSinFA_Warped.nii.gz   <- FreeSurfer brain.mgz
+#   sub-X_T1bm_MSinFA_Warped.nii.gz      <- FreeSurfer brainmask.mgz
+#   sub-X_T1bm_MSinFA_minCSF.nii.gz      <- the above minus sub-X_FS_CSF_mask
+#   sub-X_MSBP_scale3_inFA.nii.gz        <- lausanne2018_scale3, with FS brainstem
+#                                           and hypothalamic subfields patched in
+#
+# The transform is named honestly (fa_2_UKBB_vFS_*), which is the tell.
+#
+# Do not infer a file's provenance from an MS prefix, and do not add new files
+# using it. This has already cost one real bug: KUL_FWT_make_TCKs.sh excluded
+# a "sub-X_MSBP_CSF_mask.nii.gz" that no longer had anything writing it, and
+# because a missing -exclude makes tckgen abort rather than degrade, ICP_LT,
+# ICP_RT and the DRTs came out empty with the reason only in a per-bundle log.
+# The CSF mask to use is FS_csf_mask, built below from the FreeSurfer aseg.
+# ----------------------------------------------------------------------------
+
 # version = v2.0_01072026
 
 cwd="$(pwd)"
@@ -1473,7 +1497,7 @@ if [[ -z ${srch_pt1_done} ]]; then
         # use ncpu/4 to avoid flooding the CPU ;)
         for gn in {0..3}; do 
 
-            task_in="mrcalc -force -datatype uint16 -force -nthreads $((ncpu/4)) `mrconvert -force -coord 3 ${gn} ${JuHA_in_FA} - ` 25 -gt \
+            task_in="mrcalc -force -datatype uint16 -force -nthreads $((ncpu/4)) `mrconvert -force -coord 3 ${gn} -axes 0,1,2 ${JuHA_in_FA} - ` 25 -gt \
             - | maskfilter - connect ${ROIs_d}/custom_VOIs/JuHA_${GNs[$gn]}_custom.nii.gz -largest -force"
             task_exec &
 

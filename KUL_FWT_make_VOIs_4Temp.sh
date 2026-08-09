@@ -1223,7 +1223,7 @@ if [[ -z ${srch_pt1_done} ]]; then
         # use ncpu/4 to avoid flooding the CPU ;)
         for gn in {0..3}; do 
 
-            task_in="mrcalc -force -datatype uint16 -force -nthreads $((ncpu/4)) `mrconvert -force -coord 3 ${gn} ${JuHA_in_FOD} - ` 25 -gt \
+            task_in="mrcalc -force -datatype uint16 -force -nthreads $((ncpu/4)) `mrconvert -force -coord 3 ${gn} -axes 0,1,2 ${JuHA_in_FOD} - ` 25 -gt \
             - | maskfilter - connect ${ROIs_d}/custom_VOIs/JuHA_${GNs[$gn]}_custom.nii.gz -largest -force"
             task_exec &
 

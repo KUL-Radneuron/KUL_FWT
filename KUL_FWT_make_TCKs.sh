@@ -1010,9 +1010,31 @@ function make_bundle {
 
     fi
 
+    # Peduncular and dentato-rubro-thalamic bundles additionally exclude CSF
+    # outright: they run beside the fourth ventricle and the cerebellopontine
+    # cistern, where a streamline that strays into fluid can still terminate
+    # plausibly.
+    #
+    # This must be a CSF mask, i.e. positive INSIDE the fluid. Do not be tempted
+    # to hand it T1_BM_inFA_minCSF (brain MINUS CSF) -- that would exclude the
+    # whole brain and yield an empty bundle, which looks identical to the failure
+    # this replaced.
+    #
+    # Guarded, because a missing -exclude is fatal rather than degrading: tckgen
+    # cannot parse the path as either an image or a sphere and aborts the bundle
+    # entirely. That is how ICP_LT/ICP_RT came out empty for every subject since
+    # MSBP was dropped, with the reason buried in a per-bundle log.
     if [[ ${TCK_2_make} == *"CP_"* ]] || [[ ${TCK_2_make} == *"DRT_"* ]]; then
 
-        excludes_str+=$(printf " -exclude %s"  "${MSBP_csf_mask}")
+        if [[ -f "${FS_csf_mask}" ]]; then
+
+            excludes_str+=$(printf " -exclude %s"  "${FS_csf_mask}")
+
+        else
+
+            echo " WARNING: ${FS_csf_mask} not found — tracking ${TCK_2_make} without the CSF exclude; streamlines may enter the ventricles and cisterns" | tee -a ${prep_log2}
+
+        fi
 
     fi
 
@@ -1911,9 +1933,14 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
 
     T1_brain_mask_inFA="${prep_d}/sub-${subj}${ses_str}_T1bm_MSinFA_Warped.nii.gz"
 
-    MSBP_csf_mask="${prep_d}/sub-${subj}${ses_str}_MSBP_CSF_mask.nii.gz"
+    # The MSBP-derived CSF mask this used to name (sub-X_MSBP_CSF_mask.nii.gz) is
+    # never produced by anything: MSBP was dropped in favour of the Lausanne
+    # parcellation plus FreeSurfer subfields, and nothing was left writing that
+    # file. KUL_FWT_make_VOIs.sh builds an equivalent from the FreeSurfer aseg
+    # (labels 4/43/14/15/24/31/63 intersected with the brain mask), so use that.
+    FS_csf_mask="${prep_d}/sub-${subj}${ses_str}_FS_CSF_mask.nii.gz"
 
-    MSBP_csf_mask_binv="${ROIs_d}/custom_VOIs/sub-${subj}${ses_str}_MSBP_CSF_mask_binv.nii.gz"
+    FS_csf_mask_binv="${ROIs_d}/custom_VOIs/sub-${subj}${ses_str}_FS_CSF_mask_binv.nii.gz"
 
     T1_BM_inFA_minCSF="${prep_d}/sub-${subj}${ses_str}_T1bm_MSinFA_minCSF.nii.gz"
 

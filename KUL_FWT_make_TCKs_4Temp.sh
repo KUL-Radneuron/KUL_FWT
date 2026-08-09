@@ -896,7 +896,15 @@ function make_bundle {
 
     if [[ ${TCK_2_make} == *"CP_"* ]] || [[ ${TCK_2_make} == *"DRT_"* ]]; then
 
-        excludes_str+=$(printf " -exclude %s"  "${MSBP_csf_mask}")
+        if [[ -f "${FS_csf_mask}" ]]; then
+
+            excludes_str+=$(printf " -exclude %s"  "${FS_csf_mask}")
+
+        else
+
+            echo " WARNING: ${FS_csf_mask} not found — tracking ${TCK_2_make} without the CSF exclude" | tee -a ${prep_log2}
+
+        fi
 
     fi
 
@@ -1713,9 +1721,12 @@ elif [[ -f "${ROIs_d}/Part1.done" ]] && [[ -f "${ROIs_d}/Part2.done" ]]; then
 
     T1_brain_mask_inFOD="${prep_d}/sub-${subj}${ses_str}_T1bm_MSinFOD_Warped.nii.gz"
 
-    MSBP_csf_mask="${prep_d}/sub-${subj}${ses_str}_MSBP_CSF_mask.nii.gz"
+    # See the same block in KUL_FWT_make_TCKs.sh: the MSBP-derived CSF mask is
+    # never written by anything since MSBP was dropped. KUL_FWT_make_VOIs_4Temp.sh
+    # builds an FS-derived equivalent at this path.
+    FS_csf_mask="${prep_d}/sub-${subj}${ses_str}_FS_CSF_mask.nii.gz"
 
-    MSBP_csf_mask_binv="${ROIs_d}/custom_VOIs/sub-${subj}${ses_str}_MSBP_CSF_mask_binv.nii.gz"
+    FS_csf_mask_binv="${ROIs_d}/custom_VOIs/sub-${subj}${ses_str}_FS_CSF_mask_binv.nii.gz"
 
     T1_BM_inFOD_minCSF="${prep_d}/sub-${subj}${ses_str}_T1bm_MSinFOD_minCSF.nii.gz"
 

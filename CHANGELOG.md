@@ -1,5 +1,71 @@
 # Changelog
 
+## Unreleased (2026-08-09 — ICP/MCP/DRT never tracked; ThR_Inf never filtered)
+
+Nine of 46 bundles failed on a clinical run. Two distinct causes, both silent.
+
+### `MSBP_CSF_mask` has no producer (ICP, MCP, DRT — 6 bundles, empty)
+
+`KUL_FWT_make_TCKs.sh` excluded
+`${prep_d}/sub-X_MSBP_CSF_mask.nii.gz` for every `*CP_*` and `*DRT_*` bundle.
+Nothing anywhere writes that file: MSBP was replaced by the Lausanne
+parcellation plus FreeSurfer subfields, and this one reference was never
+re-pointed. A missing `-exclude` is fatal rather than degrading — `tckgen`
+cannot parse the path as an image or a sphere and aborts the bundle — so
+`ICP_LT/RT`, `MCP_LT/RT` and `DRT_LT/RT` produced **no output at all**, with the
+reason only in a per-bundle log.
+
+Now uses `FS_csf_mask` (`sub-X_FS_CSF_mask.nii.gz`), which
+`KUL_FWT_make_VOIs.sh` already builds from the FreeSurfer aseg — labels
+4/43/14/15/24/31/63 intersected with the brain mask. Verified on a subject:
+65976 CSF voxels, and CSF + brain-minus-CSF sums exactly to the brain mask, so
+it is a complete partition. Guarded, so a missing file now warns and tracks
+without the CSF exclude instead of losing the bundle.
+
+Note the substitute must be a **CSF** mask (positive inside fluid), not
+`T1_BM_inFA_minCSF` (brain *minus* CSF) — passing the latter to `-exclude` would
+exclude the whole brain and yield an empty bundle, i.e. the same symptom from the
+opposite cause. Stated in the code so it is not "fixed" that way later.
+
+### A 4D VOI (ThR_Inf — 2 bundles, stopped after `initial`)
+
+`ThR_Inf_*_incs1_bin.nii.gz` came out `173×173×114×1`, and
+`scil_tractogram_filter_by_roi` → dipy raises
+`ValueError: Buffer has wrong number of dimensions (expected 3, got 4)`.
+
+Cause: the per-volume cut from the 4D Juelich atlas used
+`mrconvert -coord 3 ${gn}`, which keeps the singleton 4th axis. Added
+`-axes 0,1,2` in `KUL_FWT_make_VOIs.sh` and `_4Temp.sh`. Verified: `ndim 4 → 3`,
+712 voxels preserved.
+
+A scan of every VOI found four 4D images — the two `ThR_Inf_*_incs1` and both
+`OR_occlobe_*_incs2`, i.e. exactly the recipes containing a `JuHA_*` entry.
+**`OR_occlobe` survived only by luck**: its filtering runs through `tckedit`,
+which tolerates the singleton, while `ThR_Inf` goes through scilpy. It was
+carrying the same defect.
+
+### Not fixed
+
+`Ant_Comm` completes but yields ~10 streamlines. Measured, and it is **not** a
+VOI or exclude problem: `incs1` overlaps the excludes by 1 voxel of 185, the AC
+centroid is properly midline (x = 1.1 mm), and only 10% of a 3-voxel dilation is
+excluded. It is a hard target — mean FA 0.36 in the AC against 0.53 in CC motor —
+compounded by seeding from every inclusion group, so ~⅔ of seeds start in
+~36,800-voxel cortical parcels rather than the 185-voxel commissure. Changing
+that would make Ant_Comm the only bundle seeding from one VOI; left as a recipe
+decision.
+
+### Naming note added
+
+`KUL_FWT_make_VOIs.sh` gains a header block recording that `MS`/`MSBP` in
+filenames is historical — `T1brain_MSinFA_Warped` is FreeSurfer `brain.mgz`,
+`T1bm_MSinFA_Warped` is `brainmask.mgz`, `MSBP_scale3_inFA` is
+`lausanne2018_scale3` with FS brainstem and hypothalamic subfields patched in.
+The transform is named honestly (`fa_2_UKBB_vFS_*`), which is the tell. Renaming
+the files would invalidate every subject's cached prep, so the names stay and the
+provenance is documented instead — inferring provenance from an `MS` prefix is
+what cost six bundles above.
+
 ## Unreleased (committed locally, 2026-08-08 — restore DRT's cortical inclusion)
 
 **Regression, introduced 2026-07-01 in c4accb8** ("KUL_FWT v2.0: externalise
