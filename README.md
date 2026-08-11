@@ -123,7 +123,55 @@ Any installation method is supported (conda, pip, container bind-mount) as long 
     -a:  Specify algorithm for tckgen fiber tractography (tckgen -algorithm options are: iFOD2, iFOD1, SD_STREAM, Tensor_Det, Tensor_Prob)
     -f:  Specify filtering approach (0 = No filtering, 1 = conservative, 2 = liberal)
 	-o:  Full path to output dir (if not set reverts to default output ./sub-*_ses-*_KUL_FWT_output)
-    -Q:  If set quantitative and qualitative analyses will be done
-    -S:  If set screenshots will taken of each bundle
+    -Q:  If set quantitative and qualitative analyses will be done (along-tract
+         tractometry, per-bundle connectivity, and the interactive per-bundle
+         HTML report — see Outputs below)
+    -S:  If set screenshots will taken of each bundle (and assembled into one
+         subject-level HTML contact sheet — see Outputs below)
     -n:  Number of cpu for parallelisation (default is 6)
     -h:  Prints help menu
+
+### Outputs
+
+Per bundle, under `<output>/sub-*_TCKs_output/<BUNDLE>_output/`:
+
+| file | needs | what it is |
+|---|---|---|
+| `<BUNDLE>_fin_BT_<algo>.tck` | — | the final bundle, MRtrix format |
+| `<BUNDLE>_fin_BT_<algo>.trk` | scilpy | the same bundle in TrackVis format, for **freeview**, which does not read `.tck` |
+| `Screenshots/*.png` | `-S` | 3 orientations × 4 renderings (tract alone / over anatomy, 3D / glass brain) |
+| `QQ/*_scores_*.txt` | `-Q` | along-tract profiles, one row per segment, per metric |
+| `QQ/*_connectivity_matrix.csv` | `-Q` | endpoint parcel × parcel streamline counts |
+| `QQ/sub-*_spider3d_<BUNDLE>.html` | `-Q` | **interactive per-bundle report** (below) |
+
+And per subject, at the top of `sub-*_TCKs_output/`:
+
+| file | needs | what it is |
+|---|---|---|
+| `sub-*_bundle_metric_means.csv` | `-Q` | one bundle × metric summary table |
+| `sub-*_FWT_report.html` | `-S` | **contact sheet** of every bundle's screenshots |
+
+**The per-bundle HTML** is self-contained (inline SVG and JS, no sibling files or
+network access) so it can be copied anywhere. It shows a drag-to-rotate 3D tower
+of the metric fingerprint beside the actual bundle geometry, an along-tract
+profile for every metric, and an endpoint-connectivity section naming the parcels
+the bundle joins — a ranked pair table plus a heatmap restricted to the parcels
+actually touched. Every axis is normalised across *this subject's own* bundles,
+since a single clinical subject has no population reference.
+
+**The contact sheet** puts every bundle on one page: three orientations each,
+with the rendering switchable for all bundles at once, a filter box, each
+bundle's strongest endpoint pair in its caption, and a link to that bundle's
+detail page. Screenshots are downscaled and JPEG-encoded on the way in (the raw
+PNGs total ~32 MB per subject, which no browser opens comfortably as base64).
+The links are bare filenames, so if you copy these out, keep the contact sheet
+and the per-bundle pages in the same directory.
+
+**`.trk` reference space.** The conversion uses the subject's FA image, not the
+FreeSurfer parcellation passed to `-F`. `KUL_FWT_make_VOIs.sh` registers
+FreeSurfer to FA itself and warps every label into FA space, so tracking — and
+therefore these streamlines — happen in FA space. Those two frames coincide only
+when the dMRI was already aligned to the T1w upstream; if it was not (a separate
+session, say), an FS-space reference would produce a `.trk` that renders offset
+in freeview. `.tck` carries no reference at all, which is why this distinction
+only matters for the `.trk`.

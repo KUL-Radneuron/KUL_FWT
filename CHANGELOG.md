@@ -1,5 +1,72 @@
 # Changelog
 
+## Unreleased (2026-08-11 — .trk for freeview; the QQ report becomes self-sufficient)
+
+### `.trk` alongside every `.tck`
+
+freeview reads TrackVis `.trk` but not MRtrix `.tck`, so the final bundles could
+only be viewed in mrview. `KUL_FWT_make_TCKs.sh` now writes a `.trk` next to each
+final `.tck` (`scil_tractogram_convert`; skipped with a warning if scilpy is not
+on `PATH`, like the other add-on outputs here).
+
+The reference is `subj_FA`, **not** the `-F` parcellation, and that distinction
+is not cosmetic. `KUL_FWT_make_VOIs.sh` registers FreeSurfer to FA itself
+(`antsIntermodalityIntrasubject.sh`) and warps every label *into FA space*, so
+tracking — and therefore these streamlines — happen in FA space. FS space
+coincides with it only when dwiprep's `_reg2T1w` step already made that
+registration near identity. Hand KUL_FWT a dMRI series that was never aligned to
+the T1w (a separate session, say) and the two frames genuinely differ, at which
+point an FS-space reference writes a `.trk` that renders offset. `.tck` carries
+no reference at all, which is why this only bites here.
+
+Verified on a clinical subject: streamline count preserved, coordinates equal to
+float32 precision, no bounding-box violations.
+
+### Endpoint connectivity in the per-bundle report
+
+The QQ connectivity output was an unlabelled 89×89 `imshow` that is ~99.9 %
+zeros, so the handful of parcel pairs actually carrying the bundle were a few
+unreadable pixels. `KUL_FWT_bundle_spider_plot.py` now renders the same matrix as
+a ranked parcel-pair table plus a labelled heatmap restricted to the parcels the
+bundle touches, ordered by involvement so the dominant endpoints sit top-left.
+
+Labels come from the `fs_default` LUT shipped beside the script — which is what
+`labelconvert` builds `LC+spine_inFA` from — and indices above 84 are the
+appended UKBB brainstem parcels, named as such rather than invented.
+
+Sanity-checked against known anatomy:
+
+| bundle | strongest pair | share |
+|---|---|---|
+| CST_LT | precentral ↔ brainstem | 74 % |
+| FAT_LT | parsopercularis ↔ superiorfrontal | 97 % |
+| MdLF_LT | superiorparietal ↔ superiortemporal | 68 % |
+| IFOF_LT | parstriangularis ↔ superiorparietal | 35 % (pars triangularis anchors every top pair) |
+
+With this the `.html` carries everything its sibling QQ files did — the
+along-tract profiles the `*_scores_*_plot.pdf` show, the spider PDF's content as
+the interactive tower, and now the connectivity matrix — so it is a single
+self-contained artifact rather than one file among a dozen.
+
+### `KUL_FWT_bundle_report.py` (new)
+
+One self-contained HTML contact sheet per subject: every bundle's screenshots,
+three orientations, all four renderings switchable at once, a bundle filter, each
+bundle's strongest endpoint pair in its caption, and a link to its detail page.
+Reviewing a run is one file instead of 22 directories. Runs under `-S`, once, at
+the end of `KUL_FWT_make_TCKs.sh`.
+
+Images are re-encoded rather than embedded as-is: the source PNGs are 1920×1080
+RGBA totalling ~32 MB per subject, which base64s into a page no browser opens
+happily. Autocropped, downscaled to 800 px and JPEG'd at q82 they come to ~14 MB,
+and at contact-sheet size the difference is not visible. The page needs no
+sibling files or network access, but the `metrics →` links are bare filenames, so
+the per-bundle pages must travel with it.
+
+**Note:** this needs Pillow, which the `scilpy` env currently provides only
+transitively (via matplotlib/fury/scikit-image) rather than as an explicit
+dependency.
+
 ## Unreleased (2026-08-09 — ICP/MCP/DRT never tracked; ThR_Inf never filtered)
 
 Nine of 46 bundles failed on a clinical run. Two distinct causes, both silent.

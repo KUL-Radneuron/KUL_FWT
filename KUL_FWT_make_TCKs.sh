@@ -1800,6 +1800,42 @@ function make_bundle {
 
     fi
 
+    # TrackVis .trk beside the .tck, so the bundle can be loaded in freeview
+    # (which reads .trk but not MRtrix .tck) as well as mrview.
+    #
+    # Reference is subj_FA, NOT the -F parcellation: KUL_FWT_make_VOIs.sh
+    # registers FS to FA itself (antsIntermodalityIntrasubject.sh) and warps
+    # every label *into FA space*, so tracking -- and therefore these
+    # streamlines -- happen in FA space. FS space only coincides with it when
+    # the dwiprep _reg2T1w step has already made that registration near
+    # identity; feed FWT a dMRI series that was never aligned to the T1 (a
+    # separate session, say) and the two frames genuinely differ, at which
+    # point an FS-space reference would write a .trk that renders offset.
+    # .tck carries no reference at all, which is why this only bites here.
+    #
+    # Optional: skipped with a warning if scilpy is not on PATH, in keeping
+    # with how the other add-on outputs here degrade rather than fail.
+    _fwt_fin_tck="${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}.tck"
+    _fwt_out_trk="${TCK_out}/${TCK_2_make}_fin_${T}_${algo_f}.trk"
+    if [[ -f "${_fwt_fin_tck}" ]] && [[ ! -f "${_fwt_out_trk}" ]]; then
+
+        if command -v scil_tractogram_convert >/dev/null 2>&1; then
+
+            if scil_tractogram_convert "${_fwt_fin_tck}" "${_fwt_out_trk}" \
+                --reference "${subj_FA}" -f >/dev/null 2>&1; then
+                echo "${TCK_2_make}_fin_${T}_${algo_f} .trk written for freeview" | tee -a ${prep_log2}
+            else
+                echo "WARNING: .trk conversion failed for ${TCK_2_make}_fin_${T}_${algo_f}" | tee -a ${prep_log2}
+            fi
+
+        else
+
+            echo "WARNING: scil_tractogram_convert not found, skipping .trk for ${TCK_2_make}" | tee -a ${prep_log2}
+
+        fi
+
+    fi
+
     unset TCK_out TCK_2_make
 
 }
@@ -2436,5 +2472,22 @@ if [[ "${Q_flag}" -eq 1 ]]; then
 
     task_in="KUL_FWT_bundle_spider_plot.py ${TCKs_outd} ${subj} ${ses_str}"
     task_exec
+
+fi
+
+# Single-page contact sheet of every bundle's screenshots, with the per-bundle
+# spider pages linked from it when -Q also ran. Gated on S_flag because it has
+# nothing to show without the screenshot step; it degrades to a warning rather
+# than failing, like the other add-on outputs here.
+if [[ "${S_flag}" -eq 1 ]]; then
+
+    echo " Assembling the single-page bundle screenshot report " | tee -a ${prep_log2}
+
+    if command -v KUL_FWT_bundle_report.py >/dev/null 2>&1; then
+        task_in="KUL_FWT_bundle_report.py ${TCKs_outd} ${subj} ${ses_str}"
+        task_exec
+    else
+        echo "WARNING: KUL_FWT_bundle_report.py not found, skipping the screenshot report" | tee -a ${prep_log2}
+    fi
 
 fi

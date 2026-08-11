@@ -49,6 +49,109 @@ BASELINE = "#c3c2b7"
 SURFACE = "#fcfcfb"
 
 
+# How many endpoint pairs the connectivity table lists. The matrix is ~89x89 but
+# a single bundle only ever touches a handful of parcels, so this is generous.
+N_CONNECTIVITY_ROWS = 15
+
+
+def load_parcel_labels():
+    """Return {label index: parcel name} for the connectivity matrix's rows/cols.
+
+    The matrix is built (KUL_FWT_plot_bundle_connectivity.py) on
+    sub-*_LC+spine_inFA.nii.gz, which KUL_FWT_make_VOIs.sh produces by running
+    `labelconvert` into the MRtrix fs_default ordering (1-84) and then appending
+    the UKBB brainstem parcels at 84+. So fs_default.txt -- which ships next to
+    this script -- is the lookup for 1-84, and anything above that is brainstem.
+    """
+    lut = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fs_default.txt")
+    labels = {}
+    try:
+        with open(lut) as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                fields = line.split()
+                if len(fields) >= 3 and fields[0].isdigit():
+                    labels[int(fields[0])] = fields[2]
+    except OSError:
+        # no LUT reachable -- the table still renders, just with bare indices
+        return {}
+    return labels
+
+
+def load_connectivity(qq_dir, labels):
+    """Rank the bundle's endpoint parcel pairs by streamline count.
+
+    Replaces what the QQ connectivity PNG showed: that was an unlabelled 89x89
+    imshow of a matrix that is ~99.9% zeros, so the handful of pairs that
+    actually carry the bundle were a few unreadable pixels. Same data, read as
+    "which parcels does this bundle connect, and how strongly".
+    """
+    hits = sorted(glob.glob(os.path.join(qq_dir, "*_connectivity_matrix.csv")))
+    if not hits:
+        return None
+    try:
+        matrix = np.loadtxt(hits[0], delimiter=",", usecols=None, ndmin=2)
+    except (OSError, ValueError):
+        return None
+    if matrix.size == 0:
+        return None
+
+    # dipy's connectivity_matrix fills both triangles; fold them together so a
+    # pair is counted once, and drop label 0 (background / unparcellated).
+    folded = np.triu(matrix) + np.tril(matrix, -1).T
+    folded[0, :] = 0
+    folded[:, 0] = 0
+    total = folded.sum()
+    if total <= 0:
+        return None
+
+    def name_for(idx):
+        if idx in labels:
+            return labels[idx]
+        # 85+ are the appended UKBB brainstem parcels, which fs_default.txt
+        # does not cover -- name them honestly rather than inventing a label
+        return f"brainstem ({idx})" if idx > 84 else f"label {idx}"
+
+    pairs = []
+    for i, j in zip(*np.nonzero(folded)):
+        pairs.append({
+            "a": name_for(int(i)),
+            "b": name_for(int(j)),
+            "count": int(folded[i, j]),
+            "pct": round(100.0 * folded[i, j] / total, 1),
+        })
+    pairs.sort(key=lambda p: -p["count"])
+
+    # Companion heatmap: the same data as a matrix, but restricted to the parcels
+    # this bundle actually touches. The QQ PNG plotted all 89x89 -- ~99.9% zeros,
+    # so the signal was a few unlabelled pixels. Ordering parcels by total
+    # involvement puts the bundle's main endpoints in the top-left.
+    involved = sorted(
+        {int(i) for i, _ in zip(*np.nonzero(folded))}
+        | {int(j) for _, j in zip(*np.nonzero(folded))},
+        key=lambda k: -(folded[k, :].sum() + folded[:, k].sum()),
+    )
+    cells = []
+    for r, i in enumerate(involved):
+        for c, j in enumerate(involved):
+            v = folded[i, j] + folded[j, i] if i != j else folded[i, j]
+            if v > 0:
+                cells.append([r, c, int(v)])
+
+    return {
+        "pairs": pairs[:N_CONNECTIVITY_ROWS],
+        "n_pairs": len(pairs),
+        "total": int(total),
+        "matrix": {
+            "labels": [name_for(i) for i in involved],
+            "cells": cells,
+            "max": int(folded.max()),
+        },
+    }
+
+
 def find_score_files(tcks_output_dir, subj, ses_str):
     """Return {bundle: {metric: [per-segment values]}} across every bundle dir."""
     data = {}
@@ -312,6 +415,25 @@ SPIDER_3D_TEMPLATE = """<!doctype html>
   .profile-card h3 {{ font-size: 11px; font-weight: 500; color: {ink_muted};
                      margin: 0 0 2px; }}
   .profile-axis-label {{ font-size: 9px; fill: {ink_muted}; }}
+  #conn-title {{ text-align: center; font-size: 13px; font-weight: 600;
+                color: {ink_primary}; margin: 28px 0 4px; }}
+  #conn-note {{ text-align: center; font-size: 10px; color: {ink_muted};
+               margin-bottom: 8px; }}
+  #conn-heat {{ display: flex; justify-content: center; margin-bottom: 14px;
+               overflow-x: auto; }}
+  .heat-label {{ font-size: 9px; fill: {ink_secondary}; }}
+  .heat-cell {{ stroke: {surface}; stroke-width: 1; }}
+  #conn {{ border-collapse: collapse; margin: 0 auto 32px; font-size: 11px;
+          max-width: 620px; width: 92%; }}
+  #conn th {{ font-weight: 500; color: {ink_muted}; text-align: left;
+             border-bottom: 1px solid {baseline}; padding: 4px 8px; }}
+  #conn td {{ padding: 3px 8px; border-bottom: 1px solid {gridline};
+             color: {ink_secondary}; }}
+  #conn td.num {{ text-align: right; font-variant-numeric: tabular-nums;
+                 white-space: nowrap; }}
+  #conn td.pair {{ color: {ink_primary}; }}
+  .bar {{ display: inline-block; height: 7px; background: {series_color};
+         border-radius: 1px; vertical-align: middle; }}
 </style></head>
 <body>
 <h1>{title}</h1>
@@ -329,7 +451,12 @@ SPIDER_3D_TEMPLATE = """<!doctype html>
 </div>
 <div id="profiles-title">along-tract profiles</div>
 <div id="profiles"></div>
+<div id="conn-title">endpoint connectivity</div>
+<div id="conn-note"></div>
+<div id="conn-heat"></div>
+<table id="conn"></table>
 <script>
+const CONNECTIVITY = {connectivity_json};
 const DATA = {payload_json};
 const BUNDLE_LINES = {bundle_json};
 const BUNDLE_SCALE = {bundle_scale_json};
@@ -667,6 +794,110 @@ function renderProfiles() {{
 }}
 renderProfiles();
 
+// Same matrix the table lists, restricted to the parcels this bundle touches.
+// Single-hue ramp from the surface colour to the series blue: these are counts
+// with a true zero and no meaningful midpoint, so a sequential scale is right
+// and a diverging one would invent a centre. sqrt on the ramp keeps the many
+// small incidental pairs visible next to one dominant connection.
+function renderConnHeat() {{
+  const m = CONNECTIVITY && CONNECTIVITY.matrix;
+  if (!m || !m.labels.length) return;
+  const n = m.labels.length;
+  const cell = n > 16 ? 14 : 20, padL = 128, padT = 128;
+  const W = padL + n * cell + 12, H = padT + n * cell + 12;
+
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+
+  m.cells.forEach(([r, c, v]) => {{
+    const rect = document.createElementNS(NS, "rect");
+    rect.setAttribute("class", "heat-cell");
+    rect.setAttribute("x", padL + c * cell);
+    rect.setAttribute("y", padT + r * cell);
+    rect.setAttribute("width", cell); rect.setAttribute("height", cell);
+    rect.setAttribute("fill", COLOR_SERIES);
+    rect.setAttribute("fill-opacity", (0.12 + 0.88 * Math.sqrt(v / m.max)).toFixed(3));
+    const title = document.createElementNS(NS, "title");
+    title.textContent = m.labels[r] + " \\u2194 " + m.labels[c] + ": " + v;
+    rect.appendChild(title);
+    svg.appendChild(rect);
+  }});
+
+  m.labels.forEach((lab, i) => {{
+    const y = document.createElementNS(NS, "text");
+    y.setAttribute("class", "heat-label");
+    y.setAttribute("x", padL - 6);
+    y.setAttribute("y", padT + i * cell + cell / 2);
+    y.setAttribute("text-anchor", "end");
+    y.setAttribute("dominant-baseline", "middle");
+    y.textContent = lab;
+    svg.appendChild(y);
+
+    const x = document.createElementNS(NS, "text");
+    x.setAttribute("class", "heat-label");
+    x.setAttribute("x", padL + i * cell + cell / 2);
+    x.setAttribute("y", padT - 6);
+    x.setAttribute("text-anchor", "start");
+    x.setAttribute("dominant-baseline", "middle");
+    // rotated so long parcel names do not overlap at any realistic n
+    x.setAttribute("transform", "rotate(-90 " + (padL + i * cell + cell / 2)
+                   + " " + (padT - 6) + ")");
+    x.textContent = lab;
+    svg.appendChild(x);
+  }});
+
+  document.getElementById("conn-heat").appendChild(svg);
+}}
+
+function renderConnectivity() {{
+  const note = document.getElementById("conn-note");
+  const table = document.getElementById("conn");
+  if (!CONNECTIVITY || !CONNECTIVITY.pairs.length) {{
+    note.textContent = "no connectivity matrix found for this bundle";
+    return;
+  }}
+  const shown = CONNECTIVITY.pairs.length;
+  note.textContent = "parcel pairs joined by this bundle, by streamline count"
+    + " \\u2022 " + CONNECTIVITY.total + " streamline endpoints across "
+    + CONNECTIVITY.n_pairs + " pair" + (CONNECTIVITY.n_pairs === 1 ? "" : "s")
+    + (shown < CONNECTIVITY.n_pairs ? " \\u2022 showing the top " + shown : "");
+
+  renderConnHeat();
+
+  const head = document.createElement("tr");
+  ["parcel pair", "streamlines", "% of bundle", ""].forEach(h => {{
+    const th = document.createElement("th");
+    th.textContent = h;
+    head.appendChild(th);
+  }});
+  table.appendChild(head);
+
+  // bars are scaled against the strongest pair, so the dominant connection
+  // reads as full-width and the incidental ones as slivers
+  const top = CONNECTIVITY.pairs[0].count;
+  CONNECTIVITY.pairs.forEach(p => {{
+    const tr = document.createElement("tr");
+    const pair = document.createElement("td");
+    pair.className = "pair";
+    pair.textContent = p.a + " \\u2194 " + p.b;
+    const count = document.createElement("td");
+    count.className = "num";
+    count.textContent = p.count;
+    const pct = document.createElement("td");
+    pct.className = "num";
+    pct.textContent = p.pct.toFixed(1) + "%";
+    const barCell = document.createElement("td");
+    const bar = document.createElement("span");
+    bar.className = "bar";
+    bar.style.width = Math.max(1, Math.round(90 * p.count / top)) + "px";
+    barCell.appendChild(bar);
+    [pair, count, pct, barCell].forEach(td => tr.appendChild(td));
+    table.appendChild(tr);
+  }});
+}}
+renderConnectivity();
+
 requestAnimationFrame(tick);
 </script>
 </body></html>
@@ -674,7 +905,7 @@ requestAnimationFrame(tick);
 
 
 def plot_bundle_spider_3d(bundle, bundle_metrics, global_ranges, out_html, subj,
-                          ses_str, bundle_geometry=None):
+                          ses_str, bundle_geometry=None, connectivity=None):
     """Interactive companion to plot_bundle_spider: the same mean-vs-segments
     idea, but as a drag-to-rotate 3D tower instead of flat alpha-blended
     overlays -- each along-tract segment gets its own ring stacked in order,
@@ -880,10 +1111,12 @@ def plot_bundle_spider_3d(bundle, bundle_metrics, global_ranges, out_html, subj,
         bundle_scale_json=json.dumps(bundle_scale),
         bundle_axes_json=json.dumps(bundle_axes),
         profiles_json=json.dumps(profiles),
+        connectivity_json=json.dumps(connectivity),
         bundle_empty_note=bundle_empty_note,
         bundle_azimuth=bundle_azimuth,
-        series_color=SERIES_COLOR, gridline=GRIDLINE,
+        series_color=SERIES_COLOR, gridline=GRIDLINE, baseline=BASELINE,
         surface=SURFACE, ink_primary=INK_PRIMARY, ink_muted=INK_MUTED,
+        ink_secondary=INK_SECONDARY,
     )
     with open(out_html, "w") as f:
         f.write(html)
@@ -922,6 +1155,7 @@ def main():
         return
 
     global_ranges = compute_global_ranges(data)
+    parcel_labels = load_parcel_labels()
 
     write_summary_csv(
         data,
@@ -947,7 +1181,8 @@ def main():
         plot_bundle_spider(bundle, bundle_metrics, global_ranges, out_pdf,
                           args.subj, args.ses_str)
         plot_bundle_spider_3d(bundle, bundle_metrics, global_ranges, out_html,
-                             args.subj, args.ses_str, bundle_geometry)
+                             args.subj, args.ses_str, bundle_geometry,
+                             connectivity=load_connectivity(qq_dir, parcel_labels))
 
 
 if __name__ == "__main__":
