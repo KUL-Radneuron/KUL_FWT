@@ -1,0 +1,38 @@
+# Bundle: OR_occlobe_LT
+# type  name  label  atlas
+incs1  Occ_lobeGM_ctx_LT  1004  FS_lobes
+
+incs2  PD25_Pulvi_LT_custom  1  custom
+incs2  JuHA_LGN_LT_custom  1  custom
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  Phippo_GM_ctx_LT_FS  1016  FS_aparc
+excs  LT_vDC_subseg2_custom  1  custom
+excs  Ins_IFOF_exc_LT_custom  1  custom
+excs  PD25_VA_VL_LT_custom  1  custom
+excs  Thal_min_Pulvi_LT_custom  1  custom
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeWM_LT  3003  FS_lobes
+excs  AC_midL_MAN  1  MAN
+excs  Hippo_GM_LT_FS  17  FS_aparc
+excs  OptCh_FS  85  FS_aparc
+excs  Insula_GM_ctx_LT_FS  1035  FS_aparc
+excs  SegWM_LT_PLIC_ex_custom  1  custom
+excs  Front_lobeGM_ctx_LT  1001  FS_lobes
+excs  Pari_lobeGM_ctx_LT  1006  FS_lobes
+excs  iPCC_GM_ctx_LT_FS  1010  FS_aparc
+excs  Caudate_GM_LT_FS  11  FS_aparc
+excs  SegWM_LT_ALIC_custom  1  custom
+excs  SegWM_LT_MPV_custom  1  custom
+excs  SegWM_LT_mIPV_custom  1  custom
+excs  Ins_subseg3_LT_custom  1  custom
+excs  Fusi4_MSBP_ctx_LT  211  Lausanne3
+excs  TempP_GM_FS_ctx_LT  1033  FS_aparc
+# TempP/ITG white matter excludes dropped: Meyer's loop and the ventral OR run
+# through inferior temporal WM, and as 'any exclude' these clipped the trunk.
+# The GM parcels are kept -- the bundle should not terminate in that cortex.
+excs  ITG_GM_FS_ctx_LT  1009  FS_aparc
+# Ins_infL_wm dropped for the same reason: it's the inferior-lateral insula WM
+# immediately adjacent to the temporal horn tip, i.e. Meyer's loop's corridor.
+excs  Ins_subseg5_LT_custom  1  custom

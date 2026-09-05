@@ -1,0 +1,29 @@
+# Bundle: Fx_RT
+# type  name  label  atlas
+incs1  Fornix_Fx  250  FS_fornix
+
+incs2  Hippocampus_FS_RT  53  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  Putamen_FS_RT  51  FS_aparc
+excs  iPCC_GM_FS_ctx_RT  2010  FS_aparc
+excs  iPCC_WM_FS_RT  4010  FS_wmparc
+excs  Thal_RT_ero2_custom  1  custom
+excs  OptCh_FS  85  FS_aparc
+excs  Front_lobeGM_ctx_RT  2001  FS_lobes
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  Occ_lobeWM_RT  4004  FS_lobes
+excs  Temp_lobeGM_ctx_RT  2005  FS_lobes
+excs  Temp_lobeWM_RT  4005  FS_lobes
+excs  Pari_lobeGM_ctx_RT  2006  FS_lobes
+excs  Pari_lobeWM_RT  4006  FS_lobes
+excs  Amyg_FS_RT  54  FS_aparc
+excs  rACC_GM_FS_ctx_RT  2026  FS_aparc
+excs  ChorP_FS_LT  31  FS_aparc
+excs  ChorP_FS_RT  63  FS_aparc
+excs  SegWM_RT_ALIC_custom  1  custom
+excs  Caudate_FS_RT  50  FS_aparc
+excs  vDC_FS_LT  28  FS_aparc
+excs  Insula_GM_ctx_LT_FS  1035  FS_aparc
+excs  Insula_WM_LT_FS  3035  FS_wmparc

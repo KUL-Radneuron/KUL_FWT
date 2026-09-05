@@ -1,0 +1,12 @@
+# Bundle: CPCT_LT
+# Corticopontocerebellar tract — left cortex to right cerebellum via crossing pons
+# type  name  label  atlas
+incs1  Front_lobeGM_ctx_LT  1001  FS_lobes
+
+incs2  Bs_Pons_RT_custom  1  custom
+
+incs3  cerebellum_RT_X  1  custom
+
+excs  CC_allr_custom  1  custom
+excs  PD25_VL_LT_custom  1  custom
+excs  PD25_RN_LT_custom  1  custom

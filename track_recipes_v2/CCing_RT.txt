@@ -1,0 +1,27 @@
+# Bundle: CCing_RT
+# type  name  label  atlas
+incs1  rACC_GM_FS_ctx_RT  2026  FS_aparc
+incs1  cACC_GM_FS_ctx_RT  2002  FS_aparc
+
+incs2  PCC_GM_FS_ctx_RT  2023  FS_aparc
+incs2  iPCC_GM_FS_ctx_RT  2010  FS_aparc
+incs2  Pc_GM_FS_ctx_RT  2025  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  STG_GM_FS_ctx_RT  2030  FS_aparc
+excs  Unseg_WM_FS_RT  5002  FS_wmparc
+excs  vDC_FS_RT  60  FS_aparc
+excs  IFG_POp_GM_FS_ctx_RT  2018  FS_aparc
+excs  IFG_POp_WM_FS_RT  4018  FS_wmparc
+excs  IFG_PTr_GM_FS_ctx_RT  2020  FS_aparc
+excs  IFG_PTr_WM_FS_RT  4020  FS_wmparc
+excs  Phippo_GM_FS_ctx_RT  2016  FS_aparc
+excs  Phipp_WM_FS_RT  4016  FS_wmparc
+excs  SFG_GM_FS_ctx_RT  2028  FS_aparc
+excs  Hippo_RT_FS  53  FS_aparc
+excs  Temp_lobeGM_ctx_RT  2005  FS_lobes
+excs  Temp_lobeWM_RT  4005  FS_lobes
+excs  AC_midline_MAN  1  MAN
+excs  Insula_GM_FS_ctx_RT  2035  FS_aparc
+excs  Insula_WM_FS_RT  4035  FS_wmparc

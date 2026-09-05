@@ -48,6 +48,21 @@ GRIDLINE = "#e1e0d9"
 BASELINE = "#c3c2b7"
 SURFACE = "#fcfcfb"
 
+# Dark palette for the interactive spider3d.html page only (NOT the static
+# matplotlib PDF/PNG above, which keeps the light palette) -- the bundle
+# geometry panel's whole point is bright per-point tract colour (directional
+# or viridis-by-segment), which reads as washed out against a light page the
+# same way it would in any renderer; a dark surface is what makes it pop,
+# matching the black background the scil_viz_bundle_screenshot_mni renders
+# already use.
+HTML_SERIES_COLOR = "#5b9bf0"
+HTML_INK_PRIMARY = "#f0efec"
+HTML_INK_SECONDARY = "#c7c5bf"
+HTML_INK_MUTED = "#918f89"
+HTML_GRIDLINE = "#3a3c41"
+HTML_BASELINE = "#4c4e54"
+HTML_SURFACE = "#25272b"
+
 
 # How many endpoint pairs the connectivity table lists. The matrix is ~89x89 but
 # a single bundle only ever touches a handful of parcels, so this is generous.
@@ -283,15 +298,18 @@ def load_bundle_geometry(tck_path, n_segments, centroid_path=None, max_streamlin
 
     all_points = np.concatenate(list(streamlines))
     center = all_points.mean(axis=0)
-    # per-axis, not one shared scalar: a bundle that's naturally short along
-    # one axis (e.g. less superior-inferior spread than anteroposterior) would
-    # otherwise get that axis compressed to a fraction of -1..1, squashing
-    # both the rendered geometry and the z-scale line beside it. Each axis
-    # filling its own -1..1 independently trades true relative proportions
-    # for a rendering that's always readable regardless of the bundle's shape
-    # -- consistent with the tower panel, which is already non-anatomical.
-    extent = np.abs(all_points - center).max(axis=0)
-    extent[extent == 0] = 1.0
+    # ONE shared scalar across all three axes, not per-axis: this is real
+    # anatomical geometry (unlike the tower panel's metric-radar space), so
+    # x/y/z must scale together or the rendered shape is warped relative to
+    # the bundle's true proportions -- e.g. a bundle naturally longer A-P than
+    # S-I would render artificially cube-shaped under independent per-axis
+    # scaling, which reads as a distorted bundle next to the (isotropic)
+    # scilpy screenshot renderings of the same geometry. A bundle short along
+    # one axis simply doesn't fill -1..1 there, same as in the screenshots.
+    extent_scalar = float(np.abs(all_points - center).max())
+    if extent_scalar == 0:
+        extent_scalar = 1.0
+    extent = np.array([extent_scalar, extent_scalar, extent_scalar])
 
     ref_centroid = None
     if centroid_path and os.path.isfile(centroid_path):
@@ -306,11 +324,30 @@ def load_bundle_geometry(tck_path, n_segments, centroid_path=None, max_streamlin
             dist_rev = np.linalg.norm(sl[::-1] - ref_centroid, axis=1).sum()
             if dist_rev < dist_fwd:
                 sl = sl[::-1]
+
+        # Directional (DEC-style) per-point colour, same recipe as the fixed
+        # scil_viz_bundle_screenshot_mni --local_coloring: local tangent via
+        # np.gradient, abs (direction, not sign, is what's colour-coded), then
+        # each point normalised by its OWN max component so every point hits
+        # full saturation on its dominant axis. Computed from sl's raw mm
+        # coordinates -- BEFORE the per-axis /extent normalisation below --
+        # since that normalisation independently rescales x/y/z for display
+        # and would otherwise distort the true anatomical tangent direction.
+        grad = np.abs(np.gradient(sl, axis=0))
+        grad_max = grad.max(axis=1, keepdims=True)
+        grad_max[grad_max == 0] = 1.0
+        dec = np.clip(grad / grad_max, 0.0, 1.0)
+        colors = [
+            "#{:02x}{:02x}{:02x}".format(*(dec[i] * 255).astype(int))
+            for i in range(len(sl))
+        ]
+
         lines.append([
             {"x": float((p[0] - center[0]) / extent[0]),
             "y": float((p[1] - center[1]) / extent[1]),
             "z": float((p[2] - center[2]) / extent[2]),
-            "seg": i + 1}
+            "seg": i + 1,
+            "color": colors[i]}
             for i, p in enumerate(sl)
         ])
     return lines
@@ -385,6 +422,9 @@ def plot_bundle_spider(bundle, bundle_metrics, global_ranges, out_pdf, subj, ses
 
     fig.tight_layout(rect=(0, 0.07, 1, 1))
     fig.savefig(out_pdf, facecolor=SURFACE)
+    # Also a PNG next to the PDF -- KUL_FWT_bundle_report.py embeds this as a
+    # thumbnail in the subject-level contact sheet, where a PDF can't be inlined.
+    fig.savefig(os.path.splitext(out_pdf)[0] + ".png", facecolor=SURFACE, dpi=150)
     plt.close(fig)
 
 
@@ -399,6 +439,20 @@ SPIDER_3D_TEMPLATE = """<!doctype html>
   #panels {{ display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }}
   .panel {{ text-align: center; }}
   .panel h2 {{ font-size: 12px; font-weight: 500; color: {ink_muted}; margin: 4px 0; }}
+  #color-toggle {{ font: inherit; font-size: 10px; color: {ink_muted};
+                  background: none; border: 1px solid {gridline};
+                  border-radius: 10px; padding: 1px 8px; margin-left: 6px;
+                  cursor: pointer; vertical-align: middle; }}
+  #color-toggle:hover {{ color: {ink_primary}; border-color: {ink_muted}; }}
+  #bundle-legend {{ text-align: center; font-size: 10px; color: {ink_muted};
+                   margin-top: 6px; min-height: 30px; }}
+  .legend-title {{ margin-bottom: 3px; }}
+  .legend-bar {{ width: 220px; height: 8px; margin: 0 auto; border-radius: 2px; }}
+  .legend-ticks {{ width: 220px; margin: 2px auto 0; display: flex;
+                  justify-content: space-between; font-variant-numeric: tabular-nums; }}
+  .legend-rgb {{ display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }}
+  .legend-swatch {{ display: inline-block; width: 9px; height: 9px; border-radius: 2px;
+                   margin-right: 4px; vertical-align: middle; }}
   #tower, #bundle {{ display: block; cursor: grab; touch-action: none; }}
   #tower.dragging, #bundle.dragging {{ cursor: grabbing; }}
   .tower-label {{ font-size: 13px; fill: {ink_muted}; text-anchor: middle;
@@ -415,6 +469,15 @@ SPIDER_3D_TEMPLATE = """<!doctype html>
   .profile-card h3 {{ font-size: 11px; font-weight: 500; color: {ink_muted};
                      margin: 0 0 2px; }}
   .profile-axis-label {{ font-size: 9px; fill: {ink_muted}; }}
+  #stats-title {{ text-align: center; font-size: 13px; font-weight: 600;
+                 color: {ink_primary}; margin: 28px 0 4px; }}
+  #stats {{ border-collapse: collapse; margin: 0 auto 20px; font-size: 11px;
+           max-width: 620px; width: 92%; }}
+  #stats th, #stats td {{ padding: 4px 12px; text-align: right;
+                         border-bottom: 1px solid {gridline}; }}
+  #stats th:first-child, #stats td:first-child {{ text-align: left; }}
+  #stats th {{ font-weight: 500; color: {ink_muted}; }}
+  #stats td {{ color: {ink_secondary}; font-variant-numeric: tabular-nums; }}
   #conn-title {{ text-align: center; font-size: 13px; font-weight: 600;
                 color: {ink_primary}; margin: 28px 0 4px; }}
   #conn-note {{ text-align: center; font-size: 10px; color: {ink_muted};
@@ -443,14 +506,19 @@ SPIDER_3D_TEMPLATE = """<!doctype html>
   <div class="panel"><h2>metric profile</h2>
     <svg id="tower" width="480" height="480" viewBox="0 0 480 480"></svg>
   </div>
-  <div class="panel"><h2>bundle geometry</h2>
+  <div class="panel"><h2>bundle geometry
+    <button id="color-toggle" title="switch between direction and along-tract segment coloring">color: direction</button>
+  </h2>
     <svg id="bundle" width="480" height="480" viewBox="0 0 480 480">
       {bundle_empty_note}
     </svg>
+    <div id="bundle-legend"></div>
   </div>
 </div>
 <div id="profiles-title">along-tract profiles</div>
 <div id="profiles"></div>
+<div id="stats-title">summary statistics</div>
+<table id="stats"></table>
 <div id="conn-title">endpoint connectivity</div>
 <div id="conn-note"></div>
 <div id="conn-heat"></div>
@@ -459,9 +527,9 @@ SPIDER_3D_TEMPLATE = """<!doctype html>
 const CONNECTIVITY = {connectivity_json};
 const DATA = {payload_json};
 const BUNDLE_LINES = {bundle_json};
-const BUNDLE_SCALE = {bundle_scale_json};
 const BUNDLE_AXES = {bundle_axes_json};
 const PROFILES = {profiles_json};
+const STATS = {stats_json};
 const COLOR_SERIES = "{series_color}";
 const COLOR_GUIDE = "{gridline}";
 const INK_MUTED = "{ink_muted}";
@@ -469,6 +537,7 @@ const NS = "http://www.w3.org/2000/svg";
 const towerSvg = document.getElementById("tower");
 const bundleSvg = document.getElementById("bundle");
 const SCALE = 170, CENTER_X = 240, CENTER_Y = 280;
+let bundleColorMode = "direction"; // "direction" or "segment", toggled by #color-toggle
 
 // each panel gets its own independent view -- dragging one never moves the other.
 // bundle's default azimuth is mirrored for _RT bundles: LT/RT are real mirror-image
@@ -586,11 +655,13 @@ function renderTower() {{
   }});
 }}
 
-// viridis: perceptually-uniform and colorblind-safe, but spans much more of
-// the color space than a single-hue ramp -- far more discriminable than a
-// light-to-dark blue-only scale for reading off ~20 distinct segment steps,
-// while still ordering monotonically (unlike jet/rainbow)
-const SEQ_RAMP = ["#440154", "#414487", "#2a788e", "#22a884", "#7ad151", "#fde725"];
+// Was viridis, but viridis's dark end (near-black purple) loses almost all
+// contrast against this page's dark surface -- every stop here instead keeps
+// meaningfully higher lightness than the background, so the ramp reads
+// clearly on dark rather than fading into it, while still spanning enough of
+// the color space for ~20 distinct segment steps to stay discriminable and
+// ordering monotonically (unlike jet/rainbow).
+const SEQ_RAMP = ["#22d3ee", "#3b82f6", "#a855f7", "#ec4899", "#f97316", "#facc15"];
 function hexToRgb(hex) {{
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -618,48 +689,23 @@ function renderBundle() {{
       const p1 = proj[i], p2 = proj[i + 1];
       const d = "M" + p1.sx.toFixed(1) + "," + p1.sy.toFixed(1) +
                " L" + p2.sx.toFixed(1) + "," + p2.sy.toFixed(1);
+      const segColorHere = segColor((pts[i].seg - 1) / (maxSeg - 1));
       elements.push({{
         depth: (p1.depth + p2.depth) / 2, d,
-        color: segColor((pts[i].seg - 1) / (maxSeg - 1)),
+        color: bundleColorMode === "segment" ? segColorHere : (pts[i].color || segColorHere),
       }});
     }}
   }});
-  if (BUNDLE_SCALE.line.length) {{
-    const p1 = project(BUNDLE_SCALE.line[0], view), p2 = project(BUNDLE_SCALE.line[1], view);
-    const d = "M" + p1.sx.toFixed(1) + "," + p1.sy.toFixed(1) + " L" + p2.sx.toFixed(1) + "," + p2.sy.toFixed(1);
-    elements.push({{ depth: (p1.depth + p2.depth) / 2, kind: "scaleline", d }});
-  }}
   elements.sort((a, b) => b.depth - a.depth);
   for (const el of elements) {{
     const path = document.createElementNS(NS, "path");
     path.setAttribute("d", el.d);
     path.setAttribute("fill", "none");
-    if (el.kind === "scaleline") {{
-      path.setAttribute("stroke", INK_MUTED);
-      path.setAttribute("stroke-width", "1");
-      path.setAttribute("stroke-dasharray", "3,3");
-    }} else {{
-      path.setAttribute("stroke", el.color);
-      path.setAttribute("stroke-width", "1.3");
-      path.setAttribute("opacity", "0.55");
-    }}
+    path.setAttribute("stroke", el.color);
+    path.setAttribute("stroke-width", "1.3");
+    path.setAttribute("opacity", "0.55");
     bundleSvg.appendChild(path);
   }}
-
-  // head z-axis tick labels: always drawn on top, not depth-sorted, same as
-  // the tower's -- these are reference annotations, not data
-  BUNDLE_SCALE.ticks.forEach(t => {{
-    const p = project(t, view);
-    const dot = document.createElementNS(NS, "circle");
-    dot.setAttribute("cx", p.sx); dot.setAttribute("cy", p.sy); dot.setAttribute("r", "3");
-    dot.setAttribute("fill", segColor((t.seg - 1) / (maxSeg - 1)));
-    bundleSvg.appendChild(dot);
-    const label = document.createElementNS(NS, "text");
-    label.setAttribute("x", p.sx + 10); label.setAttribute("y", p.sy);
-    label.setAttribute("class", "scale-label");
-    label.textContent = "seg " + t.seg;
-    bundleSvg.appendChild(label);
-  }});
 
   // radiology orientation labels (L/R, A/P, H/F) -- also on top, also rotate
   // with the bundle since they're projected through the same view
@@ -671,6 +717,26 @@ function renderBundle() {{
     t.textContent = ax.text;
     bundleSvg.appendChild(t);
   }});
+}}
+
+function renderBundleLegend() {{
+  const el = document.getElementById("bundle-legend");
+  if (!el || !BUNDLE_LINES.length) {{ if (el) el.innerHTML = ""; return; }}
+  const maxSeg = BUNDLE_LINES[0].length;
+  if (bundleColorMode === "segment") {{
+    const gradient = "linear-gradient(to right, " + SEQ_RAMP.join(", ") + ")";
+    el.innerHTML =
+      '<div class="legend-title">segment</div>' +
+      '<div class="legend-bar" style="background:' + gradient + '"></div>' +
+      '<div class="legend-ticks"><span>1</span><span>' + maxSeg + '</span></div>';
+  }} else {{
+    el.innerHTML =
+      '<div class="legend-rgb">' +
+      '<span><span class="legend-swatch" style="background:#ff3b3b"></span>R = left–right</span>' +
+      '<span><span class="legend-swatch" style="background:#3bff3b"></span>G = anterior–posterior</span>' +
+      '<span><span class="legend-swatch" style="background:#3b6bff"></span>B = superior–inferior</span>' +
+      '</div>';
+  }}
 }}
 
 function tick() {{
@@ -704,6 +770,17 @@ for (const [key, svgEl] of [["tower", towerSvg], ["bundle", bundleSvg]]) {{
   svgEl.addEventListener("touchmove", e => {{ const t = e.touches[0]; pointerMove(view, t.clientX, t.clientY); }}, {{passive: true}});
   svgEl.addEventListener("touchend", () => pointerUp(view, svgEl));
 }}
+
+const colorToggleBtn = document.getElementById("color-toggle");
+if (colorToggleBtn) {{
+  colorToggleBtn.addEventListener("click", () => {{
+    bundleColorMode = bundleColorMode === "direction" ? "segment" : "direction";
+    colorToggleBtn.textContent = "color: " + bundleColorMode;
+    views.bundle.dirty = true;
+    renderBundleLegend();
+  }});
+}}
+renderBundleLegend();
 
 // small-multiple along-tract line charts, one per metric this bundle has --
 // plain 2D, not part of the rotation system above -- built from the same
@@ -793,6 +870,28 @@ function renderProfiles() {{
   }});
 }}
 renderProfiles();
+
+function renderStats() {{
+  const table = document.getElementById("stats");
+  const thead = document.createElement("thead");
+  thead.innerHTML = "<tr><th>metric</th><th>min</th><th>max</th><th>mean</th>"
+    + "<th>median</th><th>IQR</th><th title='Shapiro-Wilk normality test'>normality (p)</th></tr>";
+  table.appendChild(thead);
+  const tbody = document.createElement("tbody");
+  STATS.forEach(s => {{
+    const tr = document.createElement("tr");
+    // same scientific-notation convention as the profile axis labels above --
+    // fixed width regardless of a metric's own magnitude (FA ~0.3, ADC ~0.0007)
+    const fmt = v => v.toExponential(2);
+    const normp = (s.shapiro_p === null || s.shapiro_p === undefined) ? "n/a" : fmt(s.shapiro_p);
+    tr.innerHTML = "<td>" + s.name + "</td><td>" + fmt(s.min) + "</td><td>"
+      + fmt(s.max) + "</td><td>" + fmt(s.mean) + "</td><td>" + fmt(s.median)
+      + "</td><td>" + fmt(s.iqr) + "</td><td>" + normp + "</td>";
+    tbody.appendChild(tr);
+  }});
+  table.appendChild(tbody);
+}}
+renderStats();
 
 // Same matrix the table lists, restricted to the parcels this bundle touches.
 // Single-hue ramp from the surface colour to the series blue: these are counts
@@ -1023,48 +1122,6 @@ def plot_bundle_spider_3d(bundle, bundle_metrics, global_ranges, out_html, subj,
              'bundle geometry not found</text>'
     )
 
-    bundle_scale = {"line": [], "ticks": []}
-    if bundle_geometry:
-        bundle_max_seg = len(bundle_geometry[0])
-        # positioned outside the bundle's own footprint, running along the real
-        # head z-axis (superior<->inferior) rather than any rotation-dependent
-        # "up" -- load_bundle_geometry only centers/scales the raw tck
-        # coordinates, it never reorients them, so z here still is real
-        # anatomical S/I, and this line rotates together with the bundle
-        # (same views.bundle state) so that reference never gets lost as the
-        # panel is dragged.
-        #
-        # Which end (low z or high z) is "segment 1" depends entirely on the
-        # model/incs1-VOI reference's own arbitrary orientation convention --
-        # there's no guarantee segment number increases with z. So the actual
-        # mean z per segment index is read straight off the (now consistently
-        # oriented) geometry itself, rather than assumed linear -1..1, or the
-        # scale can end up pointing the opposite way from the real data.
-        seg_mean_z = [
-            float(np.mean([line[i]["z"] for line in bundle_geometry]))
-            for i in range(bundle_max_seg)
-        ]
-        # diagonal (between the R and A orientation labels), not on any
-        # cardinal axis -- R/L/A/P/H/F labels now occupy all six of those, so
-        # a scale placed at (r, 0) or (0, r) would sit right on top of one
-        scale_x, scale_y = 1.35 * 0.7071, 1.35 * 0.7071
-        bundle_scale["line"] = [
-            {"x": scale_x, "y": scale_y, "z": seg_mean_z[0]},
-            {"x": scale_x, "y": scale_y, "z": seg_mean_z[-1]},
-        ]
-        tick_step = (1 if bundle_max_seg <= 10
-                    else (5 if bundle_max_seg <= 25 else 10))
-        tick_nums = list(range(tick_step, bundle_max_seg + 1, tick_step))
-        if 1 not in tick_nums:
-            tick_nums.insert(0, 1)
-        if bundle_max_seg not in tick_nums:
-            tick_nums.append(bundle_max_seg)
-        bundle_scale["ticks"] = [
-            {"x": scale_x, "y": scale_y, "z": seg_mean_z[seg_num - 1],
-            "seg": seg_num}
-            for seg_num in tick_nums
-        ]
-
     # standard radiology orientation labels (L/R, A/P, H/F), placed along the
     # real x/y/z axes at a fixed radius just outside the bundle's own extent.
     # Valid because load_bundle_geometry only centers/scales the raw tck
@@ -1096,6 +1153,28 @@ def plot_bundle_spider_3d(bundle, bundle_metrics, global_ranges, out_html, subj,
         for m, mv in zip(metrics, mean_vals)
     ]
 
+    # summary statistics per metric, across this bundle's own along-tract segments
+    from scipy import stats as spstats
+    stats = []
+    for m in metrics:
+        vals = np.asarray(bundle_metrics[m], dtype=float)
+        vals = vals[~np.isnan(vals)]
+        if vals.size == 0:
+            continue
+        q1, q3 = np.percentile(vals, [25, 75])
+        shapiro_p = None
+        if vals.size >= 3 and np.ptp(vals) > 0:
+            try:
+                shapiro_p = float(spstats.shapiro(vals).pvalue)
+            except ValueError:
+                shapiro_p = None
+        stats.append({
+            "name": m,
+            "min": float(np.min(vals)), "max": float(np.max(vals)),
+            "mean": float(np.mean(vals)), "median": float(np.median(vals)),
+            "iqr": float(q3 - q1), "shapiro_p": shapiro_p,
+        })
+
     # LT/RT are real mirror-image anatomy -- negate the bundle panel's default
     # azimuth for _RT so the two sides' default views appear consistently
     # oriented instead of mirrored (see the views.bundle comment in the template)
@@ -1108,15 +1187,15 @@ def plot_bundle_spider_3d(bundle, bundle_metrics, global_ranges, out_html, subj,
                f"across this subject's own bundles",
         payload_json=json.dumps(payload),
         bundle_json=json.dumps(bundle_geometry or []),
-        bundle_scale_json=json.dumps(bundle_scale),
         bundle_axes_json=json.dumps(bundle_axes),
         profiles_json=json.dumps(profiles),
+        stats_json=json.dumps(stats),
         connectivity_json=json.dumps(connectivity),
         bundle_empty_note=bundle_empty_note,
         bundle_azimuth=bundle_azimuth,
-        series_color=SERIES_COLOR, gridline=GRIDLINE, baseline=BASELINE,
-        surface=SURFACE, ink_primary=INK_PRIMARY, ink_muted=INK_MUTED,
-        ink_secondary=INK_SECONDARY,
+        series_color=HTML_SERIES_COLOR, gridline=HTML_GRIDLINE, baseline=HTML_BASELINE,
+        surface=HTML_SURFACE, ink_primary=HTML_INK_PRIMARY, ink_muted=HTML_INK_MUTED,
+        ink_secondary=HTML_INK_SECONDARY,
     )
     with open(out_html, "w") as f:
         f.write(html)

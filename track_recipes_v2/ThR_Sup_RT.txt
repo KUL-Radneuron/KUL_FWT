@@ -1,0 +1,35 @@
+# Bundle: ThR_Sup_RT
+# type  name  label  atlas
+incs1  Thal_FS_RT  49  FS_aparc
+
+incs2  M1_GM_ctx_RT_FS  2024  FS_aparc
+incs2  S1_GM_ctx_RT_FS  2022  FS_aparc
+incs2  ParaC_GM_ctx_RT_FS  2017  FS_aparc
+incs2  SFG5_ctx_RT_MSBP  24  Lausanne3
+incs2  SFG6_ctx_RT_MSBP  25  Lausanne3
+incs2  SFG7_ctx_RT_MSBP  26  Lausanne3
+incs2  SFG8_ctx_RT_MSBP  27  Lausanne3
+incs2  cMFG_GM_ctx_RT_FS  2003  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  vDC_RT_aseg  60  FS_aseg
+excs  AC_midline_MAN  1  MAN
+excs  hypothal_RT_excr_custom  1  custom
+excs  Temp_lobeGM_ctx_RT  2005  FS_lobes
+excs  Putamen_GM_RT_FS  51  FS_aparc
+excs  Caudate_GM_RT_FS  50  FS_aparc
+excs  PD25_Pulvi_RT_custom  1  custom
+excs  Caud_ero_RT_custom  1  custom
+excs  SFG1_MSBP_ctx_RT  20  Lausanne3
+excs  SFG2_MSBP_ctx_RT  21  Lausanne3
+excs  SFG3_MSBP_ctx_RT  22  Lausanne3
+excs  SFG4_MSBP_ctx_RT  23  Lausanne3
+excs  cACC_GM_FS_ctx_RT  2002  FS_aparc
+excs  PD25_DM_RT_custom  1  custom
+excs  PD25_DL_RT_custom  1  custom
+excs  Fornix_Fx  250  FS_fornix
+excs  Pari_lobeGM_ctx_RT  2006  FS_lobes
+excs  Pari_lobeWM_RT  4006  FS_lobes
+excs  rMFG_GM_ctx_RT_FS  2027  FS_aparc
+excs  rMFG_WM_RT_FS  4027  FS_wmparc

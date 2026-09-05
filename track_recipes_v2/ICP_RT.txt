@@ -1,0 +1,17 @@
+# Bundle: ICP_RT
+# type  name  label  atlas
+incs1  Medulla_MSBP  251  Lausanne3
+
+incs2  cFas_RT_SUIT  34  SUIT
+incs2  cIp_RT_SUIT  32  SUIT
+incs2  Dent_RT_SUIT  30  SUIT
+
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  Occ_lobeWM_RT  4004  FS_lobes
+excs  Midbrain_MSBP  249  Lausanne3
+excs  vDC_LT_FS  28  FS_aparc
+excs  vDC_RT_FS  60  FS_aparc
+excs  Pons_MSBP  250  Lausanne3
+excs  cX_RT_SUIT  28  SUIT
+excs  cIX_RT_SUIT  25  SUIT
+excs  cI_IV_RT_SUIT  2  SUIT

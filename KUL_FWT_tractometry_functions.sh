@@ -88,7 +88,18 @@ function KUL_FWT_run_tractometry {
             task_in="mrthreshold ${TCK_out}/QQ/${TCK_2_make}_fin_${T}_${algo_f}_tdi.nii.gz -abs 0.0 -comparison gt ${TCK_out}/QQ/tmp/${TCK_2_make}_bundle_mask.nii.gz -force"
             task_exec
 
-            task_in="voxel2fixel -force ${TCK_out}/QQ/tmp/${TCK_2_make}_bundle_mask.nii.gz ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_bundle_mask ${TCK_2_make}_bundle_mask.mif"
+            # bundle_mask just came off the TDI, so it's on the FA/VOI grid (upsampled,
+            # e.g. 1.3mm) -- but fixel_metrics/native_fixels live on subj_fod's own
+            # (coarser, e.g. 2.4mm native acquisition) grid. tckgen/tckmap tolerate that
+            # split via continuous-space interpolation; voxel2fixel can't, since a fixel
+            # is addressed by (voxel_index, fixel-within-voxel), not a real-world
+            # coordinate, so it hard-fails on a mask defined on a different grid. Both
+            # grids share the same world-space alignment (no registration needed), so a
+            # plain nearest-neighbour regrid onto subj_fod's grid is enough.
+            task_in="mrgrid -force ${TCK_out}/QQ/tmp/${TCK_2_make}_bundle_mask.nii.gz regrid -template ${subj_fod} -interp nearest ${TCK_out}/QQ/tmp/${TCK_2_make}_bundle_mask_fodgrid.nii.gz"
+            task_exec
+
+            task_in="voxel2fixel -force ${TCK_out}/QQ/tmp/${TCK_2_make}_bundle_mask_fodgrid.nii.gz ${TCK_out}/QQ/tmp/${TCK_2_make}_native_fixels ${TCK_out}/QQ/tmp/${TCK_2_make}_fixelized_bundle_mask ${TCK_2_make}_bundle_mask.mif"
             task_exec
 
             for i in "${!fixel_names[@]}"; do

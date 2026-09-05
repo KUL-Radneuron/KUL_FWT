@@ -1,0 +1,26 @@
+# Bundle: CC_Sensory_Comm
+# type  name  label  atlas
+incs1  CC_isth_FS  252  FS_aparc
+incs1  CC_splen_FS  251  FS_aparc
+
+incs2  S1_GM_FS_ctx_LT  1022  FS_aparc
+
+incs3  S1_GM_FS_ctx_RT  2022  FS_aparc
+
+excs  AC_MAN  1  MAN
+excs  PC_MAN  2  MAN
+excs  CC_genu_FS  255  FS_aparc
+excs  CC_ant_FS  254  FS_aparc
+excs  CC_mid_FS  253  FS_aparc
+excs  Fornix_Fx  250  FS_fornix
+excs  cMFG_GM_ctx_LT_FS  1003  FS_aparc
+excs  cMFG_GM_ctx_RT_FS  2003  FS_aparc
+excs  SFG_GM_ctx_LT_FS  1028  FS_aparc
+excs  SFG_GM_ctx_RT_FS  2028  FS_aparc
+excs  M1_GM_FS_ctx_LT  1024  FS_aparc
+excs  M1_GM_FS_ctx_RT  2024  FS_aparc
+excs  BStem_FS  16  FS_aparc
+excs  Occ_lobeGM_ctx_LT  1004  FS_lobes
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes

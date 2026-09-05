@@ -1,0 +1,34 @@
+# Bundle: MdLF_RT
+# type  name  label  atlas
+incs1  SPL_GM_ctx_RT_FS  2029  FS_aparc
+incs1  IPL_GM_ctx_RT_FS  2008  FS_aparc
+incs1  G_OSup_GM_ctx_RT_2009  12120  FS_2009
+incs1  Cun_GM_ctx_RT_FS  2005  FS_aparc
+incs1  Pc_GM_ctx_RT_FS  2025  FS_aparc
+
+incs2  STG5_MSBP_ctx_RT  104  Lausanne3
+incs2  STG4_MSBP_ctx_RT  103  Lausanne3
+incs2  STG3_MSBP_ctx_RT  102  Lausanne3
+incs2  Temp_P_GM_ctx_RT_FS  2033  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  Phippo_GM_ctx_RT_FS  2016  FS_aparc
+excs  Phippo_WM_RT_FS  4016  FS_wmparc
+excs  Ins_IFOF_exc_RT_custom  1  custom
+excs  s3Put_RT_custom  1  custom
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes
+excs  Cing_lobeWM_RT  4003  FS_lobes
+excs  AC_midL_MAN  1  MAN
+excs  Hippo_GM_RT_FS  53  FS_aparc
+excs  vDC_RT_FS  60  FS_aparc
+excs  OptCh_FS  85  FS_aparc
+excs  Insula_GM_ctx_RT_FS  2035  FS_aparc
+excs  Insula_WM_RT_FS  4035  FS_wmparc
+excs  Front_lobeGM_ctx_RT  2001  FS_lobes
+excs  Front_lobeWM_RT  4001  FS_lobes
+excs  Fusi_GM_ctx_RT_FS  2007  FS_aparc
+excs  Fusi_WM_RT_FS  4007  FS_wmparc
+excs  SegWM_RT_LPV_custom  1  custom
+excs  ITG_GM_ctx_RT_FS  2009  FS_aparc
+excs  ITG_WM_RT_FS  4009  FS_wmparc

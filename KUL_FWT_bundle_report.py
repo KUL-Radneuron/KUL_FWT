@@ -75,8 +75,14 @@ def classify(filename):
     return None
 
 
-def encode_image(path):
-    """Downscale, flatten and JPEG-encode one screenshot as a data: URI."""
+def encode_image(path, max_px=IMG_MAX_PX):
+    """Downscale, flatten and JPEG-encode one screenshot as a data: URI.
+
+    max_px overrides the default contact-sheet size for images that need to stay
+    legible at a larger display size than a tract render does -- the connectivity
+    matrix has fine axis-label text a typical 800px thumbnail crushes, even though
+    its source PNG is a sharp 1920x1440 @ 300dpi.
+    """
     with Image.open(path) as im:
         # RGBA over a white ground: the renders carry transparency, and JPEG has
         # no alpha -- compositing explicitly avoids the black background that a
@@ -89,7 +95,7 @@ def encode_image(path):
             im = im.convert("RGB")
 
         im = im.crop(trim_box(im))
-        im.thumbnail((IMG_MAX_PX, IMG_MAX_PX), Image.LANCZOS)
+        im.thumbnail((max_px, max_px), Image.LANCZOS)
         buf = io.BytesIO()
         im.save(buf, "JPEG", quality=IMG_QUALITY, optimize=True)
 
@@ -127,14 +133,22 @@ def collect_bundles(tcks_output_dir, subj, ses_str):
         if not images:
             continue
 
-        # link out to the interactive per-bundle page, if the -Q spider step ran
+        # The interactive per-bundle spider page, if the -Q spider step ran. Stored
+        # as a path relative to tcks_output_dir (where the report itself lives), NOT
+        # a bare basename -- the page actually sits at
+        # <bundle>_output/QQ/sub-*_spider3d_<bundle>.html, so a bare filename
+        # resolves against the report's own directory and 404s. Embedded live via
+        # <iframe> in the QQ tab (drag-to-rotate works exactly as the standalone
+        # page does, since it IS that page) rather than re-encoded, so it costs
+        # nothing in report file size -- only a reference, not inlined content.
         spider = glob.glob(os.path.join(
             out_dir, "QQ", f"sub-{subj}{ses_str}_spider3d_{name}.html"))
+        spider_rel = os.path.relpath(spider[0], tcks_output_dir) if spider else None
 
         bundles.append({
             "name": name,
             "images": images,
-            "spider": os.path.basename(spider[0]) if spider else None,
+            "spider": spider_rel,
             "connectivity": top_connection(out_dir),
         })
     return bundles
@@ -222,6 +236,9 @@ TEMPLATE = """<!doctype html>
   .view span {{ font-size: 10px; color: {ink_muted}; display: block;
                margin-top: 3px; }}
   .missing {{ font-size: 11px; color: {ink_muted}; padding: 20px 0; }}
+  .qqtab {{ max-width: 1500px; }}
+  .qqtab iframe {{ width: 100%; height: 560px; border: 1px solid {gridline};
+                  border-radius: 2px; display: block; }}
   #empty {{ padding: 40px 20px; font-size: 12px; color: {ink_muted}; }}
 </style></head>
 <body>
@@ -249,6 +266,61 @@ function connText(c) {{
   return "strongest: " + a + " \\u2194 " + b + " (" + c.pct + "% of " + c.n + ")";
 }}
 
+// a bundle can be missing the selected rendering (a failed screenshot pass)
+// while still having the others -- say so rather than showing a blank row
+function renderScreenshots(sec, b) {{
+  const set = b.images[variant];
+  if (!set) {{
+    const note = document.createElement("div");
+    note.className = "missing";
+    note.textContent = "no " + variant + " renders for this bundle";
+    sec.appendChild(note);
+    return;
+  }}
+  const grid = document.createElement("div");
+  grid.className = "views";
+  VIEWS.forEach(v => {{
+    if (!set[v]) return;
+    const cell = document.createElement("div");
+    cell.className = "view";
+    const img = document.createElement("img");
+    img.loading = "lazy";
+    img.src = set[v];
+    img.alt = b.name + " " + v;
+    const cap = document.createElement("span");
+    cap.textContent = v;
+    cell.appendChild(img); cell.appendChild(cap);
+    grid.appendChild(cell);
+  }});
+  sec.appendChild(grid);
+}}
+
+// The QQ tab: just the interactive spider embedded live via <iframe> (so
+// drag-to-rotate works exactly as it does opened standalone -- it IS the same
+// page, just referenced by its real relative path, not re-encoded). It
+// already has its own along-tract profile charts, summary-statistics table
+// and connectivity list, so nothing here duplicates those -- a second stats
+// table rendered out here would just be the same numbers twice, right below
+// the iframe that already shows them.
+function renderQQ(sec, b) {{
+  if (!b.spider) {{
+    const note = document.createElement("div");
+    note.className = "missing";
+    note.textContent = "no QQ data for this bundle yet";
+    sec.appendChild(note);
+    return;
+  }}
+  const wrap = document.createElement("div");
+  wrap.className = "qqtab";
+
+  const iframe = document.createElement("iframe");
+  iframe.src = b.spider;
+  iframe.loading = "lazy";
+  wrap.appendChild(iframe);
+
+  sec.appendChild(wrap);
+}}
+
 function render() {{
   const host = document.getElementById("bundles");
   const q = document.getElementById("filter").value.trim().toLowerCase();
@@ -269,41 +341,15 @@ function render() {{
     const meta = document.createElement("span");
     meta.className = "bmeta";
     meta.textContent = connText(b.connectivity);
-    if (b.spider) {{
-      if (meta.textContent) meta.appendChild(document.createTextNode(" \\u2022 "));
-      const a = document.createElement("a");
-      a.href = b.spider; a.textContent = "metrics \\u2192";
-      meta.appendChild(a);
-    }}
     head.appendChild(meta);
     sec.appendChild(head);
 
-    // a bundle can be missing the selected rendering (a failed screenshot pass)
-    // while still having the others -- say so rather than showing a blank row
-    const set = b.images[variant];
-    if (!set) {{
-      const note = document.createElement("div");
-      note.className = "missing";
-      note.textContent = "no " + variant + " renders for this bundle";
-      sec.appendChild(note);
+    if (variant === "qq") {{
+      renderQQ(sec, b);
     }} else {{
-      const grid = document.createElement("div");
-      grid.className = "views";
-      VIEWS.forEach(v => {{
-        if (!set[v]) return;
-        const cell = document.createElement("div");
-        cell.className = "view";
-        const img = document.createElement("img");
-        img.loading = "lazy";
-        img.src = set[v];
-        img.alt = b.name + " " + v;
-        const cap = document.createElement("span");
-        cap.textContent = v;
-        cell.appendChild(img); cell.appendChild(cap);
-        grid.appendChild(cell);
-      }});
-      sec.appendChild(grid);
+      renderScreenshots(sec, b);
     }}
+
     host.appendChild(sec);
   }});
 
@@ -354,9 +400,13 @@ def main():
         return
 
     # keep only the variants that at least one bundle actually has, so the
-    # switcher never offers a button that shows nothing anywhere
+    # switcher never offers a button that shows nothing anywhere. QQ is appended
+    # last, same rule -- only offered if at least one bundle's -Q step has produced
+    # something (spider page, connectivity plot, or a metric plot).
     present = {v for b in bundles for v in b["images"]}
     variants = [[k, lab] for k, lab in VARIANTS if k in present]
+    if any(b["spider"] for b in bundles):
+        variants.append(["qq", "Qualitative and Quantitative"])
 
     out = args.output or os.path.join(
         args.tcks_output_dir, f"sub-{args.subj}{args.ses_str}_FWT_report.html")

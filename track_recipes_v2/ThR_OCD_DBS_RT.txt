@@ -1,0 +1,31 @@
+# Bundle: ThR_OCD_DBS_RT
+# type  name  label  atlas
+incs1  PD25_DM_RT_custom  1  custom
+incs1  STN_RT_DISTAL_STN  2  DISTAL_STN
+
+incs2  SFG1_MSBP_ctx_RT  20  Lausanne3
+incs2  SFG2_MSBP_ctx_RT  21  Lausanne3
+incs2  SFG3_MSBP_ctx_RT  22  Lausanne3
+incs2  SFG4_MSBP_ctx_RT  23  Lausanne3
+incs2  MedOF_GM_ctx_RT_FS  2014  FS_aparc
+incs2  LatOF_GM_ctx_RT_FS  2012  FS_aparc
+incs2  FrP_GM_ctx_RT_FS  2032  FS_aparc
+incs2  cACC_GM_FS_ctx_RT  2002  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  AC_midline_MAN  1  MAN
+excs  hypothal_RT_excr_custom  1  custom
+excs  Temp_lobeGM_ctx_RT  2005  FS_lobes
+excs  Putamen_GM_RT_FS  51  FS_aparc
+excs  Caudate_GM_RT_FS  50  FS_aparc
+excs  PD25_Pulvi_RT_custom  1  custom
+excs  Fornix_Fx  250  FS_fornix
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  Pari_lobeGM_ctx_RT  2006  FS_lobes
+excs  M1_GM_FS_ctx_RT  2024  FS_aparc
+excs  M1_WM_FS_RT  4024  FS_wmparc
+excs  PHipp_GM_ctx_RT_FS  2016  FS_aparc
+excs  PHipp_WM_RT_FS  4016  FS_wmparc
+excs  Insula_GM_ctx_RT_FS  2035  FS_aparc
+excs  Insula_WM_RT_FS  4035  FS_wmparc

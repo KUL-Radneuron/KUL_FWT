@@ -1,0 +1,38 @@
+# Bundle: dHippo_Comm
+# type  name  label  atlas
+incs1  CC_splen_FS  251  FS_aparc
+
+incs2  Phippo_GM_ctx_LT_FS  1016  FS_aparc
+incs2  Hippo_LT_FS  17  FS_aparc
+incs2  Amyg_FS_LT  18  FS_aparc
+
+incs3  Phippo_GM_ctx_RT_FS  2016  FS_aparc
+incs3  Hippo_RT_FS  53  FS_aparc
+incs3  Amyg_FS_RT  54  FS_aparc
+
+excs  AC_MAN  1  MAN
+excs  PC_MAN  2  MAN
+excs  CC_genu_FS  255  FS_aparc
+excs  CC_ant_FS  254  FS_aparc
+excs  CC_mid_FS  253  FS_aparc
+excs  CC_midpost_FS  252  FS_aparc
+excs  Fornix_Fx  250  FS_fornix
+excs  Front_lobeGM_ctx_LT  1001  FS_lobes
+excs  Front_lobeGM_ctx_RT  2001  FS_lobes
+excs  Pari_lobeGM_ctx_LT  1006  FS_lobes
+excs  Pari_lobeGM_ctx_RT  2006  FS_lobes
+excs  Occ_lobeGM_ctx_LT  1004  FS_lobes
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  BStem_FS  16  FS_aparc
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes
+excs  Thal_FS_LT  10  FS_aparc
+excs  Thal_FS_RT  49  FS_aparc
+excs  ITG_GM_ctx_LT_FS  1009  FS_aparc
+excs  MTG_GM_ctx_LT_FS  1015  FS_aparc
+excs  STG_GM_ctx_LT_FS  1030  FS_aparc
+excs  TempP_GM_ctx_LT_FS  1033  FS_aparc
+excs  ITG_GM_ctx_RT_FS  2009  FS_aparc
+excs  MTG_GM_ctx_RT_FS  2015  FS_aparc
+excs  STG_GM_ctx_RT_FS  2030  FS_aparc
+excs  TempP_GM_ctx_RT_FS  2033  FS_aparc

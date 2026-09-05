@@ -1,0 +1,25 @@
+# Bundle: FAT_RT
+# type  name  label  atlas
+incs1  IFG_POp_GM_FS_ctx_RT  2018  FS_aparc
+incs1  IFG_PTr_GM_FS_ctx_RT  2020  FS_aparc
+
+incs2  SFG5_MSBP_ctx_RT  24  Lausanne3
+incs2  SFG6_MSBP_ctx_RT  25  Lausanne3
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  Insula_GM_FS_ctx_RT  2035  FS_aparc
+excs  Insula_WM_FS_RT  4035  FS_wmparc
+excs  M1_GM_FS_ctx_RT  2024  FS_aparc
+excs  M1_WM_FS_RT  4024  FS_wmparc
+excs  Med_OF_GM_FS_ctx_RT  2014  FS_aparc
+excs  Med_OF_WM_FS_RT  4014  FS_wmparc
+excs  LatOF_GM_FS_ctx_RT  2012  FS_aparc
+excs  LatOF_WM_FS_RT  4012  FS_wmparc
+excs  IFG_POr_GM_FS_ctx_RT  2019  FS_aparc
+excs  IFG_POr_WM_FS_RT  4019  FS_wmparc
+excs  Caudate_FS_RT  50  FS_aparc
+excs  SFG1_MSBP_ctx_RT  20  Lausanne3
+excs  SFG2_MSBP_ctx_RT  21  Lausanne3
+excs  SFG3_MSBP_ctx_RT  22  Lausanne3
+excs  SFG4_MSBP_ctx_RT  23  Lausanne3

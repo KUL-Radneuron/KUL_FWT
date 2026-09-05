@@ -578,6 +578,30 @@ subj_FS_WMaparc_inFA="${prep_d}/sub-${subj}${ses_str}_WMaparc_inFA.nii.gz"
 
 subj_MSsc3_inFA="${prep_d}/sub-${subj}${ses_str}_MSBP_scale3_inFA.nii.gz"
 
+# Additional KUL_FS_multiparc.sh / KUL_VBG_multiparc.sh outputs, warped to FA space the
+# same way as everything else above. All optional -- only generated if a recipe actually
+# references them (see the atlas case statement) and only if the subject's FreeSurfer
+# directory actually has the source .mgz (not every study runs the full multiparc suite).
+subj_LS1_inFA="${prep_d}/sub-${subj}${ses_str}_lausanne2018_scale1_inFA.nii.gz"
+
+subj_LS2_inFA="${prep_d}/sub-${subj}${ses_str}_lausanne2018_scale2_inFA.nii.gz"
+
+subj_LS4_inFA="${prep_d}/sub-${subj}${ses_str}_lausanne2018_scale4_inFA.nii.gz"
+
+subj_LS5_inFA="${prep_d}/sub-${subj}${ses_str}_lausanne2018_scale5_inFA.nii.gz"
+
+subj_glasser_inFA="${prep_d}/sub-${subj}${ses_str}_HCPMMP1_inFA.nii.gz"
+
+subj_thal_inFA="${prep_d}/sub-${subj}${ses_str}_ThalamicNuclei_inFA.nii.gz"
+
+subj_hippoAmyg_LT_inFA="${prep_d}/sub-${subj}${ses_str}_hippoAmyg_LT_inFA.nii.gz"
+
+subj_hippoAmyg_RT_inFA="${prep_d}/sub-${subj}${ses_str}_hippoAmyg_RT_inFA.nii.gz"
+
+subj_bss_inFA="${prep_d}/sub-${subj}${ses_str}_brainstemSs_inFA.nii.gz"
+
+subj_hypo_inFA="${prep_d}/sub-${subj}${ses_str}_hypothalamic_subunits_inFA.nii.gz"
+
 CFP_aparc_inFA="${prep_d}/sub-${subj}${ses_str}_LC+spine_inFA.nii.gz"
 
 # subj_MSsc1_inFA_uint8="${prep_d}/sub-${subj}${ses_str}_MSBP_scale1_inFA_uint8.nii.gz"
@@ -869,12 +893,17 @@ function PD25_lab_gen {
         #################################
 
         # Red Nucleus
-        task_in="mrcalc -force -datatype uint16 -nthreads 1 ${tmpo_d}/PD25_ROI_48_RT_custom.nii.gz 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
-        ${ROIs_d}/custom_VOIs/PD25_RN_RT_custom.nii.gz"
+        # RN is only a few voxels (sometimes one) at dMRI resolution. mrfilter smooth,
+        # piped through a uint16 stream, attenuates a blob that small below the integer
+        # rounding threshold and it disappears entirely -- so no smoothing here, connect
+        # -largest runs directly on the raw binary mask. Hemisphere-clipped afterwards
+        # since a single dilation pass this close to the midline can cross it.
+        task_in="mrcalc -force -datatype uint16 -nthreads 1 ${tmpo_d}/PD25_ROI_48_RT_custom.nii.gz 0 -gt - | maskfilter - connect -largest -connectivity - | maskfilter - dilate -npass 1 - | mrcalc -force -datatype uint16 - ${ROIs_d}/custom_VOIs/Right_hemir_custom.nii.gz -mult \
+        ${ROIs_d}/custom_VOIs/PD25_RN_RT_custom.nii.gz -force"
         task_exec &
 
-        task_in="mrcalc -force -datatype uint16 -nthreads 1 ${tmpo_d}/PD25_ROI_4800_LT_custom.nii.gz 0.5 -gt - | mrfilter - smooth - | maskfilter - connect -largest -connectivity - | mrcalc -force -datatype uint16 - 0.5 -gt \
-        ${ROIs_d}/custom_VOIs/PD25_RN_LT_custom.nii.gz"
+        task_in="mrcalc -force -datatype uint16 -nthreads 1 ${tmpo_d}/PD25_ROI_4800_LT_custom.nii.gz 0 -gt - | maskfilter - connect -largest -connectivity - | maskfilter - dilate -npass 1 - | mrcalc -force -datatype uint16 - ${ROIs_d}/custom_VOIs/Left_hemir_custom.nii.gz -mult \
+        ${ROIs_d}/custom_VOIs/PD25_RN_LT_custom.nii.gz -force"
         task_exec &
 
         #################################
@@ -967,6 +996,32 @@ subj_bss_mgz="${FS_dir}/brainstemSsLabels.mgz"
 subj_bss_nii="${prep_d}/sub-${subj}${ses_str}_brainstemSs.nii.gz"
 subj_hypo_mgz="${FS_dir}/hypothalamic_subunits_seg.v1.mgz"
 subj_hypo_nii="${prep_d}/sub-${subj}${ses_str}_hypothalamic_subunits.nii.gz"
+
+# Additional multiparc outputs -- source .mgz found via `find` (like subj_FS_2009 etc.
+# below) rather than assumed present, since these are optional
+subj_LS1_mgz=($(find ${FS_dir} -type f -name "lausanne2018.scale1+aseg.mgz"))
+subj_LS1_nii="${prep_d}/sub-${subj}${ses_str}_lausanne2018_scale1.nii.gz"
+
+subj_LS2_mgz=($(find ${FS_dir} -type f -name "lausanne2018.scale2+aseg.mgz"))
+subj_LS2_nii="${prep_d}/sub-${subj}${ses_str}_lausanne2018_scale2.nii.gz"
+
+subj_LS4_mgz=($(find ${FS_dir} -type f -name "lausanne2018.scale4+aseg.mgz"))
+subj_LS4_nii="${prep_d}/sub-${subj}${ses_str}_lausanne2018_scale4.nii.gz"
+
+subj_LS5_mgz=($(find ${FS_dir} -type f -name "lausanne2018.scale5+aseg.mgz"))
+subj_LS5_nii="${prep_d}/sub-${subj}${ses_str}_lausanne2018_scale5.nii.gz"
+
+subj_glasser_mgz=($(find ${FS_dir} -type f -name "HCPMMP1+aseg.mgz"))
+subj_glasser_nii="${prep_d}/sub-${subj}${ses_str}_HCPMMP1.nii.gz"
+
+subj_thal_mgz=($(find ${FS_dir} -type f -name "ThalamicNuclei.FSvoxelSpace.mgz"))
+subj_thal_nii="${prep_d}/sub-${subj}${ses_str}_ThalamicNuclei.nii.gz"
+
+subj_hippoAmyg_LT_mgz=($(find ${FS_dir} -type f -name "lh.hippoAmygLabels.FSvoxelSpace.mgz"))
+subj_hippoAmyg_LT_nii="${prep_d}/sub-${subj}${ses_str}_hippoAmyg_LT.nii.gz"
+
+subj_hippoAmyg_RT_mgz=($(find ${FS_dir} -type f -name "rh.hippoAmygLabels.FSvoxelSpace.mgz"))
+subj_hippoAmyg_RT_nii="${prep_d}/sub-${subj}${ses_str}_hippoAmyg_RT.nii.gz"
 
 subj_FS_lobes=($(find ${FS_dir} -type f -name "sub-${subj}${ses_str}_lobes.mgz"))
 
@@ -1377,6 +1432,76 @@ if [[ -z ${srch_pt1_done} ]]; then
 
         task_exec
 
+        # Promote the brainstem/hypothalamic warps already computed above (for patching
+        # into subj_MSsc3_inFA) to persistent, independently-dispatchable atlas sources.
+        # Copied immediately after their one-time computation, before anything else in
+        # tmpo_d could plausibly touch the same filenames.
+        task_in="cp ${tmpo_d}/bss_inFA.nii.gz ${subj_bss_inFA} && cp ${tmpo_d}/hypo_inFA.nii.gz ${subj_hypo_inFA}"
+
+        task_exec
+
+        # Additional multiparc atlases (Lausanne scale1/2/4/5, Glasser HCP-MMP1, thalamic
+        # nuclei, hippocampus/amygdala L+R) -- each independently optional, warped only if
+        # its source .mgz exists in this subject's FreeSurfer directory. Large cortical
+        # parcellations (Lausanne, Glasser) use -n multilabel matching aparc/LS3's own
+        # precedent; fine subcortical segmentations (thalamic nuclei, hippo/amygdala) use
+        # -n NearestNeighbor matching brainstem/hypothalamus's precedent.
+        if [[ -n ${subj_LS1_mgz} ]]; then
+            task_in="mri_convert ${subj_LS1_mgz} ${subj_LS1_nii} && antsApplyTransforms -d 3 -i ${subj_LS1_nii} -o ${subj_LS1_inFA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz -n multilabel"
+            task_exec
+        else
+            echo " lausanne2018.scale1+aseg.mgz not found in FS directory -- skipping (only needed if a recipe references atlas Lausanne1)" | tee -a ${prep_log2}
+        fi
+
+        if [[ -n ${subj_LS2_mgz} ]]; then
+            task_in="mri_convert ${subj_LS2_mgz} ${subj_LS2_nii} && antsApplyTransforms -d 3 -i ${subj_LS2_nii} -o ${subj_LS2_inFA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz -n multilabel"
+            task_exec
+        else
+            echo " lausanne2018.scale2+aseg.mgz not found in FS directory -- skipping (only needed if a recipe references atlas Lausanne2)" | tee -a ${prep_log2}
+        fi
+
+        if [[ -n ${subj_LS4_mgz} ]]; then
+            task_in="mri_convert ${subj_LS4_mgz} ${subj_LS4_nii} && antsApplyTransforms -d 3 -i ${subj_LS4_nii} -o ${subj_LS4_inFA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz -n multilabel"
+            task_exec
+        else
+            echo " lausanne2018.scale4+aseg.mgz not found in FS directory -- skipping (only needed if a recipe references atlas Lausanne4)" | tee -a ${prep_log2}
+        fi
+
+        if [[ -n ${subj_LS5_mgz} ]]; then
+            task_in="mri_convert ${subj_LS5_mgz} ${subj_LS5_nii} && antsApplyTransforms -d 3 -i ${subj_LS5_nii} -o ${subj_LS5_inFA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz -n multilabel"
+            task_exec
+        else
+            echo " lausanne2018.scale5+aseg.mgz not found in FS directory -- skipping (only needed if a recipe references atlas Lausanne5)" | tee -a ${prep_log2}
+        fi
+
+        if [[ -n ${subj_glasser_mgz} ]]; then
+            task_in="mri_convert ${subj_glasser_mgz} ${subj_glasser_nii} && antsApplyTransforms -d 3 -i ${subj_glasser_nii} -o ${subj_glasser_inFA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz -n multilabel"
+            task_exec
+        else
+            echo " HCPMMP1+aseg.mgz not found in FS directory -- skipping (only needed if a recipe references atlas Glasser)" | tee -a ${prep_log2}
+        fi
+
+        if [[ -n ${subj_thal_mgz} ]]; then
+            task_in="mri_convert ${subj_thal_mgz} ${subj_thal_nii} && antsApplyTransforms -d 3 -i ${subj_thal_nii} -o ${subj_thal_inFA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz -n NearestNeighbor"
+            task_exec
+        else
+            echo " ThalamicNuclei.FSvoxelSpace.mgz not found in FS directory -- skipping (only needed if a recipe references atlas ThalNuclei)" | tee -a ${prep_log2}
+        fi
+
+        if [[ -n ${subj_hippoAmyg_LT_mgz} ]]; then
+            task_in="mri_convert ${subj_hippoAmyg_LT_mgz} ${subj_hippoAmyg_LT_nii} && antsApplyTransforms -d 3 -i ${subj_hippoAmyg_LT_nii} -o ${subj_hippoAmyg_LT_inFA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz -n NearestNeighbor"
+            task_exec
+        else
+            echo " lh.hippoAmygLabels.FSvoxelSpace.mgz not found in FS directory -- skipping (only needed if a recipe references atlas HippoAmygLT)" | tee -a ${prep_log2}
+        fi
+
+        if [[ -n ${subj_hippoAmyg_RT_mgz} ]]; then
+            task_in="mri_convert ${subj_hippoAmyg_RT_mgz} ${subj_hippoAmyg_RT_nii} && antsApplyTransforms -d 3 -i ${subj_hippoAmyg_RT_nii} -o ${subj_hippoAmyg_RT_inFA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz -n NearestNeighbor"
+            task_exec
+        else
+            echo " rh.hippoAmygLabels.FSvoxelSpace.mgz not found in FS directory -- skipping (only needed if a recipe references atlas HippoAmygRT)" | tee -a ${prep_log2}
+        fi
+
         # Make the CSF inverse mask for downstream atlas masking.
         #
         # This used to strip the CSF labels out of the aseg, binarise, subtract the brain
@@ -1395,10 +1520,20 @@ if [[ -z ${srch_pt1_done} ]]; then
         # intersected with the brain mask, with both operands binarised so no assumption
         # about their value range survives. 31 and 63 are kept for FreeSurfer 7 subjects;
         # FreeSurfer 8 does not emit them and the -eq simply contributes nothing.
+        # Erode the raw CSF label mask by one pass before excluding it: this mask feeds
+        # tckgen -mask directly, which truncates propagation the instant a step exits it,
+        # with zero tolerance for registration/warp imprecision at the thin, curved sulcal
+        # GM/CSF interface. An unbuffered exclusion there clips fibers short of their true
+        # cortical destination whenever the T1-to-FA warp is off by even a voxel. Eroding
+        # first means only "confidently CSF" voxels get excluded, giving tckgen a one-voxel
+        # margin at the boundary instead of an all-or-nothing cutoff -- same tolerance
+        # principle as --dilate_ctx on the anatomy filter's cortex-reaching check, just
+        # applied to the exclusion side instead of the acceptance side.
         task_in="mrcalc -force -datatype uint16 -nthreads ${ncpu} -quiet \
         ${subj_aseg_inFA} 4 -eq ${subj_aseg_inFA} 43 -eq -add ${subj_aseg_inFA} 14 -eq -add ${subj_aseg_inFA} 15 -eq -add \
         ${subj_aseg_inFA} 24 -eq -add ${subj_aseg_inFA} 31 -eq -add ${subj_aseg_inFA} 63 -eq -add 0 -gt \
-        ${T1_brain_mask_inFA} 0 -gt -mult ${FS_csf_mask} -force && fslmaths ${FS_csf_mask} -binv ${FS_csf_mask_binv} \
+        ${T1_brain_mask_inFA} 0 -gt -mult - | maskfilter - erode ${FS_csf_mask} -npass 1 -force -nthreads ${ncpu} \
+        && fslmaths ${FS_csf_mask} -binv ${FS_csf_mask_binv} \
         && mrcalc -force -datatype uint16 -nthreads ${ncpu} ${T1_brain_mask_inFA} 0 -gt ${FS_csf_mask_binv} -mult ${T1_BM_inFA_minCSF}"
 
         task_exec
@@ -2085,10 +2220,11 @@ function make_VOIs {
     # to use dynamic variable definitions in bash
     # eval v_array=( \${${tck}_array[@]})
 
-    unset Vs_Ls Vs_Is source_map val Vs_1_str Vs_other_str VOIs_LUT
+    unset Vs_Ls Vs_Is Vs_As source_map val Vs_1_str Vs_other_str VOIs_LUT
 
     eval Vs_Ls=( \${${tck_VOIs_2seg}_Ls[@]});
     eval Vs_Is=( \${${tck_VOIs_2seg}_Is[@]});
+    eval Vs_As=( \${${tck_VOIs_2seg}_As[@]});
 
     ## par procs
     # pow="${ncpu}"
@@ -2119,78 +2255,162 @@ function make_VOIs {
 
         # ((pew=${pew}%${pow}))
 
-        # Clear the previous VOI's source map first. The chain below has no else branch, so a
-        # name matching none of its patterns used to silently inherit whatever atlas the previous
-        # entry resolved to -- a wrong-atlas read that depends only on line order. Cleared, an
-        # unmatched name falls through to the custom-VOI path and fails loudly on a missing file.
+        # Source map is chosen from the recipe's own explicit atlas column (track_recipes_v2/),
+        # not by guessing from the VOI name. The old substring-matching if/elif chain had no
+        # else branch, so an unmatched name silently inherited whatever atlas the previous entry
+        # resolved to -- a wrong-atlas read that depended only on line order (the documented
+        # Front_lobeWM_FS bug). A case statement on an explicit, LUT-verified atlas token can't
+        # partially match or silently fall through: an unrecognized token hits the *) branch
+        # below and fails loudly instead of guessing.
         unset source_map
 
-        # select source maps
-        # one condition per source map
-        # custom ones are made in step 1
-        # removed the PD25 condition as it was redundant "elif [[ ${Vs_Ls[$z]} == *"PD25"* ]]; then"
-        # we use the custom suffix for all PD25 labels anyway
-        if [[ ${Vs_Ls[$z]} == *"MSBP"* ]]; then
+        case "${Vs_As[$z]}" in
 
-            source_map="${subj_MSsc3_inFA}"
+            Lausanne3)
+                # Token renamed from MSBP now that scale1/2/4/5 exist as their own
+                # Lausanne1/2/4/5 tokens -- "MSBP" alone no longer says which scale.
+                # subj_MSsc3_inFA (the variable and the on-disk file) keeps its old name
+                # deliberately: renaming it would invalidate every subject's already-warped
+                # cache for no functional gain, exactly what the "NOTE ON THE MS FILENAMES"
+                # comment near the top of this file already warns against.
+                source_map="${subj_MSsc3_inFA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"FS"* ]]; then
-            # okay its from FS but GM or WM?
-            if [[ ${Vs_Ls[$z]} == *"_WM_"* ]]; then
+            FS_wmparc)
                 source_map="${subj_FS_WMaparc_inFA}"
-            else 
+                ;;
+
+            FS_aparc)
                 source_map="${subj_aparc_inFA}"
-            fi
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"2009"* ]]; then
+            FS_2009)
+                source_map="${subj_FS_2009_inFA}"
+                ;;
 
-            source_map="${subj_FS_2009_inFA}"
+            FS_fornix)
+                source_map="${subj_FS_Fx_inFA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"Fx"* ]]; then
+            FS_lobes)
+                source_map="${subj_FS_lobes_inFA}"
+                ;;
 
-            source_map="${subj_FS_Fx_inFA}"
+            FS_aseg)
+                source_map="${subj_aseg_inFA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"lobe"* ]]; then
+            SUIT)
+                source_map="${SUIT_in_FA}"
+                ;;
 
-            source_map="${subj_FS_lobes_inFA}"
+            CIT)
+                source_map="${CIT_in_FA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"aseg"* ]]; then
+            DISTAL_STN)
+                source_map="${DISTAL_STN_in_FA}"
+                ;;
 
-            source_map="${subj_aseg_inFA}"
+            TMP_BStem)
+                source_map="${TMP_BStem_in_FA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"SUIT"* ]]; then
+            MAN)
+                source_map="${Man_VOIs_in_FA}"
+                ;;
 
-            source_map="${SUIT_in_FA}"
+            UKBB)
+                source_map="${UKBB_in_FA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"CIT"* ]]; then
+            JHU)
+                source_map="${JHU_in_FA}"
+                ;;
 
-            source_map="${CIT_in_FA}"
+            Lausanne1)
+                source_map="${subj_LS1_inFA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"DISTAL_STN"* ]]; then
+            Lausanne2)
+                source_map="${subj_LS2_inFA}"
+                ;;
 
-            source_map="${DISTAL_STN_in_FA}"
+            Lausanne4)
+                source_map="${subj_LS4_inFA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"TMP_BStem"* ]]; then
+            Lausanne5)
+                source_map="${subj_LS5_inFA}"
+                ;;
 
-            source_map="${TMP_BStem_in_FA}"
+            Glasser)
+                source_map="${subj_glasser_inFA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"MAN"* ]]; then
+            ThalNuclei)
+                source_map="${subj_thal_inFA}"
+                ;;
 
-            source_map="${Man_VOIs_in_FA}"
+            HippoAmygLT)
+                source_map="${subj_hippoAmyg_LT_inFA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"UKBB"* ]]; then
+            HippoAmygRT)
+                source_map="${subj_hippoAmyg_RT_inFA}"
+                ;;
 
-            source_map="${UKBB_in_FA}"
+            BrainstemSs)
+                source_map="${subj_bss_inFA}"
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"JHU"* ]]; then
+            Hypothalamus)
+                source_map="${subj_hypo_inFA}"
+                ;;
 
-            source_map="${JHU_in_FA}"
+            custom)
+                source_map=""
+                ;;
 
-        elif [[ ${Vs_Ls[$z]} == *"custom"* ]]; then
+            *)
+                # Not one of the known atlas tokens above -- try the FreeSurfer directory
+                # directly, using the token itself as the source volume's filename stem
+                # (matches how KUL_FS_multiparc.sh/KUL_VBG_multiparc.sh name their own
+                # outputs, e.g. HCPMMP1+aseg.mgz, ThalamicNuclei.FSvoxelSpace.mgz). Lets a
+                # user reference a brand-new segmentation just by dropping it in the FS
+                # mri/ folder and naming it in the recipe -- no new dispatcher branch
+                # needed. Warped once per unique token per subject and reused after that.
+                # -n multilabel is a reasonable default for a not-otherwise-classified
+                # discrete label volume; a genuinely fine subcortical segmentation may
+                # need -n NearestNeighbor added as its own dedicated branch above instead.
+                _generic_mgz=($(find ${FS_dir} -type f -name "${Vs_As[$z]}.mgz"))
 
-            source_map=""
+                if [[ -n ${_generic_mgz} ]]; then
 
-        fi
+                    _generic_nii="${prep_d}/sub-${subj}${ses_str}_${Vs_As[$z]}.nii.gz"
+                    _generic_inFA="${prep_d}/sub-${subj}${ses_str}_${Vs_As[$z]}_inFA.nii.gz"
+
+                    if [[ ! -f ${_generic_inFA} ]]; then
+
+                        echo " ${Vs_Ls[$z]}: atlas token '${Vs_As[$z]}' not hardcoded -- found ${_generic_mgz} in ${FS_dir}, warping generically" | tee -a ${prep_log2}
+
+                        task_in="mri_convert ${_generic_mgz} ${_generic_nii} && antsApplyTransforms -d 3 -i ${_generic_nii} -o ${_generic_inFA} -r ${subj_FA} -t [${FA2FS_str}_0GenericAffine.mat,1] -t ${FA2FS_str}_1InverseWarp.nii.gz -n multilabel"
+
+                        task_exec
+
+                    fi
+
+                    source_map="${_generic_inFA}"
+
+                else
+
+                    echo " ERROR: ${Vs_Ls[$z]} has unrecognized atlas token '${Vs_As[$z]}' in ${recipe_f}, and no ${Vs_As[$z]}.mgz found in ${FS_dir} either -- fix the recipe, or add ${Vs_As[$z]}.mgz to the FreeSurfer directory" | tee -a ${prep_log2}
+                    exit 2
+
+                fi
+                ;;
+
+        esac
 
         # calc val to scale each VOI to
         ((val=${z}+1))
@@ -2396,7 +2616,7 @@ for q in ${!tck_list[@]}; do
             # restructure CST/PMC/SMA are all redundant, doable from the PyT_all
             # can be done using -eq for each of those VOIs hardcoded even
 
-            track_recipes_d="${function_path}/track_recipes"
+            track_recipes_d="${function_path}/track_recipes_v2"
 
             recipe_f="${track_recipes_d}/${tck_list[$q]}.txt"
 
@@ -2418,16 +2638,20 @@ for q in ${!tck_list[@]}; do
 
                 # Initialise all segment arrays empty
                 for _s in "${_inc_segs[@]}" excs; do
-                    eval "${bname}_${_s}_Ls=()" ; eval "${bname}_${_s}_Is=()"
+                    eval "${bname}_${_s}_Ls=()" ; eval "${bname}_${_s}_Is=()" ; eval "${bname}_${_s}_As=()"
                 done
 
-                # Parse recipe file — format: <type>  <VOI_name>  <label>
-                while IFS=" " read -r _seg _vname _vlabel _rest; do
+                # Parse recipe file — format: <type>  <VOI_name>  <label>  <atlas>
+                # (track_recipes_v2/ adds the 4th atlas column; bash `read` with 4 target
+                # variables and exactly 4 whitespace-separated fields puts it straight into
+                # _vatlas, no extra parsing needed)
+                while IFS=" " read -r _seg _vname _vlabel _vatlas; do
                     [[ -z "${_seg}" || "${_seg}" == \#* ]] && continue
                     case "${_seg}" in
                         incs[0-9]|incs[0-9][0-9]|excs)
                             eval "${bname}_${_seg}_Ls+=(\"\${_vname}\")"
                             eval "${bname}_${_seg}_Is+=(\"\${_vlabel}\")"
+                            eval "${bname}_${_seg}_As+=(\"\${_vatlas}\")"
                             ;;
                     esac
                 done < "${recipe_f}"

@@ -1,0 +1,22 @@
+# Bundle: CST_LT
+# type  name  label  atlas
+incs1  CST_LT_UKBB  1  UKBB
+
+incs2  M1_GM_ctx_LT_FS  1024  FS_aparc
+incs2  S1_GM_ctx_LT_FS  1022  FS_aparc
+incs2  ParaC_GM_ctx_LT_FS  1017  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStemr_exc_RT_custom  1  custom
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeWM_LT  3003  FS_lobes
+excs  LT_ML_X_custom  1  custom
+excs  Thal_LT_ero2_custom  1  custom
+excs  Temp_lobeGM_ctx_LT  1005  FS_lobes
+excs  Temp_lobeWM_LT  3005  FS_lobes
+excs  Putamen_GM_LT_FS  12  FS_aparc
+excs  Caudate_GM_LT_FS  11  FS_aparc
+excs  SFG_GM_ctx_LT_FS  1028  FS_aparc
+excs  Occ_lobeGM_ctx_LT  1004  FS_lobes
+excs  Occ_lobeWM_LT  3004  FS_lobes
+excs  hypothal_vDC_RT_excr_custom  1  custom

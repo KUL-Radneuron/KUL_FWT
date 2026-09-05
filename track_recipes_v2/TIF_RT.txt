@@ -1,0 +1,30 @@
+# Bundle: TIF_RT
+# type  name  label  atlas
+incs1  Ins1_MSBP_ctx_RT  106  Lausanne3
+incs1  Ins2_MSBP_ctx_RT  107  Lausanne3
+incs1  Ins3_MSBP_ctx_RT  108  Lausanne3
+
+incs2  Amygdala_RT_FS  54  FS_aparc
+incs2  TempP_GM_ctx_RT_FS  2033  FS_aparc
+incs2  EntoR_MSBP_ctx_RT  89  Lausanne3
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  PHipp_GM_ctx_RT_FS  2016  FS_aparc
+excs  PHipp_WM_FS_RT  4016  FS_wmparc
+excs  vDC_FS_RT  60  FS_aparc
+excs  Fusi_GM_ctx_RT_FS  2007  FS_aparc
+excs  Fusi_WM_RT_FS  4007  FS_wmparc
+excs  e2Put_RT_custom  1  custom
+excs  Pall_RT_FS  52  FS_aparc
+excs  Front_lobeGM_ctx_RT  2001  FS_lobes
+excs  Front_lobeWM_RT  4001  FS_lobes
+excs  Acc_RT_FS  58  FS_aparc
+excs  AC_midline_MAN  1  MAN
+excs  OptCh_FS  85  FS_aparc
+excs  Pari_lobeGM_ctx_RT  2006  FS_lobes
+excs  Pari_lobeWM_RT  4006  FS_lobes
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  Occ_lobeWM_RT  4004  FS_lobes
+excs  STG_GM_ctx_RT_FS  2030  FS_aparc
+excs  STG_WM_RT_FS  4030  FS_wmparc

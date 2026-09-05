@@ -1,0 +1,32 @@
+# Bundle: CC_PMandSM_Comm
+# type  name  label  atlas
+incs1  CC_mid_FS  253  FS_aparc
+
+incs2  cMFG_GM_ctx_LT_FS  1003  FS_aparc
+incs2  SFG5_ctx_LT_MSBP  148  Lausanne3
+incs2  SFG6_ctx_LT_MSBP  149  Lausanne3
+incs2  SFG7_ctx_LT_MSBP  150  Lausanne3
+incs2  SFG8_ctx_LT_MSBP  151  Lausanne3
+
+incs3  cMFG_GM_ctx_RT_FS  2003  FS_aparc
+incs3  SFG5_ctx_RT_MSBP  24  Lausanne3
+incs3  SFG6_ctx_RT_MSBP  25  Lausanne3
+incs3  SFG7_ctx_RT_MSBP  26  Lausanne3
+incs3  SFG8_ctx_RT_MSBP  27  Lausanne3
+
+excs  AC_MAN  1  MAN
+excs  PC_MAN  2  MAN
+excs  CC_genu_FS  255  FS_aparc
+excs  CC_ant_FS  254  FS_aparc
+excs  CC_isth_FS  252  FS_aparc
+excs  CC_splen_FS  251  FS_aparc
+excs  Fornix_Fx  250  FS_fornix
+excs  BStem_FS  16  FS_aparc
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes
+excs  SegWM_LT_ALIC_custom  1  custom
+excs  SegWM_RT_ALIC_custom  1  custom
+excs  vDC_FS_LT  28  FS_aparc
+excs  vDC_FS_RT  60  FS_aparc
+excs  Thal_LT_FS  10  FS_aparc
+excs  Thal_RT_FS  49  FS_aparc

@@ -1,0 +1,41 @@
+# Bundle: SLF_I_RT
+# type  name  label  atlas
+incs1  SFG6_ctx_RT_MSBP  25  Lausanne3
+incs1  SFG7_ctx_RT_MSBP  26  Lausanne3
+incs1  SFG8_ctx_RT_MSBP  27  Lausanne3
+
+incs2  SPL2_ctx_RT_MSBP  55  Lausanne3
+
+excs  SFG1_ctx_RT_MSBP  20  Lausanne3
+excs  SFG2_ctx_RT_MSBP  21  Lausanne3
+excs  SFG3_ctx_RT_MSBP  22  Lausanne3
+excs  SFG4_ctx_RT_MSBP  23  Lausanne3
+excs  SFG5_ctx_RT_MSBP  24  Lausanne3
+excs  S1_GM_ctx_RT_FS  2022  FS_aparc
+excs  S1_WM_RT_FS  4022  FS_wmparc
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  s3Put_RT_custom  1  custom
+excs  Thal_RT_FS  49  FS_aparc
+excs  Temp_lobeGM_ctx_RT  2005  FS_lobes
+excs  Temp_lobeWM_RT  4005  FS_lobes
+excs  Phippo_GM_ctx_RT_FS  2016  FS_aparc
+excs  Phippo_WM_RT_FS  4016  FS_wmparc
+excs  Insula_GM_ctx_RT_FS  2035  FS_aparc
+excs  Insula_WM_RT_FS  4035  FS_wmparc
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes
+excs  Cing_lobeWM_RT  4003  FS_lobes
+excs  PCC_GM_ctx_RT_FS  2023  FS_aparc
+excs  PCC_WM_RT_FS  4023  FS_wmparc
+excs  cMFG_GM_ctx_RT_FS  2003  FS_aparc
+excs  rMFG_GM_ctx_RT_FS  2027  FS_aparc
+excs  IFGpTr_GM_ctx_RT_FS  2020  FS_aparc
+excs  IFGpOp_GM_ctx_RT_FS  2018  FS_aparc
+excs  IFGpOr_GM_ctx_RT_FS  2019  FS_aparc
+excs  IPL_GM_ctx_RT_FS  2008  FS_aparc
+excs  SMG_GM_ctx_RT_FS  2031  FS_aparc
+excs  M1_GM_ctx_RT_FS  2024  FS_aparc
+excs  SPL3_ctx_RT_MSBP  56  Lausanne3
+excs  SPL4_ctx_RT_MSBP  57  Lausanne3
+excs  SPL5_ctx_RT_MSBP  58  Lausanne3
+excs  SPL6_ctx_RT_MSBP  59  Lausanne3

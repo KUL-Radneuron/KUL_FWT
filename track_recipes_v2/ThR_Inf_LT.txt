@@ -1,0 +1,20 @@
+# Bundle: ThR_Inf_LT
+# type  name  label  atlas
+incs1  Thal_FS_LT  10  FS_aparc
+incs1  JuHA_MGN_LT_custom  1  custom
+
+incs2  TTG_MSBP_ctx_LT  229  Lausanne3
+incs2  STG3_MSBP_ctx_LT  226  Lausanne3
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  AC_midline_MAN  1  MAN
+excs  e2Put_LT_custom  1  custom
+excs  Caudate_GM_LT_FS  11  FS_aparc
+excs  Front_lobeGM_ctx_LT  1001  FS_lobes
+excs  cACC_GM_FS_ctx_LT  1002  FS_aparc
+excs  Occ_lobeGM_ctx_LT  1004  FS_lobes
+excs  Occ_lobeWM_LT  3004  FS_lobes
+excs  Pari_lobeGM_ctx_LT  1006  FS_lobes
+excs  Pari_lobeWM_LT  3006  FS_lobes
+excs  Ins_subseg1_LT_custom  1  custom

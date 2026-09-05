@@ -1,0 +1,15 @@
+# Bundle: CSHDP_RT
+# type  name  label  atlas
+incs1  STN_RT_DISTAL_STN  2  DISTAL_STN
+
+incs2  M1_GM_FS_ctx_RT  2024  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  hypothal_RT_excr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes
+excs  Cing_lobeWM_RT  4003  FS_lobes
+excs  Thal_RT_ero2_custom  1  custom
+excs  SFG_GM_ctx_RT_FS  2028  FS_aparc
+excs  SFG_WM_RT_FS  4028  FS_wmparc
+excs  SegWM_RT_ALIC_custom  1  custom

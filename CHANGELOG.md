@@ -1,5 +1,355 @@
 # Changelog
 
+## Unreleased (2026-09-05 — subcortical VOIs stop being treated as cortex; the QQ report gets real colour)
+
+### `-T 4`/`-T 5` were GMWMI-narrowing subcortical VOIs
+
+DRT's `incs3` — the VL thalamus — was coming back masked by the GMWMI, which is
+not a cortical VOI by any reading. The cause was the survival rule: both
+approaches computed the GMWMI intersection unconditionally and only fell back to
+the original VOI when the result dropped below a 250-voxel floor. That floor is
+not a test of whether a VOI is cortical. VL-thalamus has 0 % overlap with
+`ctx_mask_inFA` yet still produced 283 GMWMI voxels — just over the floor — so it
+was silently narrowed as if it were cortex. Any deep-GM VOI large enough to clear
+250 voxels of incidental interface overlap had the same problem.
+
+- Both `-T 4` and `-T 5` now **gate on corticality before narrowing at all**,
+  using the same test `-K` already used: voxel overlap with `ctx_mask_inFA`,
+  cortical at ≥ 50 %. Applied in all four blocks (DTI and non-DTI branches of
+  each approach).
+- Non-cortical VOIs are passed through **unchanged** — for `-T 5`, both the seed
+  and the include side. An interim version gave them a "WM outline" (dilate 1
+  pass ∩ `WM_mask_inFA`) instead; that was dropped deliberately. GMWMI/WM
+  narrowing is a cortical construct and subcortical VOIs should simply be left
+  alone.
+- `ctx_mask_inFA` is now built for `T_app` 4 and 5 as well (previously only `-K`,
+  `-T 2`), since the gate needs it.
+
+### `incs_map_agg` could be stale while the VOIs it describes were fresh
+
+The QQ overlay map is built from `TCK_I_b`, but was guarded by
+`if [ ! -f <..._incs_map_agg_inMNI.nii.gz> ]`. `TCK_I_b`'s own per-VOI outputs
+have separate `-f` guards, and `tckgen` is skipped independently when `tck_init`
+already has enough streamlines — so a rerun could legitimately recompute
+`TCK_I_b`'s content while this step, seeing its old output present, served a map
+baked from whatever `TCK_I_b` pointed at on some earlier run. Observed directly:
+only 204 of 949 voxels of the current VOI appeared in the map on disk.
+
+- The guard is removed in both `KUL_FWT_make_TCKs.sh` and `_4Temp.sh`. The step
+  is a few `mrcalc` calls plus one `antsApplyTransforms` — cheap next to `tckgen`
+  — so it always rebuilds from whatever `TCK_I_b` currently is.
+
+### tckgen thread oversubscription
+
+`ncpu_per_bundle` was derived so that the sum of live `-nthreads` never exceeded
+physical cores. `tckgen`'s threads are not fully CPU-bound (mutex contention on
+the shared streamline-output queue), so a modest oversubscription fills those
+gaps rather than genuinely demanding more cores.
+
+- New `oversubscribe_pct` (default 25) inflates the budget used for the
+  per-dispatch thread split only. `bundles_simultaneous` stays anchored to real
+  `ncpu`, so the number of concurrent `tckgen` processes is unchanged and only
+  each one's thread count rises.
+
+### The QQ report: directional colour, true proportions, dark surface
+
+- **Bundle geometry is coloured by direction (DEC).** Per-point tangent via
+  `np.gradient`, `abs`, normalised per point by its own max component — the same
+  recipe `scil_viz_bundle_screenshot_mni --local_coloring` uses. Computed from
+  raw mm coordinates *before* display normalisation, so the colours reflect true
+  anatomical direction. A toggle switches back to the previous
+  along-tract-segment colouring.
+- **The rotatable panel is no longer warped.** `load_bundle_geometry` scaled
+  x/y/z independently, each stretched to fill its own -1..1, so a bundle longer
+  A-P than S-I rendered artificially cube-shaped next to the (isotropic) scilpy
+  screenshots of the same geometry. It now uses one shared scale factor.
+- **A legend** that follows the colour mode: R/G/B → left-right /
+  anterior-posterior / superior-inferior for direction, or a fixed-width ramp
+  labelled 1..N for segments.
+- The segment ramp moved off viridis, whose dark end vanished against the page,
+  and the page itself moved to a dark surface so the tract colours read the way
+  they do in the screenshots. The static matplotlib PDF/PNG keeps the light
+  palette.
+- The per-bundle in-panel dotted "seg N" scale line was removed; the legend now
+  carries that information.
+- **Summary statistics per metric** (min/max/mean/median/IQR plus a Shapiro-Wilk
+  normality p-value) in the standalone page. The combined report shows only the
+  iframe's copy — it no longer renders a second table of the same numbers below
+  it.
+
+## Unreleased (accumulated — `-T 5`, five experimental flags, recipe v2/Lausanne2018, filtering-chain rewrites)
+
+Work that had built up uncommitted alongside the entries below, written up here
+before committing.
+
+### New tracking approach `-T 5` (`BT_WMR`)
+
+`-T 4` reassigns one mask, which fixes *seeding* but leaves `-include` as wide as
+the raw VOI — so `-stop` only fires once a streamline has already tunnelled deep
+into a gyrus. `-T 5` splits the two roles. From one shared GMWMI interface patch
+and a 1-pass shell it builds:
+
+- `TCK_I_seed_b` — shell ∩ WM, minus the interface: pure WM one voxel past the
+  ribbon, so no streamline is born in GM.
+- `TCK_I_b` (reassigned) — interface ∪ (shell ∩ (WM ∪ raw VOI)): the WM ring, the
+  interface, and a ~1-voxel cortical rim, so `-stop` fires at the ribbon.
+
+Each stage falls back under the same 250-voxel floor.
+
+### Five experimental opt-in flags (all default-off, all parse-validated)
+
+- **`-K`** — dilates cortical inclusion VOIs one pass *inward* into WM
+  (dilate ∩ `WM_mask_inFA`), absorbing T1→FA registration slop at the GM/CSF
+  boundary without jumping a sulcus. Corticality is detected by ≥50 % overlap
+  with `ctx_mask_inFA` rather than by filename, since one `incsN` slot can merge
+  several recipe entries. Reassigns `TCK_I_b` so tckgen and the downstream scilpy
+  `--drawn_roi` filter stay consistent; excludes are deliberately untouched.
+- **`-O`** — `-include_ordered` instead of `-include`. tckgen refuses ordered
+  includes without `-seed_unidirectional`, so `-O` also narrows seeding to the
+  chain's *first* VOI; otherwise a mid-chain seed captures only half the pathway.
+- **`-Z <mm>`** — explicit `tckgen -step` override, to bound per-step curvature
+  through sharp turns (Meyer's loop, the DRT's dentate/red-nucleus segment).
+- **`-Y`** — `-seed_random_per_voxel`, with per-VOI *n* inversely weighted by
+  voxel count to target ~50 000 attempts per seed VOI. Note the budget is fixed,
+  so a bundle can come back under `-select`.
+- **`-M <N>`** — rind-excluded tracking mask for `-T 1/4/5`. Erodes the
+  CSF-stripped brain mask N passes (eroding cortex directly was tried first and
+  eats the whole ribbon), then adds back brainstem, corpus callosum, fornix
+  (label 250 specifically — matching any-nonzero pulled in 635 k voxels and undid
+  the erosion) and ventricles dilated by N.
+
+### Changed tracking defaults
+
+- **`-stop` on every bundle-specific `tckgen`** (`-T 1/4/5`), and
+  `-include ctx_mask_inFA -stop` on `-T 2`'s whole-brain run: streamlines now
+  terminate at first cortex contact.
+- **`-seeds` capped at `10000 × -select`**, replacing unlimited (`0`). Unlimited
+  can genuinely run away under `-M`/`-T 5`'s tighter masks; 10 000× keeps ten
+  times MRtrix's own headroom while guaranteeing termination.
+- `KUL_FWT_tracks_list.txt`: CST target **10 000 → 8 000**; `VOF_*` → `VOFc_*`
+  (the list named a recipe that did not exist).
+
+### `filt1` endpoint filtering rewritten
+
+`either_end` had been dead code for the pipeline's entire history. Simply
+enabling it for both VOIs of a two-VOI bundle cost AF_all/CST/OR 50-75 % of
+`filt1` and collapsed IFOF. It is now applied — with a new 2-voxel tolerance
+(`either_end include 2`) — to only the *smaller, more precise* VOI, leaving the
+broad cortical one at `any`. CST/PyT/ML_ get `either_end` unconditionally on
+their cortical terminus.
+
+### Optic radiation chain rebuilt
+
+OR previously ran FBC alone, then smoothing. FBC verifies neither where a
+streamline terminates nor its shape, so thalamic overextension and ILF/temporal-
+stem strays survived. It now mirrors the standard chain's bookends: ROI filter →
+FBC → smooth → RecoBundles. Also fixes the model path, which used
+`${tck_list[$q]}` instead of `${TCK_2_make}`.
+
+### `-R`: augmented filtering chain
+
+Anatomy-endpoint filter (`scil_tractogram_filter_by_anatomy --dilate_ctx 2`) →
+loop detection → outlier rejection → smoothing → a **3-run bootstrap RecoBundles
+ensemble** over 70 % subsamples, combined by `scil_bundle_filter_by_occurrence`
+at ratio `1.0`. Unanimity rather than 2-of-3: majority behaved as an OR-ish
+criterion *looser* than a single run. 70 % (down from 80 %) makes the runs less
+redundant, at the stated cost that a sparse real sub-branch may be dropped.
+Requires a one-time `int32` recast of `subj_aparc_inFA` — ANTs multilabel writes
+float and scilpy refuses it.
+
+### Atlas dispatcher rewritten; MSBP replaced by Lausanne2018
+
+`make_VOIs*.sh` used a name-substring `if/elif` chain with **no `else`**, so a
+name matching nothing silently inherited the *previous* entry's atlas — the
+`Front_lobeWM_FS` bug. Replaced with a `case` on an explicit **`atlas` column**
+in the recipes, `MSBP` → `Lausanne3`. The `*)` branch is a generic escape hatch
+that finds and warps `<token>.mgz` on demand. Ten optional warped atlases added
+(Lausanne scales 1/2/4/5, HCP-MMP1, ThalamicNuclei, hippoAmygLabels, BrainstemSs,
+hypothalamic subunits).
+
+### `track_recipes_v2/` (92 recipes)
+
+3-column → 4-column format carrying the `atlas` token, plus a `_ctx` infix on
+cortical GM VOI names (consumed by `-K`, `-T 4`, `-T 5`). **No new bundles** —
+content is byte-identical after normalising those two markers, with one
+exception: the OR family, whose seed/target are swapped (calcarine is now
+`incs1`, LGN/pulvinar `incs2`) and whose `Ins_infL_wm` exclude is dropped for
+sitting in the Meyer's-loop corridor.
+
+### Bugfixes
+
+- **Retry-path staleness**: the `count ≤ 10` retry regenerated `tck_init` but
+  left `tck_init_rs`/`_inT` stale, so everything downstream — count, filtering,
+  QQ — read the old near-empty file. Both are now re-resampled and re-transformed.
+- **`.trk` conversion moved before Screenshots**: a fury `--local_coloring` crash
+  aborts the bundle subshell, so CST's `.trk` was consistently missing despite a
+  valid `fin.tck`.
+- **Screenshots take the native-space bundle and `sub_T1inFA`** with
+  `--target_template MNI152_T1_1mm_brain`, not the nonlinearly-warped `_inMNI`
+  inputs. The "warped" renderings were real geometric deformation from the ANTs
+  warp, not a rendering defect; `--target_template` restores correct framing via
+  affine-only registration.
+- **`voxel2fixel` grid mismatch**: the TDI-derived bundle mask is now regridded
+  onto `subj_fod`'s grid (`mrgrid -interp nearest`). Fixels are addressed by voxel
+  index, so this hard-failed before.
+- **CSF mask eroded one pass** before subtraction in `make_VOIs.sh` (not yet
+  ported to `_4Temp.sh`).
+- **PD25 red nucleus**: `mrfilter smooth` dropped — at dMRI resolution the RN is a
+  few voxels and smoothing in a uint16 stream rounded it away entirely.
+- **`make_VOIs_4Temp.sh`** discovers `incsN` from the recipe instead of hardcoding
+  `incs1..3`, which silently dropped the DRT's `incs4` M1 endpoint.
+- **`-f` input normalised** via `$((filt_fl2))`, so `-f 01` / `-f +1` still work
+  after the switch from `-eq` to `case`.
+
+### Reporting
+
+- The spider plot and bundle report now regenerate **incrementally** after each
+  bundle's QQ/screenshots (flock-serialised, non-fatal) rather than once at end
+  of run, so a partial run still has a usable report.
+- `bundle_report.py`: new **"Qualitative and Quantitative" tab** embedding the
+  spider page via lazy iframe; **spider link path fixed** (`basename` →
+  `relpath`) — the `metrics →` links were 404ing.
+- `spider_plot.py`: PNG sibling written at dpi 150 for the contact sheet.
+
+## Unreleased (2026-09-03 — outlier rejection stops eating fanning bundles; the two make_TCKs scripts converge)
+
+### `filt3` was deleting the anatomically complete part of fanning bundles
+
+The uncinate came back missing its whole frontal limb on some subjects and not
+others. Traced to `filt3`, the outlier-rejection step, which called scilpy's
+`scil_bundle_reject_outliers --alpha`. That tool scores each streamline by how
+deep it survives a hierarchical QuickBundles clustering, normalised by the
+deepest streamline in the *same bundle*, then cuts below an absolute `alpha`.
+Three compounding problems:
+
+- The score is relative to the bundle's own densest core, so a bundle with a
+  narrow bottleneck feeding a wide cortical fan (UF, CCing, ILF, TCing) grades
+  its fan against its bottleneck and loses the fan.
+- Clusters stop subdividing at ≤10 members, making the score partly a *density*
+  measure — a small but real sub-fascicle scores like an outlier however
+  anatomically correct it is.
+- The score's scale is bundle- and subject-specific (it depends on the bundle's
+  bounding box, which sets the clustering ladder's depth). Across one cohort's
+  uncinate bundles the median score ran 0.55–0.78, so a fixed `alpha=0.58` sat
+  on the steep part of the distribution and swung retention between 40 % and
+  92 % on anatomically comparable bundles.
+
+Measured on 38 real bundles: at `alpha=0.58` the correlation between a
+streamline's score and its length was negative in 18 of 19 uncinate bundles
+(median ≈ −0.60), and on the worst subject `filt3` discarded 49 % of the
+streamlines whose two endpoints landed in the recipe's own terminal VOIs, while
+keeping 58 % of those terminating in neither.
+
+- **New `KUL_FWT_reject_outliers.py`** replaces `scil_bundle_reject_outliers` at
+  every call site in both `KUL_FWT_make_TCKs.sh` and `_4Temp.sh`. Same scoring —
+  it calls scilpy's own `outliers_removal_using_hierarchical_quickbundles`, so
+  no fork of scilpy and nothing for the pinned checkout to clobber — but the cut
+  is bounded from both sides: `--alpha` (nothing scoring above it is ever
+  dropped, so a clean bundle pays no fixed tithe) and `--drop_percentile` (never
+  drop more than this share, however low the scores run). Effective threshold is
+  `min(alpha, Pth percentile)`. A `--min_retention` floor (0.65) relaxes the cut
+  and logs loudly if it would still go below it.
+- It never exits nonzero on a degenerate input — empty bundle, or fewer than 20
+  streamlines where the score is not a meaningful population statistic — since
+  `task_exec` aborts the whole bundle on any nonzero status and a missing
+  `filt3` breaks the smoothing step after it.
+- **`-f` levels redefined**: `1` = standard (floor 0.40, ≤10 % dropped), `2` =
+  lenient (0.30, ≤5 %), `3` = legacy strict (0.58, no ceiling). Level `1`
+  previously meant what `3` means now, and was the shipped default in
+  `KUL_NIS/study_config/_base/run_fwt.txt`, so every clinical run took the
+  harshest branch while the log said "conservative". Level `3` is bit-exact
+  against the old tool — verified streamline-for-streamline on a real `filt2`
+  bundle — for reproducing prior runs.
+- Every bundle now writes `*_filt3_rejected_*.tck` and a
+  `*_outlier_rejection.json` (threshold, counts, score quantiles, whether the
+  floor fired). This step is the largest streamline loss in the chain and was
+  previously invisible.
+- Cohort result (38 bundles): mean retention 74.0 % → 97.0 %, worst case 28.2 %
+  → 90.0 %. Rerun on one subject's UF with tracking reused (no `tckgen`):
+  `-T 4` UF_LT `fin` went 2282 → 3749 streamlines, and the bundle's anterior
+  extent (max-y p95) from 65.0 mm to 90.6 mm.
+
+### `KUL_FWT_make_TCKs_4Temp.sh` brought to flow parity
+
+The template variant had drifted well behind its subject-space counterpart.
+Back-ported: `-R`, `-O`, `-Z`, `-Y`, `-M`, `-T 5`, the `KUL_FWT_bundle_report.py`
+call under `-S`, and the 25 % thread oversubscription in
+`KUL_dispatch_bundles` (which the 2026-09-02 entry above notes as
+`KUL_FWT_make_TCKs.sh` only — no longer true). Four further drift items found
+during that port and fixed: the tracking-mask default (CSF-stripped is now the
+default for every bundle, not only `OR_`/`AF_`/`CP_`/`DRT_` and `-T 4`), `-T 4`'s
+cortical-overlap gate, `-T 2`'s `-include ctx_mask -stop`, and `-angle 60` on
+whole-brain `-seed_dynamic`.
+
+What still legitimately differs: the subject-dMRI input overrides
+(`-W`/`-G`/`-B`/`-L`/`-C`/`-U`), `_inFA` vs `_inFOD` naming, `_GT_log_` log
+filenames, and `-f 3`'s alpha (0.48 here, 0.58 there — each restores its own
+former default).
+
+### tckgen cutoff is now explicit, and reconstruction-aware
+
+- **`-power 2.0` removed** from `_4Temp.sh`'s tckgen. iFOD2's default power is
+  `1/nsamples` (0.25 with the default `-samples 4`), so 2.0 was an 8× exponent,
+  and `-power` sharpens the sampled direction distribution: a candidate arc at
+  half the local-maximum amplitude goes from 84 % relative acceptance at the
+  default to 25 % at 2.0. That suppresses exactly the sub-maximal directions a
+  cortical fan is made of — the same failure mode as the `filt3` bug, one stage
+  earlier and unrecoverable downstream.
+- **New `-X <value>`** in both scripts: explicit tckgen `-cutoff`, applied to
+  every tckgen in the run, validated as numeric at parse time, and honoured
+  whatever the algorithm (with a warning if the scale looks wrong for it).
+  Exposed as `fwt_cutoff` in `KUL_NIS/study_config/_base/run_fwt.txt`.
+- **Default cutoff is now reconstruction-dependent again**: MRtrix's own default
+  for an ordinary CSD FOD, `0.05` for a LoRE-SD one. This reverses an earlier
+  change that applied 0.05 to everything on the grounds that a
+  reconstruction-dependent threshold was a confound. That had the premise
+  backwards — 0.05 was derived from LoRE-SD's amplitude scale, so applying it to
+  CSD was using a threshold on a reconstruction it was never tuned for. A fixed
+  cutoff across reconstructions is still a legitimate thing to want when
+  comparing methods; that is what `-X` is for.
+- Three dead `algo_f` FACT/Tensor branches removed from `KUL_FWT_make_TCKs.sh`'s
+  bundle `cmd_str` (`-T 1/4/5`). Once `fod_cutoff_opt` is emptied for those
+  algorithms, both arms of each branch expand to an identical command; the `-T 1`
+  pair was already byte-identical. Verified by expanding `cmd_str` for all 5
+  tracking approaches × 6 algorithms before and after: identical in all 30.
+
+Not yet run end to end against template data — `_4Temp.sh` was verified by
+syntax checks, flag-parsing unit tests and command-string assembly only.
+
+## Unreleased (2026-09-02 — bundle scheduling: 2 fat tckgen jobs, not N thin ones)
+
+Total wall-clock in `KUL_FWT_make_TCKs.sh` is set by the *slowest single bundle*,
+not by aggregate throughput, so the previous scheduler optimised the wrong thing.
+It derived concurrency from a fixed 8-thread floor (`bundles_simultaneous =
+ncpu / 8`), which on a 32-core box meant 4 bundles at 8 threads each — and a
+bundle asking for 10k streamlines sat on those 8 threads for the length of the run
+while the other three slots churned through trivial ones.
+
+- **Cap first, split second**, in both `KUL_FWT_make_TCKs.sh` and `_4Temp.sh`:
+  ```
+  max_parallel_bundles   = 2                                  # hard cap
+  bundles_simultaneous   = min(max_parallel_bundles, ncpu)
+  min_threads_per_bundle = max(1, ncpu / bundles_simultaneous) # even split, also the floor
+  ```
+  On 32 cores that is 2 bundles × 16 threads instead of 4 × 8. The
+  smallest-workload-first dispatch order and the per-dispatch `running_threads`
+  ledger are unchanged — a bundle whose partner has finished still grows past the
+  even split when the ledger says the cores are free.
+- **New per-bundle ceiling at `$ncpu`** in `KUL_dispatch_bundles`. With only two
+  slots, the 25 % oversubscription budget (`KUL_FWT_make_TCKs.sh` only) would
+  otherwise hand a lone bundle `ncpu * 1.25` threads; oversubscription is meant to
+  fill scheduling gaps *across* concurrent jobs, not to inflate one process past
+  the hardware.
+- Dispatch math dry-run in an isolated harness (no tractography): `ncpu=32`, 5
+  bundles → 20, 16, 16, 16, then 24 threads for the last one running alone (the
+  first job takes the oversubscription headroom while nothing else is live).
+  `ncpu=6` → 3, 3, 4. `ncpu=1` → cap collapses to 1 bundle × 1 thread, no
+  divide-by-zero.
+- Tune with `max_parallel_bundles` at the top of the scheduler block; set
+  `oversubscribe_pct=0` for an exact `ncpu/2` split with no headroom.
+- Not yet run against real tractography data — the next real run is what confirms
+  the wall-clock win.
+
 ## Unreleased (2026-08-11 — .trk for freeview; the QQ report becomes self-sufficient)
 
 ### `.trk` alongside every `.tck`

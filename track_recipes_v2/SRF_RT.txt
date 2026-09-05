@@ -1,0 +1,23 @@
+# Bundle: SRF_RT
+# type  name  label  atlas
+incs1  Ling3_MSBP_ctx_RT  83  Lausanne3
+incs1  Fusi2_MSBP_ctx_RT  85  Lausanne3
+incs1  Fusi3_MSBP_ctx_RT  86  Lausanne3
+incs1  Fusi4_GMWM_RT_custom  1  custom
+
+incs2  SPL5_MSBP_ctx_RT  58  Lausanne3
+incs2  Pc4_MSBP_ctx_RT  70  Lausanne3
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  PHip_GM_FS_ctx_RT  2016  FS_aparc
+excs  PHip_WM_FS_RT  4016  FS_wmparc
+excs  Front_lobeGM_ctx_RT  2001  FS_lobes
+excs  Front_lobeWM_RT  4001  FS_lobes
+excs  STG_GM_FS_ctx_RT  2030  FS_aparc
+excs  STG_WM_FS_RT  4030  FS_wmparc
+excs  ITG1_MSBP_ctx_RT  91  Lausanne3
+excs  ITG2_MSBP_ctx_RT  92  Lausanne3
+excs  ITG3_MSBP_ctx_RT  93  Lausanne3
+excs  MTG_GM_FS_ctx_RT  2015  FS_aparc
+excs  S1_GM_FS_ctx_RT  2022  FS_aparc

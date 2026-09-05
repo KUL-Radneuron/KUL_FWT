@@ -1,0 +1,32 @@
+# Bundle: PyT_SMA_RT
+# type  name  label  atlas
+incs1  BStem_FS  16  FS_aparc
+
+incs2  SFG5_ctx_RT_MSBP  24  Lausanne3
+incs2  SFG6_ctx_RT_MSBP  25  Lausanne3
+incs2  SFG7_ctx_RT_MSBP  26  Lausanne3
+incs2  SFG8_ctx_RT_MSBP  27  Lausanne3
+
+excs  CC_allr_custom  1  custom
+excs  BStemr_exc_LT_custom  1  custom
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes
+excs  Cing_lobeWM_RT  4003  FS_lobes
+excs  RT_ML_X_custom  1  custom
+excs  Thal_RT_ero2_custom  1  custom
+excs  Temp_lobeGM_ctx_RT  2005  FS_lobes
+excs  Temp_lobeWM_RT  4005  FS_lobes
+excs  Putamen_GM_RT_FS  51  FS_aparc
+excs  cMFG_GM_ctx_RT_FS  2003  FS_aparc
+excs  rMFG_GM_ctx_RT_FS  2027  FS_aparc
+excs  Caudate_GM_RT_FS  50  FS_aparc
+excs  M1_GM_ctx_RT_FS  2024  FS_aparc
+excs  M1_WM_RT_FS  4024  FS_wmparc
+excs  S1_GM_ctx_RT_FS  2022  FS_aparc
+excs  S1_WM_RT_FS  4022  FS_wmparc
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  Occ_lobeWM_RT  4004  FS_lobes
+excs  SFG1_ctx_RT_MSBP  20  Lausanne3
+excs  SFG2_ctx_RT_MSBP  21  Lausanne3
+excs  SFG3_ctx_RT_MSBP  22  Lausanne3
+excs  SFG4_ctx_RT_MSBP  23  Lausanne3
+excs  hypothal_vDC_LT_excr_custom  1  custom

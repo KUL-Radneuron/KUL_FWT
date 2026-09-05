@@ -1,0 +1,30 @@
+# Bundle: AF_wprecentral_LT
+# type  name  label  atlas
+incs1  IFGpTr_GM_ctx_LT_FS  1020  FS_aparc
+incs1  IFGpOp_GM_ctx_LT_FS  1018  FS_aparc
+incs1  PreC1_ctx_LT_MSBP  155  Lausanne3
+incs1  PreC2_ctx_LT_MSBP  156  Lausanne3
+incs1  PreC3_ctx_LT_MSBP  157  Lausanne3
+
+incs2  STG1_ctx_LT_MSBP  224  Lausanne3
+incs2  STG2_ctx_LT_MSBP  225  Lausanne3
+incs2  STG3_ctx_LT_MSBP  226  Lausanne3
+incs2  bSTS_GM_ctx_LT_FS  1001  FS_aparc
+incs2  SMG_GM_ctx_LT_FS  1031  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  PreC4_ctx_LT_MSBP  158  Lausanne3
+excs  PreC5_ctx_LT_MSBP  159  Lausanne3
+excs  PreC6_ctx_LT_MSBP  160  Lausanne3
+excs  s3Put_LT_custom  1  custom
+excs  Thal_LT_FS  10  FS_aparc
+excs  STG4_ctx_LT_MSBP  227  Lausanne3
+excs  STG5_ctx_LT_MSBP  228  Lausanne3
+excs  Phippo_GM_ctx_LT_FS  1016  FS_aparc
+excs  Phippo_WM_LT_FS  3016  FS_wmparc
+excs  Insula_GMWM_LT_ero2_custom  1  custom
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeWM_LT  3003  FS_lobes
+excs  SFG_GM_ctx_LT_FS  1028  FS_aparc
+excs  SFG_WM_LT_FS  3028  FS_wmparc

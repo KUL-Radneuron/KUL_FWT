@@ -1,0 +1,36 @@
+# Bundle: UF_RT
+# type  name  label  atlas
+incs1  MTG4_MSBP_ctx_RT  98  Lausanne3
+incs1  ITG1_MSBP_ctx_RT  91  Lausanne3
+incs1  TempP_GM_FS_ctx_RT  2033  FS_aparc
+incs1  EntoR_MSBP_ctx_RT  89  Lausanne3
+
+incs2  IFG_PTr_GM_FS_ctx_RT  2020  FS_aparc
+incs2  IFG_POr_GM_FS_ctx_RT  2019  FS_aparc
+incs2  FrontP_GM_FS_ctx_RT  2032  FS_aparc
+incs2  LatOF_GM_FS_ctx_RT  2012  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  Acc_FS_RT  58  FS_aparc
+excs  Thal_FS_RT  49  FS_aparc
+excs  Caud_FS_RT  50  FS_aparc
+excs  Amyg_FS_RT  54  FS_aparc
+excs  Hippo_FS_RT  53  FS_aparc
+# Unseg_WM_FS_RT (5002) removed: wmparc 5002 is ALL right deep WM, including the
+# temporal stem the UF trunk must cross. See KUL_FWT_dev_work/ audit, section 5.2.
+excs  Pari_lobeGM_ctx_RT  2006  FS_lobes
+excs  Pari_lobeWM_RT  4006  FS_lobes
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  Occ_lobeWM_RT  4004  FS_lobes
+excs  rACC_GM_FS_ctx_RT  2026  FS_aparc
+excs  rACC_WM_FS_RT  4026  FS_wmparc
+excs  IFG_POp_GM_ctx_RT_FS  2018  FS_aparc
+excs  IFG_POp_WM_RT_FS  4018  FS_wmparc
+excs  M1_GM_FS_ctx_RT  2024  FS_aparc
+excs  M1_WM_FS_RT  4024  FS_wmparc
+excs  Ins1_MSBP_ctx_RT  106  Lausanne3
+excs  Ins2_MSBP_ctx_RT  107  Lausanne3
+excs  Ins3_MSBP_ctx_RT  108  Lausanne3
+excs  UF_Ins_exc_RT_custom  1  custom
+excs  MedOF_GM_FS_ctx_RT  2014  FS_aparc

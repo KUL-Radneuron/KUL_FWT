@@ -1,0 +1,22 @@
+# Bundle: M1_CST_RT
+# type  name  label  atlas
+incs1  CST_RT_UKBB  3  UKBB
+
+incs2  M1_GM_ctx_RT_FS  2024  FS_aparc
+incs2  ParaC_GM_ctx_RT_FS  2017  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStemr_exc_LT_custom  1  custom
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes
+excs  Cing_lobeWM_RT  4003  FS_lobes
+excs  RT_ML_X_custom  1  custom
+excs  Thal_RT_ero2_custom  1  custom
+excs  Temp_lobeGM_ctx_RT  2005  FS_lobes
+excs  Temp_lobeWM_RT  4005  FS_lobes
+excs  Putamen_GM_RT_FS  51  FS_aparc
+excs  Caudate_GM_RT_FS  50  FS_aparc
+excs  SFG_GM_ctx_RT_FS  2028  FS_aparc
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  Occ_lobeWM_RT  4004  FS_lobes
+excs  S1_GM_ctx_RT_FS  2022  FS_aparc
+excs  hypothal_vDC_LT_excr_custom  1  custom
