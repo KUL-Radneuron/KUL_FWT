@@ -1,5 +1,65 @@
 # Changelog
 
+## Unreleased (2026-09-21 — filt1 enforced `either_end` on ML's thalamic waypoint, annihilating the bundle)
+
+### The terminus was indexed, not identified
+
+The `CST`/`PyT`/`ML_` branch in `KUL_FWT_make_TCKs.sh` builds filt1 as a brainstem
+waypoint at `any` plus one `either_end` on "the precise, worth-enforcing end of
+this pathway" — and hardcoded that end as `TCK_I_b[1]`, the second inclusion VOI.
+
+That index is the terminus only for two-group bundles. Every other bundle on the
+branch has exactly two inclusion groups (`CST`, `PyT_all`, `PyT_SMA`, `M1_CST`),
+so it was right for all of them. **ML is the sole three-group member** — `incs1`
+brainstem ML, `incs2` PD25 VPL/VPM thalamus, `incs3` S1 cortex — so `[1]` put the
+endpoint constraint on the *thalamic waypoint*, and `incs3`, the real terminus,
+never entered filt1 at all (the `vsz > 2` block that would have added it is
+unreachable once the first `if` matches).
+
+The medial lemniscus relays *through* VPL/VPM and continues to S1, so a correctly
+tracked ML is disqualified by construction. Measured on one clinical subject, per
+criterion, against the 5000-streamline initial tractogram:
+
+| criterion | ML_RT | ML_LT |
+| --- | --- | --- |
+| `BStemr any include` | 5000 | 5000 |
+| `incs2 either_end include 2` | **0** | **6** |
+| `excs any exclude` | 4998 | 4995 |
+| contralateral cerebrum `exclude` | 5000 | 5000 |
+| `cerebellum_Bil exclude` | 5000 | 5000 |
+
+On that same ROI, `any include` keeps 4984/4989 — virtually every streamline
+crosses VPL/VPM, virtually none stops within 2 voxels of it. The bundle was never
+anatomically wrong; it was rejected for not ending where the filter insisted.
+
+It failed quietly and inconsistently: subjects whose ML tracking petered out near
+the thalamus survived, subjects whose tracking reached cortex were wiped. The
+filter was selecting *against* better tractography.
+
+### Fix: the terminus is the last inclusion VOI, chosen by shape not by index
+
+Recipes list inclusions in stage order, so `incsN` is the terminus and
+`incs2..incsN-1` are waypoints. The branch now adds middles at `any include` and
+puts the single `either_end` on `TCK_I_b[vsz-1]`. For `vsz == 2` the middle slice
+`${TCK_I_b[@]:1:0}` is empty and `[vsz-1] == [1]`, so **CST, PyT_all, PyT_SMA and
+M1_CST are bit-for-bit unchanged**.
+
+The generic `vsz > 2` branch also had the *opposite* defect — `any` on every VOI,
+so multi-stage bundles outside this branch (`DRT`, `CPCT`) got no endpoint
+enforcement at all, passing filt1 more easily than the one-precise-end rule
+intends. Its terminus now gets the same single `either_end`.
+
+Filtering philosophy is unchanged: exactly one `either_end` per bundle, at
+distance 2, on the anatomically precise end, everything else `any`. The 64
+two-VOI bundles keep their size-based selection and the `_Comm` branch is
+untouched.
+
+Validated on real data — ML filt1 recovers from 0/6 to 4981/4974 of 5000 under a
+*stricter* constraint (endpoint at S1), and carries through to `fin` at 1366
+(LT) and 1642 (RT) streamlines. DRT, newly subject to the check, loses almost
+nothing: 180 → 174 (RT) and 105 → 105 (LT). CPCT, which had no tractograms
+anywhere to test against beforehand, ran end to end at 4848/4853.
+
 ## Unreleased (2026-09-05 — subcortical VOIs stop being treated as cortex; the QQ report gets real colour)
 
 ### `-T 4`/`-T 5` were GMWMI-narrowing subcortical VOIs

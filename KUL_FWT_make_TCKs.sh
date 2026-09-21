@@ -1908,10 +1908,28 @@ function make_bundle {
 
         if [[ ${TCK_2_make} == *"CST"* ]] || [[ ${TCK_2_make} == *"PyT"* ]] || [[ ${TCK_2_make} == *"ML_"* ]]; then
 
-            # Cortical terminus: the precise, worth-enforcing end of this
-            # pathway, unlike the brainstem waypoint above -- unconditional,
-            # not gated on VOI size or -K.
-            drawn_incs_str+=$(printf " --drawn_roi %s either_end include %s "  "${TCK_I_b[1]}" "${_either_end_dist}")
+            # Terminus: the precise, worth-enforcing end of this pathway,
+            # unlike the brainstem waypoint above -- unconditional, not gated
+            # on VOI size or -K.
+            #
+            # It is the LAST inclusion VOI, not index 1. Recipes list
+            # inclusions in stage order (incs1 -> incsN), so incsN is the
+            # terminus and incs2..incsN-1 are waypoints; [1] only coincided
+            # with the terminus because every other bundle on this branch has
+            # exactly two inclusion groups (CST, PyT_all, PyT_SMA, M1_CST).
+            # ML is the sole 3-group member -- incs1 brainstem ML, incs2 PD25
+            # VPL/VPM thalamus, incs3 S1 cortex -- so [1] enforced either_end
+            # on the thalamic waypoint the tract passes *through* on its way to
+            # cortex, and dropped incs3 from filt1 altogether. 4984/5000
+            # streamlines cross VPL/VPM but ~0 stop within 2 voxels of it, so
+            # filt1 rejected an otherwise clean bundle (5000 -> 0 RT, -> 6 LT).
+            for vi in ${TCK_I_b[@]:1:$((vsz-2))}; do
+
+                drawn_incs_str+=$(printf " --drawn_roi %s any include "  "${vi}")
+
+            done
+
+            drawn_incs_str+=$(printf " --drawn_roi %s either_end include %s "  "${TCK_I_b[${vsz}-1]}" "${_either_end_dist}")
 
         elif [[ ${vsz} -eq 2 ]]; then
 
@@ -1930,7 +1948,12 @@ function make_bundle {
 
             done
 
-            drawn_incs_str+=$(printf " --drawn_roi %s any include "  "${TCK_I_b[${vsz}-1]}")
+            # Terminus gets the same single either_end that every other bundle
+            # shape gets. Leaving it at any meant multi-stage bundles outside
+            # the CST/PyT/ML branch (DRT, CPCT) had no endpoint enforcement at
+            # all -- the opposite failure to ML's, and just as silent: they
+            # pass filt1 more easily than the one-precise-end rule intends.
+            drawn_incs_str+=$(printf " --drawn_roi %s either_end include %s "  "${TCK_I_b[${vsz}-1]}" "${_either_end_dist}")
 
         fi
 
