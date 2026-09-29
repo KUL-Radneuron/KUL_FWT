@@ -2606,6 +2606,52 @@ for q in ${!tck_list[@]}; do
     ((qs=${qs}%${qo}))
 
     dotdones[$q]="${ROIs_d}/${tck_list[$q]}_VOIs.done"
+
+    # A bundle's .done marker is APPENDED to once per VOI segment (see the
+    # writer above: `echo ... >> ..._VOIs.done` inside the per-segment loop), so
+    # its mere existence proves only that the FIRST segment finished -- not the
+    # bundle. Resuming on existence alone therefore skipped bundles whose VOI
+    # set was incomplete, and KUL_FWT_make_TCKs.sh then tracked with fewer
+    # includes/excludes than the recipe declares: no error, just a quietly wrong
+    # bundle. Confirmed live on an interrupted run, where DRT_RT_VOIs.done
+    # already existed with 2 of its 5 lines while incs3, incs4 and excs had not
+    # been written yet.
+    #
+    # Multi-segment recipes are the exposed ones, and the risk scales with them:
+    # DRT declares 5 segments, so there are four distinct ways to be fooled,
+    # against two for a 3-segment bundle like CSHDP or CST.
+    #
+    # So compare the marker's line count against the number of segments the
+    # recipe actually declares, and delete a short marker so the existence check
+    # below rebuilds that bundle. Deliberately done on the READER side rather
+    # than by moving the writer to a single post-loop write: the per-segment
+    # append is useful progress information, and a reader-side check also
+    # self-repairs markers already left short by runs that were interrupted
+    # before this fix existed -- which a writer-side change could not do.
+    #
+    # Segments are counted the same way the builder below parses them: distinct
+    # incs<N> indices (a segment may be declared over several lines, and excs
+    # routinely is), plus one for excs. Verified against the recipes actually
+    # shipped -- DRT_LT 4+1=5, CSHDP_LT 2+1=3, CST_LT 2+1=3 -- which match the
+    # marker line counts those bundles produce when they complete.
+    _dd_recipe="${function_path}/track_recipes_v2/${tck_list[$q]}.txt"
+    _dd_exp=0
+    _dd_have=0
+    if [[ -f "${_dd_recipe}" ]]; then
+        _dd_exp=$(grep -oE '^[[:space:]]*incs[0-9]+' "${_dd_recipe}" \
+                  | sed 's/[[:space:]]//g' | sort -u | wc -l)
+        grep -qE '^[[:space:]]*excs' "${_dd_recipe}" && ((_dd_exp++))
+    fi
+    if [[ -f "${dotdones[$q]}" ]]; then
+        _dd_have=$(wc -l < "${dotdones[$q]}" 2>/dev/null | tr -d '[:space:]')
+        [[ -z "${_dd_have}" ]] && _dd_have=0
+    fi
+    if [[ ${_dd_exp} -gt 0 ]] && [[ ${_dd_have} -gt 0 ]] && [[ ${_dd_have} -lt ${_dd_exp} ]]; then
+        echo " WARNING: ${tck_list[$q]}: VOI marker records ${_dd_have}/${_dd_exp} segments -- a previous run was interrupted part-way. Rebuilding its VOIs rather than tracking against an incomplete set." | tee -a ${prep_log2}
+        rm -f "${dotdones[$q]}"
+    fi
+    unset _dd_recipe _dd_exp _dd_have
+
     srch_dotdones[$q]=$(find ${ROIs_d} -not -path '*/\.*' -type f | grep "${tck_list[$q]}_VOIs.done")
 
     if [[ -z ${srch_dotdones[$q]} ]]; then
