@@ -1,0 +1,15 @@
+# Bundle: MCP_RT
+# type  name  label  atlas
+incs1  Bs_Pons_LT_custom  1  custom
+
+incs2  cVI_RT_SUIT  7  SUIT
+incs2  cI_RT_SUIT  10  SUIT
+incs2  cVIIb_RT_SUIT  16  SUIT
+
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  Occ_lobeWM_RT  4004  FS_lobes
+excs  Midbrain_MSBP  249  Lausanne3
+excs  Medulla_MSBP  251  Lausanne3
+excs  vDC_LT_FS  28  FS_aparc
+excs  vDC_RT_FS  60  FS_aparc
+excs  cIX_RT_SUIT  25  SUIT

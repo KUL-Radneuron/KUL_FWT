@@ -1,0 +1,21 @@
+# Bundle: TCing_LT
+# type  name  label  atlas
+incs1  Hippo_FS_LT  17  FS_aparc
+
+incs2  Pc_GM_FS_ctx_LT  1025  FS_aparc
+incs2  iPCC_GM_FS_ctx_LT  1010  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  PCC_GM_FS_ctx_LT  1023  FS_aparc
+excs  PCC_WM_FS_LT  3023  FS_wmparc
+excs  Fusi_GM_FS_ctx_LT  1026  FS_aparc
+excs  Fusi_WM_FS_LT  3026  FS_wmparc
+excs  Unseg_WM_FS_LT  5001  FS_wmparc
+excs  Insula_GM_FS_ctx_LT  1035  FS_aparc
+excs  Insula_WM_FS_LT  3035  FS_wmparc
+excs  MedOF_GM_FS_ctx_LT  1014  FS_aparc
+excs  MedOF_WM_FS_LT  3014  FS_wmparc
+excs  LatOF_GM_FS_ctx_LT  1012  FS_aparc
+excs  LatOF_WM_FS_LT  3012  FS_wmparc
+excs  Amyg_FS_LT  18  FS_aparc

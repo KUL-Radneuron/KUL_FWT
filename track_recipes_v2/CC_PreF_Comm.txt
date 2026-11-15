@@ -1,0 +1,48 @@
+# Bundle: CC_PreF_Comm
+# type  name  label  atlas
+incs1  CC_genu_FS  255  FS_aparc
+incs1  CC_ant_FS  254  FS_aparc
+
+incs2  IFG_PTr_GM_FS_ctx_LT  1020  FS_aparc
+incs2  IFG_POr_GM_FS_ctx_LT  1019  FS_aparc
+incs2  FrontP_GM_FS_ctx_LT  1032  FS_aparc
+incs2  LatOF_GM_FS_ctx_LT  1012  FS_aparc
+incs2  MedOF_GM_FS_ctx_LT  1014  FS_aparc
+incs2  cMFG_GM_ctx_LT_FS  1003  FS_aparc
+incs2  rMFG_GM_ctx_LT_FS  1027  FS_aparc
+incs2  SFG_GM_ctx_LT_FS  1028  FS_aparc
+
+incs3  IFG_PTr_GM_FS_ctx_RT  2020  FS_aparc
+incs3  IFG_POr_GM_FS_ctx_RT  2019  FS_aparc
+incs3  FrontP_GM_FS_ctx_RT  2032  FS_aparc
+incs3  LatOF_GM_FS_ctx_RT  2012  FS_aparc
+incs3  MedOF_GM_FS_ctx_RT  2014  FS_aparc
+incs3  cMFG_GM_ctx_RT_FS  2003  FS_aparc
+incs3  rMFG_GM_ctx_RT_FS  2027  FS_aparc
+incs3  SFG_GM_ctx_RT_FS  2028  FS_aparc
+
+excs  AC_MAN  1  MAN
+excs  PC_MAN  2  MAN
+excs  CC_mid_FS  253  FS_aparc
+excs  CC_isth_FS  252  FS_aparc
+excs  CC_splen_FS  251  FS_aparc
+excs  Fornix_Fx  250  FS_fornix
+excs  cMFG_GM_ctx_LT_FS  1003  FS_aparc
+excs  cMFG_GM_ctx_RT_FS  2003  FS_aparc
+excs  M1_GM_ctx_LT_FS  1024  FS_aparc
+excs  M1_GM_ctx_RT_FS  2024  FS_aparc
+excs  Pari_lobeGM_ctx_LT  1006  FS_lobes
+excs  Pari_lobeGM_ctx_RT  2006  FS_lobes
+excs  BStem_FS  16  FS_aparc
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes
+excs  Thal_LT_FS  10  FS_aparc
+excs  Thal_RT_FS  49  FS_aparc
+excs  Insula_lobeGM_ctx_LT  1007  FS_lobes
+excs  Insula_lobeWM_LT  3007  FS_lobes
+excs  Insula_lobeGM_ctx_RT  2007  FS_lobes
+excs  Insula_lobeWM_RT  4007  FS_lobes
+excs  SegWM_LT_ALIC_custom  1  custom
+excs  SegWM_RT_ALIC_custom  1  custom
+excs  vDC_FS_LT  28  FS_aparc
+excs  vDC_FS_RT  60  FS_aparc

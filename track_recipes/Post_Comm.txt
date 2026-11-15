@@ -1,0 +1,21 @@
+# Bundle: Post_Comm
+# type  name  label
+incs1  PC_MAN  2
+
+incs2  JuHA_MGN_LT_custom  1
+incs2  JuHA_LGN_LT_custom  1
+
+incs3  JuHA_MGN_LT_custom  1
+incs3  JuHA_LGN_LT_custom  1
+
+excs  CC_allr_custom  1
+excs  Medulla_MSBP  251
+excs  Pons_MSBP  250
+excs  AC_MAN  1
+excs  OptCh_FS  85
+excs  hypoTh_LT_MSBP  248
+excs  hypoTh_RT_MSBP  124
+excs  Pari_lobeGM_LT  1006
+excs  Pari_lobeWM_LT  3006
+excs  Pari_lobeGM_RT  2006
+excs  Pari_lobeWM_RT  4006

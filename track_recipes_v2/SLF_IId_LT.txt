@@ -1,0 +1,35 @@
+# Bundle: SLF_IId_LT
+# type  name  label  atlas
+incs1  cMFG_GM_ctx_LT_FS  1003  FS_aparc
+incs1  rMFG1_ctx_LT_MSBP  138  Lausanne3
+
+incs2  SMG_GM_ctx_LT_FS  1031  FS_aparc
+incs2  IPL_GM_ctx_LT_FS  1008  FS_aparc
+
+excs  SFG1_ctx_LT_MSBP  144  Lausanne3
+excs  SFG2_ctx_LT_MSBP  145  Lausanne3
+excs  SFG3_ctx_LT_MSBP  146  Lausanne3
+excs  SFG4_ctx_LT_MSBP  147  Lausanne3
+excs  SFG5_ctx_LT_MSBP  148  Lausanne3
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  s3Put_LT_custom  1  custom
+excs  Thal_LT_FS  10  FS_aparc
+excs  Temp_lobeGM_ctx_LT  1005  FS_lobes
+excs  Temp_lobeWM_LT  3005  FS_lobes
+excs  rMFG_GM_ctx_LT_FS  1027  FS_aparc
+excs  Phippo_GM_ctx_LT_FS  1016  FS_aparc
+excs  Phippo_WM_LT_FS  3016  FS_wmparc
+excs  Insula_GM_ctx_LT_FS  1035  FS_aparc
+excs  Insula_WM_LT_FS  3035  FS_wmparc
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeWM_LT  3003  FS_lobes
+excs  PCC_GM_ctx_LT_FS  1023  FS_aparc
+excs  PCC_WM_LT_FS  3023  FS_wmparc
+excs  SFG6_ctx_LT_MSBP  149  Lausanne3
+excs  SFG7_ctx_LT_MSBP  150  Lausanne3
+excs  SFG8_ctx_LT_MSBP  151  Lausanne3
+excs  IFGpTr_GM_ctx_LT_FS  1020  FS_aparc
+excs  IFGpOp_GM_ctx_LT_FS  1018  FS_aparc
+excs  IFGpOr_GM_ctx_LT_FS  1019  FS_aparc
+excs  SPL_GM_ctx_LT_FS  1029  FS_aparc

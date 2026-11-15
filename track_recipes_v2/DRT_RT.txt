@@ -1,0 +1,14 @@
+# Bundle: DRT_RT
+# type  name  label  atlas
+incs1  Dent_LT_SUIT  29  SUIT
+
+incs2  PD25_RN_RT_custom  1  custom
+
+incs3  PD25_VL_RT_custom  1  custom
+
+incs4  M1_GM_FS_ctx_RT  2024  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  Medulla_MSBP  251  Lausanne3
+excs  cIX_LT_SUIT  23  SUIT
+excs  SegWM_RT_ALIC_custom  1  custom

@@ -1,0 +1,28 @@
+# Bundle: ThR_Par_RT
+# type  name  label  atlas
+incs1  Thal_FS_RT  49  FS_aparc
+
+incs2  Pari_lobeGM_ctx_RT  2006  FS_lobes
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  vDC_RT_aseg  60  FS_aseg
+excs  AC_midline_MAN  1  MAN
+excs  SegWM_RT_ALIC_custom  1  custom
+excs  hypothal_RT_excr_custom  1  custom
+excs  Temp_lobeGM_ctx_RT  2005  FS_lobes
+excs  Putamen_GM_RT_FS  51  FS_aparc
+excs  Front_lobeGM_ctx_RT  2001  FS_lobes
+excs  Fornix_Fx  250  FS_fornix
+excs  Occ_lobeGM_ctx_RT  2004  FS_lobes
+excs  Caudate_GM_RT_FS  50  FS_aparc
+excs  PD25_Pulvi_RT_custom  1  custom
+excs  Caud_ero_RT_custom  1  custom
+excs  SFG1_MSBP_ctx_RT  20  Lausanne3
+excs  SFG2_MSBP_ctx_RT  21  Lausanne3
+excs  SFG3_MSBP_ctx_RT  22  Lausanne3
+excs  SFG4_MSBP_ctx_RT  23  Lausanne3
+excs  cACC_GM_FS_ctx_RT  2002  FS_aparc
+excs  PD25_DM_RT_custom  1  custom
+excs  PD25_DL_RT_custom  1  custom
+excs  SegWM_RT_mIPV_custom  1  custom

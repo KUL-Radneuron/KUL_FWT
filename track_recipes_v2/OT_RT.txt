@@ -1,0 +1,21 @@
+# Bundle: OT_RT
+# type  name  label  atlas
+incs1  OptCh_FS  85  FS_aparc
+
+incs2  PD25_Pulvi_RT_custom  1  custom
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  Putamen_FS_RT  51  FS_aparc
+excs  Hippo_FS_RT  53  FS_aparc
+excs  Caudate_FS_RT  50  FS_aparc
+excs  CGM_aseg_ctx_RT  42  FS_aseg
+excs  Front_lobeWM_RT  4001  FS_lobes
+excs  Fornix_Fx  250  FS_fornix
+excs  PD25_DM_RT_custom  1  custom
+excs  PD25_DL_RT_custom  1  custom
+excs  Pari_lobeGM_ctx_RT  2006  FS_lobes
+excs  Pari_lobeWM_RT  4006  FS_lobes
+excs  M1_GM_FS_ctx_RT  2024  FS_aparc
+excs  M1_WM_FS_RT  4024  FS_wmparc
+excs  Thal_min_Pulvi_RT_custom  1  custom

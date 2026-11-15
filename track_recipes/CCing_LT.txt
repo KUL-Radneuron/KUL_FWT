@@ -1,0 +1,27 @@
+# Bundle: CCing_LT
+# type  name  label
+incs1  rACC_GM_FS_LT  1026
+incs1  cACC_GM_FS_LT  1002
+
+incs2  PCC_GM_FS_LT  1023
+incs2  iPCC_GM_FS_LT  1010
+incs2  Pc_GM_FS_LT  1025
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  STG_GM_FS_LT  1030
+excs  Unseg_WM_FS_LT  5001
+excs  vDC_FS_LT  28
+excs  IFG_POp_GM_FS_LT  1018
+excs  IFG_POp_WM_FS_LT  3018
+excs  IFG_PTr_GM_FS_LT  1020
+excs  IFG_PTr_WM_FS_LT  3020
+excs  Phippo_GM_FS_LT  1016
+excs  Phipp_WM_FS_LT  3016
+excs  SFG_GM_FS_LT  1028
+excs  Hippo_LT_FS  17
+excs  Temp_lobeGM_LT  1005
+excs  Temp_lobeWM_LT  3005
+excs  AC_midline_MAN  1
+excs  Insula_GM_FS_LT  1035
+excs  Insula_WM_FS_LT  3035

@@ -1,0 +1,31 @@
+# Bundle: ILF_LT
+# type  name  label  atlas
+incs1  Occ_lobeGM_ctx_LT  1004  FS_lobes
+
+incs2  ITG1_MSBP_ctx_LT  215  Lausanne3
+incs2  ITG2_MSBP_ctx_LT  216  Lausanne3
+incs2  MTG4_MSBP_ctx_LT  222  Lausanne3
+incs2  TempP_GM_FS_ctx_LT  1033  FS_aparc
+incs2  Fusi4_MSBP_ctx_LT  211  Lausanne3
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  STG_GM_ctx_LT_FS  1030  FS_aparc
+excs  G_OSup_GM_ctx_LT_2009  11120  FS_2009
+excs  Phippo_GM_ctx_LT_FS  1016  FS_aparc
+excs  Phippo_WM_LT_FS  3016  FS_wmparc
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeWM_LT  3003  FS_lobes
+excs  AC_midL_MAN  1  MAN
+excs  Hippo_GM_LT_FS  17  FS_aparc
+excs  vDC_LT_FS  28  FS_aparc
+excs  OptCh_FS  85  FS_aparc
+excs  Insula_GM_ctx_LT_FS  1035  FS_aparc
+excs  Insula_WM_LT_FS  3035  FS_wmparc
+excs  Front_lobeGM_ctx_LT  1001  FS_lobes
+excs  Front_lobeWM_LT  3001  FS_lobes
+excs  Pari_lobeGM_ctx_LT  1006  FS_lobes
+excs  Pari_lobeWM_LT  3006  FS_lobes
+excs  SegWM_LT_MPV_custom  1  custom
+excs  M1_GM_ctx_LT_FS  1024  FS_aparc
+excs  M1_WM_LT_FS  3024  FS_wmparc

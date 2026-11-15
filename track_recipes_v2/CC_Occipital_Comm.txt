@@ -1,0 +1,28 @@
+# Bundle: CC_Occipital_Comm
+# type  name  label  atlas
+incs1  CC_splen_FS  251  FS_aparc
+
+incs2  Occ_lobeGM_ctx_LT  1004  FS_lobes
+
+incs3  Occ_lobeGM_ctx_RT  2004  FS_lobes
+
+excs  AC_MAN  1  MAN
+excs  PC_MAN  2  MAN
+excs  CC_genu_FS  255  FS_aparc
+excs  CC_ant_FS  254  FS_aparc
+excs  CC_mid_FS  253  FS_aparc
+excs  CC_isth_FS  252  FS_aparc
+excs  Fornix_Fx  250  FS_fornix
+excs  Front_lobeGM_ctx_LT  1001  FS_lobes
+excs  Front_lobeGM_ctx_RT  2001  FS_lobes
+excs  Pari_lobeGM_ctx_LT  1006  FS_lobes
+excs  Pari_lobeGM_ctx_RT  2006  FS_lobes
+excs  Temp_lobeGM_ctx_LT  1005  FS_lobes
+excs  Temp_lobeGM_ctx_RT  2005  FS_lobes
+excs  BStem_FS  16  FS_aparc
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes
+excs  vDC_FS_LT  28  FS_aparc
+excs  vDC_FS_RT  60  FS_aparc
+excs  Thal_LT_FS  10  FS_aparc
+excs  Thal_RT_FS  49  FS_aparc

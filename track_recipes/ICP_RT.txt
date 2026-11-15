@@ -1,0 +1,17 @@
+# Bundle: ICP_RT
+# type  name  label
+incs1  Medulla_MSBP  251
+
+incs2  cFas_RT_SUIT  34
+incs2  cIp_RT_SUIT  32
+incs2  Dent_RT_SUIT  30
+
+excs  Occ_lobeGM_RT  2004
+excs  Occ_lobeWM_RT  4004
+excs  Midbrain_MSBP  249
+excs  vDC_LT_FS  28
+excs  vDC_RT_FS  60
+excs  Pons_MSBP  250
+excs  cX_RT_SUIT  28
+excs  cIX_RT_SUIT  25
+excs  cI_IV_RT_SUIT  2

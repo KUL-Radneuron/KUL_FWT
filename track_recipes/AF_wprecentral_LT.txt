@@ -1,0 +1,30 @@
+# Bundle: AF_wprecentral_LT
+# type  name  label
+incs1  IFGpTr_GM_LT_FS  1020
+incs1  IFGpOp_GM_LT_FS  1018
+incs1  PreC1_LT_MSBP  155
+incs1  PreC2_LT_MSBP  156
+incs1  PreC3_LT_MSBP  157
+
+incs2  STG1_LT_MSBP  224
+incs2  STG2_LT_MSBP  225
+incs2  STG3_LT_MSBP  226
+incs2  bSTS_GM_LT_FS  1001
+incs2  SMG_GM_LT_FS  1031
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  PreC4_LT_MSBP  158
+excs  PreC5_LT_MSBP  159
+excs  PreC6_LT_MSBP  160
+excs  s3Put_LT_custom  1
+excs  Thal_LT_FS  10
+excs  STG4_LT_MSBP  227
+excs  STG5_LT_MSBP  228
+excs  Phippo_GM_LT_FS  1016
+excs  Phippo_WM_LT_FS  3016
+excs  Insula_GMWM_LT_ero2_custom  1
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeWM_LT  3003
+excs  SFG_GM_LT_FS  1028
+excs  SFG_WM_LT_FS  3028

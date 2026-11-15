@@ -1,0 +1,21 @@
+# Bundle: OT_LT
+# type  name  label
+incs1  OptCh_FS  85
+
+incs2  PD25_Pulvi_LT_custom  1
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  Putamen_FS_LT  12
+excs  Hippo_FS_LT  17
+excs  Caudate_FS_LT  11
+excs  CGM_aseg_LT  3
+excs  Front_lobeWM_LT  3001
+excs  Fornix_Fx  250
+excs  PD25_DM_LT_custom  1
+excs  PD25_DL_LT_custom  1
+excs  Pari_lobeGM_LT  1006
+excs  Pari_lobeWM_LT  3006
+excs  M1_GM_FS_LT  1024
+excs  M1_WM_FS_LT  3024
+excs  Thal_min_Pulvi_LT_custom  1

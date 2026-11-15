@@ -1,0 +1,36 @@
+# Bundle: ThR_Ant_LT
+# type  name  label  atlas
+incs1  Thal_FS_LT  10  FS_aparc
+
+incs2  SFG1_MSBP_ctx_LT  144  Lausanne3
+incs2  SFG2_MSBP_ctx_LT  145  Lausanne3
+incs2  SFG3_MSBP_ctx_LT  146  Lausanne3
+incs2  SFG4_MSBP_ctx_LT  147  Lausanne3
+incs2  MedOF_GM_ctx_LT_FS  1014  FS_aparc
+incs2  LatOF_GM_ctx_LT_FS  1012  FS_aparc
+incs2  FrP_GM_ctx_LT_FS  1032  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  AC_midline_MAN  1  MAN
+excs  hypothal_LT_excr_custom  1  custom
+excs  Temp_lobeGM_ctx_LT  1005  FS_lobes
+excs  Putamen_GM_LT_FS  12  FS_aparc
+excs  Caudate_GM_LT_FS  11  FS_aparc
+excs  PD25_Pulvi_LT_custom  1  custom
+excs  Fornix_Fx  250  FS_fornix
+excs  cACC_GM_FS_ctx_LT  1002  FS_aparc
+excs  Occ_lobeGM_ctx_LT  1004  FS_lobes
+excs  Pari_lobeGM_ctx_LT  1006  FS_lobes
+excs  PD25_VPALPLPM_LT_custom  1  custom
+excs  M1_GM_FS_ctx_LT  1024  FS_aparc
+excs  M1_WM_FS_LT  3024  FS_wmparc
+excs  SFG5_ctx_LT_MSBP  148  Lausanne3
+excs  cMFG_GM_ctx_LT_FS  1003  FS_aparc
+excs  PHipp_GM_ctx_LT_FS  1016  FS_aparc
+excs  PHipp_WM_LT_FS  3016  FS_wmparc
+excs  Insula_GM_ctx_LT_FS  1035  FS_aparc
+excs  Insula_WM_LT_FS  3035  FS_wmparc
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeWM_LT  3003  FS_lobes
+excs  vDC_FS_LT  28  FS_aparc

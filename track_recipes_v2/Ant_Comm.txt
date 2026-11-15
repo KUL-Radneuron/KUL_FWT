@@ -1,0 +1,16 @@
+# Bundle: Ant_Comm
+# type  name  label  atlas
+incs1  AC_MAN  1  MAN
+
+incs2  Temp_lobeGM_ctx_LT  1005  FS_lobes
+incs2  Occ_lobeGM_ctx_LT  1004  FS_lobes
+
+incs3  Temp_lobeGM_ctx_RT  2005  FS_lobes
+incs3  Occ_lobeGM_ctx_RT  2004  FS_lobes
+
+excs  CC_allr_custom  1  custom
+excs  PC_MAN  2  MAN
+excs  BStem_FS  16  FS_aparc
+excs  OptCh_FS  85  FS_aparc
+excs  Thal_LT_FS  10  FS_aparc
+excs  Thal_RT_FS  49  FS_aparc

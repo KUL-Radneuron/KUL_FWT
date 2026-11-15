@@ -1,0 +1,28 @@
+# Bundle: PyT_PMC_LT
+# type  name  label  atlas
+incs1  BStem_FS  16  FS_aparc
+
+incs2  cMFG_GM_ctx_LT_FS  1003  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStemr_exc_RT_custom  1  custom
+excs  Cing_lobeGM_ctx_LT  1003  FS_lobes
+excs  Cing_lobeWM_LT  3003  FS_lobes
+excs  LT_ML_X_custom  1  custom
+excs  Thal_LT_ero2_custom  1  custom
+excs  Temp_lobeGM_ctx_LT  1005  FS_lobes
+excs  Temp_lobeWM_LT  3005  FS_lobes
+excs  Putamen_LT_FS  12  FS_aparc
+excs  SFG_GM_ctx_LT_FS  1028  FS_aparc
+excs  SFG_WM_LT_FS  3028  FS_wmparc
+excs  Caudate_GM_LT_FS  11  FS_aparc
+excs  M1_GM_ctx_LT_FS  1024  FS_aparc
+excs  M1_WM_LT_FS  3024  FS_wmparc
+excs  S1_GM_ctx_LT_FS  1022  FS_aparc
+excs  S1_WM_LT_FS  3022  FS_wmparc
+excs  Occ_lobeGM_ctx_LT  1004  FS_lobes
+excs  Occ_lobeWM_LT  3004  FS_lobes
+excs  SegWM_LT_PPV_custom  1  custom
+excs  rMFG5_MSBP_ctx_LT  142  Lausanne3
+excs  rMFG6_MSBP_ctx_LT  143  Lausanne3
+excs  hypothal_vDC_RT_excr_custom  1  custom

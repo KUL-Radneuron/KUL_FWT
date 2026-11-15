@@ -1,0 +1,25 @@
+# Bundle: AF_all_RT
+# type  name  label  atlas
+incs1  IFGpTr_GM_ctx_RT_FS  2020  FS_aparc
+incs1  IFGpOp_GM_ctx_RT_FS  2018  FS_aparc
+
+incs2  STG1_ctx_RT_MSBP  100  Lausanne3
+incs2  STG2_ctx_RT_MSBP  101  Lausanne3
+incs2  STG3_ctx_RT_MSBP  102  Lausanne3
+incs2  bSTS_GM_ctx_RT_FS  2001  FS_aparc
+incs2  SMG_GM_ctx_RT_FS  2031  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  M1_GM_FS_ctx_RT  2024  FS_aparc
+excs  s3Put_RT_custom  1  custom
+excs  Thal_RT_FS  49  FS_aparc
+excs  STG4_ctx_RT_MSBP  103  Lausanne3
+excs  STG5_ctx_RT_MSBP  104  Lausanne3
+excs  Phippo_GM_ctx_RT_FS  2016  FS_aparc
+excs  Phippo_WM_RT_FS  4016  FS_wmparc
+excs  Insula_GMWM_RT_ero2_custom  1  custom
+excs  Cing_lobeGM_ctx_RT  2003  FS_lobes
+excs  Cing_lobeWM_RT  4003  FS_lobes
+excs  SFG_GM_ctx_RT_FS  2028  FS_aparc
+excs  SFG_WM_RT_FS  4028  FS_wmparc

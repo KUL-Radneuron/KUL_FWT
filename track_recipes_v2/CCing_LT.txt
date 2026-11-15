@@ -1,0 +1,27 @@
+# Bundle: CCing_LT
+# type  name  label  atlas
+incs1  rACC_GM_FS_ctx_LT  1026  FS_aparc
+incs1  cACC_GM_FS_ctx_LT  1002  FS_aparc
+
+incs2  PCC_GM_FS_ctx_LT  1023  FS_aparc
+incs2  iPCC_GM_FS_ctx_LT  1010  FS_aparc
+incs2  Pc_GM_FS_ctx_LT  1025  FS_aparc
+
+excs  CC_allr_custom  1  custom
+excs  BStem_FS  16  FS_aparc
+excs  STG_GM_FS_ctx_LT  1030  FS_aparc
+excs  Unseg_WM_FS_LT  5001  FS_wmparc
+excs  vDC_FS_LT  28  FS_aparc
+excs  IFG_POp_GM_FS_ctx_LT  1018  FS_aparc
+excs  IFG_POp_WM_FS_LT  3018  FS_wmparc
+excs  IFG_PTr_GM_FS_ctx_LT  1020  FS_aparc
+excs  IFG_PTr_WM_FS_LT  3020  FS_wmparc
+excs  Phippo_GM_FS_ctx_LT  1016  FS_aparc
+excs  Phipp_WM_FS_LT  3016  FS_wmparc
+excs  SFG_GM_FS_ctx_LT  1028  FS_aparc
+excs  Hippo_LT_FS  17  FS_aparc
+excs  Temp_lobeGM_ctx_LT  1005  FS_lobes
+excs  Temp_lobeWM_LT  3005  FS_lobes
+excs  AC_midline_MAN  1  MAN
+excs  Insula_GM_FS_ctx_LT  1035  FS_aparc
+excs  Insula_WM_FS_LT  3035  FS_wmparc

@@ -1,0 +1,15 @@
+# Bundle: MCP_RT
+# type  name  label
+incs1  Bs_Pons_LT_custom  1
+
+incs2  cVI_RT_SUIT  7
+incs2  cI_RT_SUIT  10
+incs2  cVIIb_RT_SUIT  16
+
+excs  Occ_lobeGM_RT  2004
+excs  Occ_lobeWM_RT  4004
+excs  Midbrain_MSBP  249
+excs  Medulla_MSBP  251
+excs  vDC_LT_FS  28
+excs  vDC_RT_FS  60
+excs  cIX_RT_SUIT  25

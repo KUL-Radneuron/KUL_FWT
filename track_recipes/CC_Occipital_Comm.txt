@@ -1,0 +1,28 @@
+# Bundle: CC_Occipital_Comm
+# type  name  label
+incs1  CC_splen_FS  251
+
+incs2  Occ_lobeGM_LT  1004
+
+incs3  Occ_lobeGM_RT  2004
+
+excs  AC_MAN  1
+excs  PC_MAN  2
+excs  CC_genu_FS  255
+excs  CC_ant_FS  254
+excs  CC_mid_FS  253
+excs  CC_isth_FS  252
+excs  Fornix_Fx  250
+excs  Front_lobeGM_LT  1001
+excs  Front_lobeGM_RT  2001
+excs  Pari_lobeGM_LT  1006
+excs  Pari_lobeGM_RT  2006
+excs  Temp_lobeGM_LT  1005
+excs  Temp_lobeGM_RT  2005
+excs  BStem_FS  16
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeGM_RT  2003
+excs  vDC_FS_LT  28
+excs  vDC_FS_RT  60
+excs  Thal_LT_FS  10
+excs  Thal_RT_FS  49

@@ -1,0 +1,21 @@
+# Bundle: Post_Comm
+# type  name  label  atlas
+incs1  PC_MAN  2  MAN
+
+incs2  JuHA_MGN_LT_custom  1  custom
+incs2  JuHA_LGN_LT_custom  1  custom
+
+incs3  JuHA_MGN_LT_custom  1  custom
+incs3  JuHA_LGN_LT_custom  1  custom
+
+excs  CC_allr_custom  1  custom
+excs  Medulla_MSBP  251  Lausanne3
+excs  Pons_MSBP  250  Lausanne3
+excs  AC_MAN  1  MAN
+excs  OptCh_FS  85  FS_aparc
+excs  hypoTh_LT_MSBP  248  Lausanne3
+excs  hypoTh_RT_MSBP  124  Lausanne3
+excs  Pari_lobeGM_ctx_LT  1006  FS_lobes
+excs  Pari_lobeWM_LT  3006  FS_lobes
+excs  Pari_lobeGM_ctx_RT  2006  FS_lobes
+excs  Pari_lobeWM_RT  4006  FS_lobes

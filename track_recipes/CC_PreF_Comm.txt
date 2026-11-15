@@ -1,0 +1,48 @@
+# Bundle: CC_PreF_Comm
+# type  name  label
+incs1  CC_genu_FS  255
+incs1  CC_ant_FS  254
+
+incs2  IFG_PTr_GM_FS_LT  1020
+incs2  IFG_POr_GM_FS_LT  1019
+incs2  FrontP_GM_FS_LT  1032
+incs2  LatOF_GM_FS_LT  1012
+incs2  MedOF_GM_FS_LT  1014
+incs2  cMFG_GM_LT_FS  1003
+incs2  rMFG_GM_LT_FS  1027
+incs2  SFG_GM_LT_FS  1028
+
+incs3  IFG_PTr_GM_FS_RT  2020
+incs3  IFG_POr_GM_FS_RT  2019
+incs3  FrontP_GM_FS_RT  2032
+incs3  LatOF_GM_FS_RT  2012
+incs3  MedOF_GM_FS_RT  2014
+incs3  cMFG_GM_RT_FS  2003
+incs3  rMFG_GM_RT_FS  2027
+incs3  SFG_GM_RT_FS  2028
+
+excs  AC_MAN  1
+excs  PC_MAN  2
+excs  CC_mid_FS  253
+excs  CC_isth_FS  252
+excs  CC_splen_FS  251
+excs  Fornix_Fx  250
+excs  cMFG_GM_LT_FS  1003
+excs  cMFG_GM_RT_FS  2003
+excs  M1_GM_LT_FS  1024
+excs  M1_GM_RT_FS  2024
+excs  Pari_lobeGM_LT  1006
+excs  Pari_lobeGM_RT  2006
+excs  BStem_FS  16
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeGM_RT  2003
+excs  Thal_LT_FS  10
+excs  Thal_RT_FS  49
+excs  Insula_lobeGM_LT  1007
+excs  Insula_lobeWM_LT  3007
+excs  Insula_lobeGM_RT  2007
+excs  Insula_lobeWM_RT  4007
+excs  SegWM_LT_ALIC_custom  1
+excs  SegWM_RT_ALIC_custom  1
+excs  vDC_FS_LT  28
+excs  vDC_FS_RT  60

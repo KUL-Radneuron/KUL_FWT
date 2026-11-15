@@ -1,0 +1,30 @@
+# Bundle: TIF_RT
+# type  name  label
+incs1  Ins1_MSBP_RT  106
+incs1  Ins2_MSBP_RT  107
+incs1  Ins3_MSBP_RT  108
+
+incs2  Amygdala_RT_FS  54
+incs2  TempP_GM_RT_FS  2033
+incs2  EntoR_MSBP_RT  89
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  PHipp_GM_RT_FS  2016
+excs  PHipp_WM_FS_RT  4016
+excs  vDC_FS_RT  60
+excs  Fusi_GM_RT_FS  2007
+excs  Fusi_WM_RT_FS  4007
+excs  e2Put_RT_custom  1
+excs  Pall_RT_FS  52
+excs  Front_lobeGM_RT  2001
+excs  Front_lobeWM_RT  4001
+excs  Acc_RT_FS  58
+excs  AC_midline_MAN  1
+excs  OptCh_FS  85
+excs  Pari_lobeGM_RT  2006
+excs  Pari_lobeWM_RT  4006
+excs  Occ_lobeGM_RT  2004
+excs  Occ_lobeWM_RT  4004
+excs  STG_GM_RT_FS  2030
+excs  STG_WM_RT_FS  4030

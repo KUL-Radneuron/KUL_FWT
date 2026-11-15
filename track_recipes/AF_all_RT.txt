@@ -1,0 +1,25 @@
+# Bundle: AF_all_RT
+# type  name  label
+incs1  IFGpTr_GM_RT_FS  2020
+incs1  IFGpOp_GM_RT_FS  2018
+
+incs2  STG1_RT_MSBP  100
+incs2  STG2_RT_MSBP  101
+incs2  STG3_RT_MSBP  102
+incs2  bSTS_GM_RT_FS  2001
+incs2  SMG_GM_RT_FS  2031
+
+excs  CC_allr_custom  1
+excs  BStem_FS  16
+excs  M1_GM_FS_RT  2024
+excs  s3Put_RT_custom  1
+excs  Thal_RT_FS  49
+excs  STG4_RT_MSBP  103
+excs  STG5_RT_MSBP  104
+excs  Phippo_GM_RT_FS  2016
+excs  Phippo_WM_RT_FS  4016
+excs  Insula_GMWM_RT_ero2_custom  1
+excs  Cing_lobeGM_RT  2003
+excs  Cing_lobeWM_RT  4003
+excs  SFG_GM_RT_FS  2028
+excs  SFG_WM_RT_FS  4028

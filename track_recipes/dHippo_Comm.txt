@@ -1,0 +1,38 @@
+# Bundle: dHippo_Comm
+# type  name  label
+incs1  CC_splen_FS  251
+
+incs2  Phippo_GM_LT_FS  1016
+incs2  Hippo_LT_FS  17
+incs2  Amyg_FS_LT  18
+
+incs3  Phippo_GM_RT_FS  2016
+incs3  Hippo_RT_FS  53
+incs3  Amyg_FS_RT  54
+
+excs  AC_MAN  1
+excs  PC_MAN  2
+excs  CC_genu_FS  255
+excs  CC_ant_FS  254
+excs  CC_mid_FS  253
+excs  CC_midpost_FS  252
+excs  Fornix_Fx  250
+excs  Front_lobeGM_LT  1001
+excs  Front_lobeGM_RT  2001
+excs  Pari_lobeGM_LT  1006
+excs  Pari_lobeGM_RT  2006
+excs  Occ_lobeGM_LT  1004
+excs  Occ_lobeGM_RT  2004
+excs  BStem_FS  16
+excs  Cing_lobeGM_LT  1003
+excs  Cing_lobeGM_RT  2003
+excs  Thal_FS_LT  10
+excs  Thal_FS_RT  49
+excs  ITG_GM_LT_FS  1009
+excs  MTG_GM_LT_FS  1015
+excs  STG_GM_LT_FS  1030
+excs  TempP_GM_LT_FS  1033
+excs  ITG_GM_RT_FS  2009
+excs  MTG_GM_RT_FS  2015
+excs  STG_GM_RT_FS  2030
+excs  TempP_GM_RT_FS  2033
